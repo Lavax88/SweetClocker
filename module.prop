@@ -1,7 +1,7 @@
 id=sweetclocker
 name=SweetClocker
 version=v1.0.0
-versionCode=1
+versionCode=2
 author=Lava
 description=Caps SD8s Gen 4 max clocks to sweet spots (1286/1920/2515 MHz) for best battery/thermal balance. Values by iRedDragonICY.
 updateJson=https://raw.githubusercontent.com/Lavax88/SweetClocker/main/update.json
