@@ -1,0 +1,6 @@
+# Runtime log and temporary state files
+logs/
+*.log
+*.tmp
+.sweetclocker_state
+*.zip

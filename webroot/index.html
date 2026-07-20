@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" id="meta-theme-color" content="#0b0811">
+  <title>SweetClocker Dashboard</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Style Sheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="m3-theme dark-mode">
+
+  <!-- SVG Symbols for Material 3 Icons -->
+  <svg style="display: none;">
+    <symbol id="icon-dashboard" viewBox="0 0 24 24">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </symbol>
+    <symbol id="icon-logs" viewBox="0 0 24 24">
+      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2zm-4 8H7v-2h6v2z"/>
+    </symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </symbol>
+    <symbol id="icon-lightning" viewBox="0 0 24 24">
+      <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+    </symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24">
+      <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+    </symbol>
+    <symbol id="icon-cpu" viewBox="0 0 24 24">
+      <path d="M17 9H7v6h10V9zm-8 4h-2v-2h2v2zm8 0h-2v-2h2v2zM9 17H7v-2h2v2zm8 0h-2v-2h2v2zM9 9H7V7h2v2zm8 0h-2V7h2v2zM21 11v2h-2v-2h2zm-16 0v2H3v-2h2zm14-8h-2V1h-2v2h-2V1h-2v2H9V1H7v2H5V1H3v2H1v2h2v2H1v2h2v2H1v2h2v2H1v2h2v2H1v2h2v2h18v-2h-2v-2h2v-2h-2v-2h2v-2h-2v-2h2v-2h-2v-2h2v-2h-2V9h2V7h-2V5h2V3h-2zm-2 16H5V5h14v14z"/>
+    </symbol>
+  </svg>
+
+  <!-- App Container -->
+  <div class="app-layout">
+    
+    <!-- Main Content Area -->
+    <main class="content-container">
+      
+      <!-- Top App Bar (Lightning + Title) -->
+      <header class="top-app-bar">
+        <div class="status-badge" id="service-status">
+          <span class="status-indicator warning"></span>
+          <span class="status-text">Loading...</span>
+        </div>
+
+        <div class="app-logo-title">
+          <svg class="lightning-icon"><use href="#icon-lightning"></use></svg>
+          <span class="app-title">SweetClocker</span>
+        </div>
+
+        <div class="top-bar-actions">
+          <button class="btn btn-filled" id="refresh-btn">
+            <svg class="btn-icon"><use href="#icon-refresh"></use></svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <div class="scroll-content">
+        
+        <!-- PAGE 1: DASHBOARD -->
+        <section id="page-dashboard" class="page-section active">
+          
+
+
+          <!-- Cores Grid -->
+          <h3 class="section-header">CPU Frequency & Thermals</h3>
+          <div class="cores-grid" id="cores-grid">
+            <div class="grid-placeholder">Loading CPU configurations...</div>
+          </div>
+
+          <!-- GPU Stats Card -->
+          <h3 class="section-header" style="margin-top: 16px;">GPU Frequency & Thermals</h3>
+          <div class="gpu-card-container">
+            <div class="gpu-card">
+              <div class="gpu-card-header">
+                <div class="gpu-title-group">
+                  <svg class="gpu-icon" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 15H5v-2h7v2zm7 0h-5v-2h5v2zm0-4H5v-2h14v2zm0-4H5V8h14v2z"/>
+                  </svg>
+                  <div class="gpu-title-text">
+                    <span class="gpu-name" id="gpu-card-name">Adreno GPU</span>
+                    <span class="gpu-class-label">3D GRAPHICS ACCELERATOR</span>
+                  </div>
+                </div>
+                <span class="gpu-temp-badge" id="gpu-temp-badge">--°C</span>
+              </div>
+              
+              <div class="gpu-usage-section">
+                <div class="gpu-usage-meta">
+                  <span class="gpu-usage-value" id="gpu-usage-value">0%</span>
+                  <span class="gpu-usage-label">GPU LOAD</span>
+                </div>
+                <div class="gpu-progress-bar-container">
+                  <div class="gpu-progress-bar" id="gpu-progress-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+              
+              <div class="gpu-freq-meta-row">
+                <div class="gpu-freq-col" style="align-items: flex-start; text-align: left;">
+                  <span class="gpu-freq-limits" id="gpu-freq-min">-- MHz</span>
+                  <span class="gpu-freq-label">MIN CLOCK</span>
+                </div>
+                <div class="gpu-freq-col" style="align-items: center; text-align: center;">
+                  <span class="gpu-freq-now" id="gpu-freq-now">-- MHz</span>
+                  <span class="gpu-freq-label">CURRENT CLOCK</span>
+                </div>
+                <div class="gpu-freq-col" style="align-items: flex-end; text-align: right;">
+                  <span class="gpu-freq-limits" id="gpu-freq-max">-- MHz</span>
+                  <span class="gpu-freq-label">MAX CLOCK</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- PAGE 2: LOGS -->
+        <section id="page-logs" class="page-section">
+          <div class="card card-outlined logs-container-card">
+            <div class="logs-header">
+              <div class="search-bar">
+                <input type="text" id="log-search" placeholder="Filter logs...">
+              </div>
+              <div class="logs-actions">
+                <button class="btn btn-outlined btn-small" id="clear-log-btn">Clear Log File</button>
+                <span class="log-info" id="log-size-info">Size: 0 B</span>
+              </div>
+            </div>
+            <div class="log-viewer" id="log-viewer">
+              <pre class="log-pre" id="log-pre">Reading /data/local/tmp/sweetclocker.log...</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAGE 3: PREFERENCES -->
+        <section id="page-preferences" class="page-section">
+          <div class="card card-elevated">
+            <h3 class="section-header" style="margin-bottom: 16px; margin-top: 0px;">Theme Configuration</h3>
+            
+            <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Theme Mode</label>
+              <div class="segmented-control" style="margin-top: 8px;">
+                <button class="segment active" data-theme-mode="dark">Dark</button>
+                <button class="segment" data-theme-mode="light">Light</button>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Seed Color (Accent)</label>
+              <div class="color-options" style="margin-top: 8px;">
+                <div class="color-dot active" style="background-color: #6750A4;" data-color="#6750A4" title="M3 Default Purple"></div>
+                <div class="color-dot" style="background-color: #006A6A;" data-color="#006A6A" title="Teal"></div>
+                <div class="color-dot" style="background-color: #8b5000;" data-color="#8b5000" title="Orange"></div>
+                <div class="color-dot" style="background-color: #386a20;" data-color="#386a20" title="Green"></div>
+                <div class="color-dot" style="background-color: #005FAF;" data-color="#005FAF" title="Blue"></div>
+                <div class="color-dot" style="background-color: #A60067;" data-color="#A60067" title="Pink"></div>
+                <div class="color-dot" id="custom-color-indicator" style="background-color: #795548;" title="Custom Color">
+                  <input type="color" id="custom-color-picker" value="#795548">
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 24px;">
+              <label>Monet Sync Status</label>
+              <div class="monet-status-row" style="margin-top: 8px;">
+                <span class="status-indicator success" id="monet-indicator"></span>
+                <span id="monet-sync-text">System Monet Active</span>
+              </div>
+              <button class="btn btn-outlined btn-small" id="reset-monet-btn" style="margin-top: 12px; height: 36px; padding: 0 16px;">Reset to Monet Sync</button>
+            </div>
+
+            <div class="setting-group" style="border-top: 1px dashed var(--md-sys-color-outline-variant); padding-top: 20px;">
+              <label>Force Bypass Override</label>
+              <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; margin-bottom: 12px; line-height: 1.4;">Bypass SoC hardware verification check and enforce clock limits anyway.</p>
+              <div class="segmented-control">
+                <button class="segment active" id="bypass-off-btn" data-bypass-val="false">Disabled</button>
+                <button class="segment" id="bypass-on-btn" data-bypass-val="true">Enabled</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Bottom Navigation Bar (Material 3 Style Capsule) -->
+      <nav class="bottom-nav">
+        <button class="nav-tab active" data-target="page-dashboard">
+          <div class="icon-wrapper">
+            <svg><use href="#icon-dashboard"></use></svg>
+          </div>
+          <span class="tab-label">Home</span>
+        </button>
+        <button class="nav-tab" data-target="page-logs">
+          <div class="icon-wrapper">
+            <svg><use href="#icon-logs"></use></svg>
+          </div>
+          <span class="tab-label">Logs</span>
+        </button>
+        <button class="nav-tab" data-target="page-preferences">
+          <div class="icon-wrapper">
+            <svg><use href="#icon-settings"></use></svg>
+          </div>
+          <span class="tab-label">Preferences</span>
+        </button>
+      </nav>
+      
+    </main>
+  </div>
+
+  <!-- Classic Scripts to prevent CORS block over file:// protocol in Android WebView -->
+  <script src="js/ksu-api.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/logs.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
