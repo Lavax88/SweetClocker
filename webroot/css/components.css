@@ -20,6 +20,8 @@
               box-shadow var(--transition-speed) var(--transition-easing),
               transform 0.1s var(--transition-easing);
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn:active {
@@ -106,6 +108,10 @@ body.light-mode .btn-filled:hover {
   padding: 0 16px var(--bottom-inset) 16px;
   z-index: 100;
   box-shadow: var(--md-elevation-2);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .nav-tab {
@@ -125,6 +131,10 @@ body.light-mode .btn-filled:hover {
   height: 100%;
   outline: none;
   transition: color var(--transition-speed);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .nav-tab:hover {

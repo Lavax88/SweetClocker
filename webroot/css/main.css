@@ -128,11 +128,13 @@ body.light-mode {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
   background-color: #0b0811; /* pre-JS fallback: colors status bar immediately */
   color-scheme: dark; /* pre-JS fallback for status bar icon contrast */
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -143,6 +145,7 @@ html, body {
   height: 100vh;
   height: 100dvh;
   width: 100vw;
+  -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-speed) var(--transition-easing),
