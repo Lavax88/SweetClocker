@@ -75,7 +75,7 @@
   const mockCoresState = Array.from({ length: 8 }, (_, i) => {
     let cluster = "LITTLE";
     let targetMax = 1286400;
-    if (i >= 2 && i <= 6) { cluster = "MID"; targetMax = 1920000; }
+    if (i >= 2 && i <= 6) { cluster = "BIG"; targetMax = 1920000; }
     else if (i === 7) { cluster = "PRIME"; targetMax = 2515200; }
     
     return {
@@ -100,9 +100,9 @@
   let mockLog = `[2026-07-20 00:02:18] post-fs-data.sh: boot start, log truncated
 [2026-07-20 00:02:18] discovered policy0 -> cpus [0,1] -> target 1286400 kHz (LITTLE, matches expected)
 [2026-07-20 00:02:18] policy0/scaling_max_freq: wrote 1286400, readback 1286400 (exact)
-[2026-07-20 00:02:18] discovered policy2 -> cpus [2,3,4] -> target 1920000 kHz (MID, matches expected)
+[2026-07-20 00:02:18] discovered policy2 -> cpus [2,3,4] -> target 1920000 kHz (BIG, matches expected)
 [2026-07-20 00:02:18] policy2/scaling_max_freq: wrote 1920000, readback 1920000 (exact)
-[2026-07-20 00:02:18] discovered policy5 -> cpus [5,6] -> target 1920000 kHz (MID, matches expected)
+[2026-07-20 00:02:18] discovered policy5 -> cpus [5,6] -> target 1920000 kHz (BIG, matches expected)
 [2026-07-20 00:02:18] policy5/scaling_max_freq: wrote 1920000, readback 1920000 (exact)
 [2026-07-20 00:02:19] discovered policy7 -> cpus [7] -> target 2515200 kHz (PRIME, matches expected)
 [2026-07-20 00:02:19] policy7/scaling_max_freq: wrote 2515200, readback 2515200 (exact)

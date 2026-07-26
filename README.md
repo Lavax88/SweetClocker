@@ -47,7 +47,7 @@ These exact hardware OPP thresholds have been benchmarked by **[iRedDragonICY](h
 | Cluster | Assigned Cores | Target Max Frequency | Exact OPP (`sysfs` Value) | Policy Paths |
 | :--- | :---: | :---: | :---: | :--- |
 | **LITTLE** *(Efficiency)* | `cpu0, cpu1` | **1286.4 MHz** | `1286400` | `/sys/devices/system/cpu/cpufreq/policy0` |
-| **MID** *(Performance)* | `cpu2 – cpu6` | **1920.0 MHz** | `1920000` | `/sys/devices/system/cpu/cpufreq/policy2`<br>`/sys/devices/system/cpu/cpufreq/policy5` |
+| **BIG** *(Performance)* | `cpu2 – cpu6` | **1920.0 MHz** | `1920000` | `/sys/devices/system/cpu/cpufreq/policy2`<br>`/sys/devices/system/cpu/cpufreq/policy5` |
 | **PRIME** *(Ultra)* | `cpu7` | **2515.2 MHz** | `2515200` | `/sys/devices/system/cpu/cpufreq/policy7` |
 
 ---

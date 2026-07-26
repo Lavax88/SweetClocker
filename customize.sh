@@ -7,10 +7,8 @@ rm -f "/data/local/tmp/sweetclocker.log" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_state" 2>/dev/null
 
 # Unmount any existing policy mount locks if active before removing files
-for d in /sys/devices/system/cpu/cpufreq/policy*; do
-    if [ -d "$d" ] && grep -q " ${d}/scaling_max_freq " /proc/mounts 2>/dev/null; then
-        umount "${d}/scaling_max_freq" 2>/dev/null
-    fi
+for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do
+    umount -l "$mount_point" 2>/dev/null
 done
 rm -rf "/dev/sweetclocker" 2>/dev/null
 

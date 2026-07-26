@@ -78,10 +78,71 @@ get_state() {
 get_cpu_target() {
     case "$1" in
         0|1) echo "1286400 LITTLE" ;;
-        2|3|4|5|6) echo "1920000 MID" ;;
+        2|3|4|5|6) echo "1920000 BIG" ;;
         7) echo "2515200 PRIME" ;;
         *) echo "0 UNKNOWN" ;;
     esac
+}
+
+get_freq_target_nodes() {
+    lbl="$1"
+    real_path="$2"
+    freq_type="$3" # "max" or "min"
+
+    if [ "${lbl#policy}" != "$lbl" ]; then
+        pol_dir="/sys/devices/system/cpu/cpufreq/${lbl}"
+    else
+        pol_dir="/sys/devices/system/cpu/${lbl}/cpufreq"
+    fi
+
+    nodes="${pol_dir}/scaling_${freq_type}_freq ${pol_dir}/cpuinfo_${freq_type}_freq"
+
+    cpus_str=$(cat "$real_path/related_cpus" 2>/dev/null)
+    [ -z "$cpus_str" ] && cpus_str=$(cat "$real_path/affected_cpus" 2>/dev/null)
+    if [ -n "$cpus_str" ]; then
+        for c in $(echo "$cpus_str" | tr ',' ' '); do
+            nodes="${nodes} /sys/devices/system/cpu/cpu${c}/cpufreq/scaling_${freq_type}_freq /sys/devices/system/cpu/cpu${c}/cpufreq/cpuinfo_${freq_type}_freq"
+        done
+    fi
+
+    echo "$nodes"
+}
+
+unmount_freq_locks() {
+    lbl="$1"
+    real_path="$2"
+    for n in $(get_freq_target_nodes "$lbl" "$real_path" "max") $(get_freq_target_nodes "$lbl" "$real_path" "min"); do
+        if grep -q " ${n} " /proc/mounts 2>/dev/null; then
+            umount "${n}" 2>/dev/null
+        fi
+    done
+}
+
+bind_freq_locks() {
+    lbl="$1"
+    src_max="$2"
+    src_min="$3"
+    real_path="$4"
+
+    for n in $(get_freq_target_nodes "$lbl" "$real_path" "max"); do
+        if [ -f "$n" ] || [ -L "$n" ]; then
+            if grep -q " ${n} " /proc/mounts 2>/dev/null; then
+                umount "${n}" 2>/dev/null
+            fi
+            mount --bind "$src_max" "${n}" 2>/dev/null
+        fi
+    done
+
+    if [ -n "$src_min" ] && [ -f "$src_min" ]; then
+        for n in $(get_freq_target_nodes "$lbl" "$real_path" "min"); do
+            if [ -f "$n" ] || [ -L "$n" ]; then
+                if grep -q " ${n} " /proc/mounts 2>/dev/null; then
+                    umount "${n}" 2>/dev/null
+                fi
+                mount --bind "$src_min" "${n}" 2>/dev/null
+            fi
+        done
+    fi
 }
 
 apply_and_log() {
@@ -110,10 +171,8 @@ apply_and_log() {
         fi
     fi
 
-    # Unmount the standard path if currently bind-mounted before writing to the underlying file
-    if grep -q " ${std_path} " /proc/mounts 2>/dev/null; then
-        umount "${std_path}" 2>/dev/null
-    fi
+    # Unmount standard policy and per-CPU max/min frequency paths before writing to real sysfs node
+    unmount_freq_locks "$label" "$path"
 
     # Attempt direct write of exact target to the real node (which is un-mounted)
     err_msg=$(echo "$target" > "$path/scaling_max_freq" 2>&1)
@@ -130,12 +189,20 @@ apply_and_log() {
             log_msg "${label}/scaling_max_freq: wrote ${target}, readback ${readback} (snapped, nearest available)"
         fi
 
-        # Apply VFS bind-mount lock to prevent userspace (libperfmgr/PowerHAL) overrides on the standard path
+        # Apply VFS bind-mount locks on scaling & cpuinfo max and min frequencies across policy & CPUs
         mkdir -p /dev/sweetclocker 2>/dev/null
         src_file="/dev/sweetclocker/${label}_max_freq"
         echo "$readback" > "$src_file" 2>/dev/null
         chmod 444 "$src_file" 2>/dev/null
-        mount --bind "$src_file" "${std_path}" 2>/dev/null
+
+        src_min_file=""
+        if [ -n "$min_freq" ]; then
+            src_min_file="/dev/sweetclocker/${label}_min_freq"
+            echo "$min_freq" > "$src_min_file" 2>/dev/null
+            chmod 444 "$src_min_file" 2>/dev/null
+        fi
+
+        bind_freq_locks "$label" "$src_file" "$src_min_file" "$path"
 
         update_state "$label" "$readback"
         return 0
@@ -148,9 +215,7 @@ apply_and_log() {
                 if [ -n "$min_freq" ] && [ "$fallback_target" -lt "$min_freq" ] 2>/dev/null; then
                     log_msg "warning: fallback frequency ${fallback_target} kHz is below scaling_min_freq (${min_freq} kHz) for ${label}"
                 else
-                    if grep -q " ${std_path} " /proc/mounts 2>/dev/null; then
-                        umount "${std_path}" 2>/dev/null
-                    fi
+                    unmount_freq_locks "$label" "$path"
                     err_msg2=$(echo "$fallback_target" > "$path/scaling_max_freq" 2>&1)
                     if [ "$?" -eq 0 ]; then
                         readback=$(cat "$path/scaling_max_freq" 2>/dev/null)
@@ -160,12 +225,20 @@ apply_and_log() {
                             log_msg "${label}/scaling_max_freq: wrote ${fallback_target} (fallback from ${target}), readback ${readback} (snapped, nearest available)"
                         fi
 
-                        # Apply VFS bind-mount lock
+                        # Apply VFS bind-mount locks
                         mkdir -p /dev/sweetclocker 2>/dev/null
                         src_file="/dev/sweetclocker/${label}_max_freq"
                         echo "$readback" > "$src_file" 2>/dev/null
                         chmod 444 "$src_file" 2>/dev/null
-                        mount --bind "$src_file" "${std_path}" 2>/dev/null
+
+                        src_min_file=""
+                        if [ -n "$min_freq" ]; then
+                            src_min_file="/dev/sweetclocker/${label}_min_freq"
+                            echo "$min_freq" > "$src_min_file" 2>/dev/null
+                            chmod 444 "$src_min_file" 2>/dev/null
+                        fi
+
+                        bind_freq_locks "$label" "$src_file" "$src_min_file" "$path"
 
                         update_state "$label" "$readback"
                         return 0
@@ -197,7 +270,7 @@ fi
 check_is_sd8s_gen4 || exit 1
 
 found_LITTLE=0
-found_MID=0
+found_BIG=0
 found_PRIME=0
 layout_mismatch=0
 
@@ -245,9 +318,9 @@ for d in $policies; do
         if [ "$first_cluster" = "LITTLE" ] && [ "$cpus_comma" = "0,1" ]; then
             matches_expected=1
             found_LITTLE=1
-        elif [ "$first_cluster" = "MID" ] && case "$cpus_comma" in "2,3,4,5,6"|"2,3,4"|"5,6") true ;; *) false ;; esac; then
+        elif [ "$first_cluster" = "BIG" ] && case "$cpus_comma" in "2,3,4,5,6"|"2,3,4"|"5,6") true ;; *) false ;; esac; then
             matches_expected=1
-            found_MID=1
+            found_BIG=1
         elif [ "$first_cluster" = "PRIME" ] && [ "$cpus_comma" = "7" ]; then
             matches_expected=1
             found_PRIME=1
@@ -280,14 +353,14 @@ for d in $policies; do
     fi
 done
 
-if [ "$found_LITTLE" != "1" ] || [ "$found_MID" != "1" ] || [ "$found_PRIME" != "1" ]; then
+if [ "$found_LITTLE" != "1" ] || [ "$found_BIG" != "1" ] || [ "$found_PRIME" != "1" ]; then
     layout_mismatch=1
     if [ "$MODE" = "--init" ]; then
         if [ "$found_LITTLE" != "1" ]; then
             log_msg "error: expected cluster LITTLE (cpus 0,1 -> 1286400 kHz) policy directory missing or mismatched!"
         fi
-        if [ "$found_MID" != "1" ]; then
-            log_msg "error: expected cluster MID (cpus 2,3,4,5,6 -> 1920000 kHz) policy directory missing or mismatched!"
+        if [ "$found_BIG" != "1" ]; then
+            log_msg "error: expected cluster BIG (cpus 2,3,4,5,6 -> 1920000 kHz) policy directory missing or mismatched!"
         fi
         if [ "$found_PRIME" != "1" ]; then
             log_msg "error: expected cluster PRIME (cpu 7 -> 2515200 kHz) policy directory missing or mismatched!"
@@ -297,7 +370,7 @@ fi
 
 if [ "$layout_mismatch" = "1" ] && [ "$MODE" = "--init" ]; then
     log_msg "WARNING: Cluster layout mismatch detected on this device!"
-    log_msg "WARNING: Expected: cpu0-1 (LITTLE: 1286400 kHz), cpu2-6 (MID: 1920000 kHz across policy2/policy5), cpu7 (PRIME: 2515200 kHz)."
+    log_msg "WARNING: Expected: cpu0-1 (LITTLE: 1286400 kHz), cpu2-6 (BIG: 1920000 kHz across policy2/policy5), cpu7 (PRIME: 2515200 kHz)."
     log_msg "WARNING: Discovered grouping does not match expected SoC split. Sweet-spot numbers were derived for SD8s Gen 4."
 fi
 

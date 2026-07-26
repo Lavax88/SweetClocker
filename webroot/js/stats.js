@@ -160,7 +160,7 @@ echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}"
       const id = parseInt(parts[0], 10);
       
       let cluster = "LITTLE";
-      if (id >= 2 && id <= 6) cluster = "MID";
+      if (id >= 2 && id <= 6) cluster = "BIG";
       else if (id === 7) cluster = "PRIME";
       
       return {
