@@ -95,13 +95,13 @@ get_freq_target_nodes() {
         pol_dir="/sys/devices/system/cpu/${lbl}/cpufreq"
     fi
 
-    nodes="${pol_dir}/scaling_${freq_type}_freq ${pol_dir}/cpuinfo_${freq_type}_freq"
+    nodes="${pol_dir}/scaling_${freq_type}_freq"
 
     cpus_str=$(cat "$real_path/related_cpus" 2>/dev/null)
     [ -z "$cpus_str" ] && cpus_str=$(cat "$real_path/affected_cpus" 2>/dev/null)
     if [ -n "$cpus_str" ]; then
         for c in $(echo "$cpus_str" | tr ',' ' '); do
-            nodes="${nodes} /sys/devices/system/cpu/cpu${c}/cpufreq/scaling_${freq_type}_freq /sys/devices/system/cpu/cpu${c}/cpufreq/cpuinfo_${freq_type}_freq"
+            nodes="${nodes} /sys/devices/system/cpu/cpu${c}/cpufreq/scaling_${freq_type}_freq"
         done
     fi
 
@@ -148,18 +148,23 @@ bind_freq_locks() {
 apply_and_log() {
     label="$1"
     path="$2"
-    target="$3"
+    def_target="$3"
+
+    target=$(get_custom_max "$label" "$def_target")
+    custom_min=$(get_custom_min "$label")
 
     if [ ! -f "$path/scaling_max_freq" ]; then
         log_msg "error: ${path}/scaling_max_freq not found"
         return 1
     fi
 
-    # Determine the corresponding standard path for locking
-    if [ "${label#policy}" != "$label" ]; then
-        std_path="/sys/devices/system/cpu/cpufreq/${label}/scaling_max_freq"
-    else
-        std_path="/sys/devices/system/cpu/${label}/cpufreq/scaling_max_freq"
+    # Unmount standard policy and per-CPU max/min frequency paths before writing to real sysfs node
+    unmount_freq_locks "$label" "$path"
+
+    # Write custom min frequency if configured
+    if [ -n "$custom_min" ] && [ -f "$path/scaling_min_freq" ]; then
+        echo "$custom_min" > "$path/scaling_min_freq" 2>/dev/null
+        log_msg "${label}/scaling_min_freq: set custom min ${custom_min} kHz"
     fi
 
     # Check against scaling_min_freq to prevent capping below min
@@ -170,9 +175,6 @@ apply_and_log() {
             return 1
         fi
     fi
-
-    # Unmount standard policy and per-CPU max/min frequency paths before writing to real sysfs node
-    unmount_freq_locks "$label" "$path"
 
     # Attempt direct write of exact target to the real node (which is un-mounted)
     err_msg=$(echo "$target" > "$path/scaling_max_freq" 2>&1)
@@ -259,12 +261,39 @@ apply_and_log() {
     fi
 }
 
+CUSTOM_FILE="/data/local/tmp/.sweetclocker_custom"
+
+get_custom_max() {
+    lbl="$1"
+    def="$2"
+    if [ -f "$CUSTOM_FILE" ]; then
+        val=$(grep "^${lbl}_max=" "$CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
+        [ -n "$val" ] && echo "$val" && return
+    fi
+    echo "$def"
+}
+
+get_custom_min() {
+    lbl="$1"
+    if [ -f "$CUSTOM_FILE" ]; then
+        val=$(grep "^${lbl}_min=" "$CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
+        [ -n "$val" ] && echo "$val" && return
+    fi
+    echo ""
+}
+
 MODE="$1"
 CHECK_NUM="$2"
 
 if [ "$MODE" = "--check-soc" ]; then
     check_is_sd8s_gen4
     exit $?
+fi
+
+if [ "$MODE" = "--reset-sweetclock" ]; then
+    rm -f "$CUSTOM_FILE" 2>/dev/null
+    log_msg "sweetspot-apply.sh: Reset custom cluster frequencies to predefined sweetclocks"
+    MODE="--init"
 fi
 
 check_is_sd8s_gen4 || exit 1

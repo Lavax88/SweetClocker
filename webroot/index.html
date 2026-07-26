@@ -29,6 +29,9 @@
     <symbol id="icon-settings" viewBox="0 0 24 24">
       <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
     </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </symbol>
     <symbol id="icon-lightning" viewBox="0 0 24 24">
       <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
     </symbol>
@@ -37,6 +40,9 @@
     </symbol>
     <symbol id="icon-cpu" viewBox="0 0 24 24">
       <path d="M17 9H7v6h10V9zm-8 4h-2v-2h2v2zm8 0h-2v-2h2v2zM9 17H7v-2h2v2zm8 0h-2v-2h2v2zM9 9H7V7h2v2zm8 0h-2V7h2v2zM21 11v2h-2v-2h2zm-16 0v2H3v-2h2zm14-8h-2V1h-2v2h-2V1h-2v2H9V1H7v2H5V1H3v2H1v2h2v2H1v2h2v2H1v2h2v2H1v2h2v2H1v2h2v2h18v-2h-2v-2h2v-2h-2v-2h2v-2h-2v-2h2v-2h-2v-2h2v-2h-2V9h2V7h-2V5h2V3h-2zm-2 16H5V5h14v14z"/>
+    </symbol>
+    <symbol id="icon-tune" viewBox="0 0 24 24">
+      <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
     </symbol>
   </svg>
 
@@ -192,6 +198,35 @@
           </div>
         </section>
 
+        <!-- PAGE 4: CLUSTER TUNING -->
+        <section id="page-tuning" class="page-section">
+          <div class="card card-elevated hero-card" style="padding: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="section-header" style="margin: 0;">Cluster Frequency Tuning</h3>
+                <span class="cluster-name" style="font-size: 0.7rem; padding: 3px 8px;">CUSTOM LIMITS</span>
+              </div>
+              <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
+                Set custom min and max frequencies for each cluster (0-1, 2-4, 5-6, 7). Max values range up to maximum hardware clocks.
+              </p>
+            </div>
+          </div>
+
+          <div class="tuning-grid" id="tuning-grid">
+            <div class="grid-placeholder">Loading cluster frequency controls...</div>
+          </div>
+
+          <!-- M3 Floating Action Buttons (Bottom-Right Icon-Only FAB Stack) -->
+          <div class="tuning-fab-container" id="tuning-fab-container">
+            <button class="m3-fab m3-fab-secondary fab-icon-only" id="reset-sweetclock-btn" title="Reset to Predefined Sweetclocks">
+              <svg class="m3-fab-icon"><use href="#icon-refresh"></use></svg>
+            </button>
+            <button class="m3-fab m3-fab-primary fab-icon-only" id="apply-tuning-btn" title="Apply Custom Clocks">
+              <svg class="m3-fab-icon"><use href="#icon-check"></use></svg>
+            </button>
+          </div>
+        </section>
+
       </div>
 
       <!-- Bottom Navigation Bar (Material 3 Style Capsule) -->
@@ -201,6 +236,12 @@
             <svg><use href="#icon-dashboard"></use></svg>
           </div>
           <span class="tab-label">Home</span>
+        </button>
+        <button class="nav-tab" data-target="page-tuning">
+          <div class="icon-wrapper">
+            <svg><use href="#icon-tune"></use></svg>
+          </div>
+          <span class="tab-label">Tuning</span>
         </button>
         <button class="nav-tab" data-target="page-logs">
           <div class="icon-wrapper">
@@ -217,6 +258,25 @@
       </nav>
       
     </main>
+  </div>
+
+  <!-- Material 3 Frequency Selector Bottom Sheet -->
+  <div class="m3-sheet-backdrop" id="freq-sheet-backdrop">
+    <div class="m3-bottom-sheet" id="freq-sheet">
+      <div class="m3-sheet-handle"></div>
+      <div class="m3-sheet-header">
+        <div class="m3-sheet-title-group">
+          <h4 class="m3-sheet-title" id="freq-sheet-title">Select Frequency</h4>
+          <span class="m3-sheet-subtitle" id="freq-sheet-subtitle">Cluster 0 • LITTLE</span>
+        </div>
+        <button class="icon-btn" id="freq-sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="m3-sheet-content" id="freq-sheet-options">
+        <!-- Frequency Option Items dynamically rendered in app.js -->
+      </div>
+    </div>
   </div>
 
   <!-- Classic Scripts to prevent CORS block over file:// protocol in Android WebView -->
