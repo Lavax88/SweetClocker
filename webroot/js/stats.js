@@ -55,11 +55,26 @@ fi
 [ "\${gpu_max}" = "0" ] && [ -f "/sys/class/kgsl/kgsl-3d0/max_gpuclk" ] && read -r gpu_max < "/sys/class/kgsl/kgsl-3d0/max_gpuclk"
 [ -f "/sys/class/kgsl/kgsl-3d0/gpu_model" ] && read -r gpu_model < "/sys/class/kgsl/kgsl-3d0/gpu_model"
 echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}"
+echo "---"
+for p in 0 2 5 7; do
+  pol_dir="\${sys_path}/devices/system/cpu/cpufreq/policy\${p}"
+  [ -d "\${pol_dir}" ] || pol_dir="\${sys_path}/devices/system/cpu/cpu\${p}/cpufreq"
+  avail=""
+  boost=""
+  hw_min="0"
+  hw_max="0"
+  [ -f "\${pol_dir}/scaling_available_frequencies" ] && read -r avail < "\${pol_dir}/scaling_available_frequencies"
+  [ -f "\${pol_dir}/scaling_boost_frequencies" ] && read -r boost < "\${pol_dir}/scaling_boost_frequencies"
+  [ -n "\${boost}" ] && avail="\${avail} \${boost}"
+  [ -f "\${pol_dir}/cpuinfo_min_freq" ] && read -r hw_min < "\${pol_dir}/cpuinfo_min_freq"
+  [ -f "\${pol_dir}/cpuinfo_max_freq" ] && read -r hw_max < "\${pol_dir}/cpuinfo_max_freq"
+  echo "\${p}|\${hw_min}|\${hw_max}|\${avail}"
+done
 `;
 
   /**
    * Fetch and parse system stats
-   * @returns {Promise<{cores: Array, totalLoad: number, serviceRunning: boolean, bypassActive: boolean, gpu: Object}>}
+   * @returns {Promise<{cores: Array, totalLoad: number, serviceRunning: boolean, bypassActive: boolean, gpu: Object, clusters: Object}>}
    */
   async function getCpuStats() {
     const { errno, stdout, stderr } = await KsuApi.exec(STATS_COMBINED_CMD);
@@ -82,6 +97,30 @@ echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}"
     
     const serviceRunning = rawStatus[0] === "1";
     const bypassActive = rawStatus[1] === "1";
+
+    const clustersData = {};
+    if (sections[5]) {
+      const rawClusters = sections[5].trim().split("\n");
+      rawClusters.forEach(line => {
+        const parts = line.split("|");
+        if (parts.length >= 3) {
+          const policyId = parts[0].trim();
+          const hwMin = parseInt(parts[1], 10) || 0;
+          let hwMax = parseInt(parts[2], 10) || 0;
+          const availStr = parts[3] || "";
+          const availFreqs = availStr.split(/\s+/).map(f => parseInt(f, 10)).filter(f => !isNaN(f) && f > 0).sort((a, b) => a - b);
+          if (availFreqs.length > 0) {
+            hwMax = Math.max(hwMax, availFreqs[availFreqs.length - 1]);
+          }
+          clustersData[`policy${policyId}`] = {
+            policyId,
+            hwMin,
+            hwMax,
+            availFreqs
+          };
+        }
+      });
+    }
     
     // Parse thermal zones into a map: type -> temp
     const thermalMap = {};
@@ -261,7 +300,8 @@ echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}"
       totalLoad,
       serviceRunning,
       bypassActive,
-      gpu: gpuStats
+      gpu: gpuStats,
+      clusters: clustersData
     };
   }
 
@@ -281,9 +321,52 @@ echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}"
     return true;
   }
 
+  /**
+   * Apply custom cluster frequencies to system
+   */
+  async function applyCustomClusterFreqs(config) {
+    let customText = "";
+    for (const [pol, limits] of Object.entries(config)) {
+      if (limits.min) customText += `${pol}_min=${limits.min}\n`;
+      if (limits.max) customText += `${pol}_max=${limits.max}\n`;
+    }
+    
+    const cmd = `cat << 'EOF' > /data/local/tmp/.sweetclocker_custom\n${customText}EOF\n` +
+      `sp="/data/adb/modules/sweetclocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="/data/adb/modules/SweetClocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="$(find /data/adb/modules* -name sweetspot-apply.sh 2>/dev/null | head -n 1)"\n` +
+      `sh "$sp" --init`;
+
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to apply custom frequencies:", stderr);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Reset frequencies back to predefined sweetclocks
+   */
+  async function resetToSweetclocks() {
+    const cmd = `sp="/data/adb/modules/sweetclocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="/data/adb/modules/SweetClocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="$(find /data/adb/modules* -name sweetspot-apply.sh 2>/dev/null | head -n 1)"\n` +
+      `sh "$sp" --reset-sweetclock`;
+
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to reset sweetclocks:", stderr);
+      return false;
+    }
+    return true;
+  }
+
   // Expose to window namespace
   window.Stats = {
     getCpuStats,
-    setBypassMode
+    setBypassMode,
+    applyCustomClusterFreqs,
+    resetToSweetclocks
   };
 })();

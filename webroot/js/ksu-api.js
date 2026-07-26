@@ -188,18 +188,59 @@
       return { errno: 0, stdout: outputs, stderr: "" };
     }
 
-    if (command.includes("cat /proc/stat")) {
-      let statOutput = "";
-      mockCoresState.forEach(c => {
-        const activeDelta = Math.floor(Math.random() * 2000);
-        const idleDelta = Math.floor(Math.random() * 4000);
-        c.user += Math.floor(activeDelta * 0.7);
-        c.sys += Math.floor(activeDelta * 0.3);
-        c.idle += idleDelta;
-        
-        statOutput += `cpu${c.id} ${c.user} ${c.nice} ${c.sys} ${c.idle} ${c.iowait} ${c.irq} ${c.softirq} 0 0 0\n`;
+    if (command.includes(".sweetclocker_custom")) {
+      const lines = command.split("\n");
+      lines.forEach(l => {
+        if (l.includes("_max=")) {
+          const [key, val] = l.split("=");
+          const maxVal = parseInt(val, 10);
+          if (key.startsWith("policy0")) {
+            mockCoresState[0].max = maxVal; mockCoresState[1].max = maxVal;
+          } else if (key.startsWith("policy2")) {
+            mockCoresState[2].max = maxVal; mockCoresState[3].max = maxVal; mockCoresState[4].max = maxVal;
+          } else if (key.startsWith("policy5")) {
+            mockCoresState[5].max = maxVal; mockCoresState[6].max = maxVal;
+          } else if (key.startsWith("policy7")) {
+            mockCoresState[7].max = maxVal;
+          }
+        }
+        if (l.includes("_min=")) {
+          const [key, val] = l.split("=");
+          const minVal = parseInt(val, 10);
+          if (key.startsWith("policy0")) {
+            mockCoresState[0].min = minVal; mockCoresState[1].min = minVal;
+          } else if (key.startsWith("policy2")) {
+            mockCoresState[2].min = minVal; mockCoresState[3].min = minVal; mockCoresState[4].min = minVal;
+          } else if (key.startsWith("policy5")) {
+            mockCoresState[5].min = minVal; mockCoresState[6].min = minVal;
+          } else if (key.startsWith("policy7")) {
+            mockCoresState[7].min = minVal;
+          }
+        }
       });
-      return { errno: 0, stdout: statOutput, stderr: "" };
+      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Applied custom cluster frequency limits`;
+      return { errno: 0, stdout: "", stderr: "" };
+    }
+
+    if (command.includes("--reset-sweetclock")) {
+      mockCoresState[0].max = 1286400; mockCoresState[1].max = 1286400;
+      mockCoresState[2].max = 1920000; mockCoresState[3].max = 1920000; mockCoresState[4].max = 1920000;
+      mockCoresState[5].max = 1920000; mockCoresState[6].max = 1920000;
+      mockCoresState[7].max = 2515200;
+      mockCoresState[0].min = 400000; mockCoresState[1].min = 400000;
+      mockCoresState[2].min = 600000; mockCoresState[3].min = 600000; mockCoresState[4].min = 600000;
+      mockCoresState[5].min = 600000; mockCoresState[6].min = 600000;
+      mockCoresState[7].min = 800000;
+      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Reset custom cluster frequencies to predefined sweetclocks`;
+      return { errno: 0, stdout: "", stderr: "" };
+    }
+
+    if (command.includes("scaling_available_frequencies") || command.includes("cpuinfo_max_freq")) {
+      const out = "0|400000|2000000|400000 600000 800000 1000000 1200000 1286400 1400000 1600000 1800000 2000000\n" +
+                  "2|600000|2800000|600000 900000 1200000 1500000 1800000 1920000 2100000 2400000 2600000 2800000\n" +
+                  "5|600000|2800000|600000 900000 1200000 1500000 1800000 1920000 2100000 2400000 2600000 2800000\n" +
+                  "7|800000|3000000|800000 1100000 1400000 1700000 2000000 2300000 2515200 2700000 2900000 3000000\n";
+      return { errno: 0, stdout: out, stderr: "" };
     }
 
     return { errno: 0, stdout: "", stderr: "" };

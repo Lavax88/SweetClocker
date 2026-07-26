@@ -792,3 +792,446 @@ body.light-mode .log-line-info { color: #0969da; }
   opacity: 0.65;
 }
 
+/* 6. CLUSTER TUNING COMPONENTS (M3E) */
+.tuning-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.tuning-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--md-corner-large);
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-elevation-1);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed), border-color var(--transition-speed);
+}
+
+.tuning-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--md-elevation-2);
+  border-color: var(--md-sys-color-primary);
+}
+
+.tuning-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tuning-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tuning-card-title {
+  font-family: 'Outfit', var(--font-family);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.sweetclock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--md-corner-full);
+}
+
+.tuning-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--md-sys-color-surface-variant);
+  padding: 8px 12px;
+  border-radius: var(--md-corner-medium);
+  font-size: 0.775rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.tuning-stat-val {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.tuning-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tuning-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tuning-control-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.m3-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--md-corner-medium);
+  border: 1px solid var(--md-sys-color-outline);
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-speed), background-color var(--transition-speed);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23a5d6ff'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+body.light-mode .m3-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23005faf'><path d='M7 10l5 5 5-5z'/></svg>");
+}
+
+.m3-select:focus {
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+}
+
+@media (max-width: 600px) {
+  .tuning-grid {
+    grid-template-columns: 1fr;
+  }
+  .tuning-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* M3 Floating Action Buttons Container (Bottom-Right FAB Stack) with Fly-in Animation */
+.tuning-fab-container {
+  position: fixed;
+  bottom: calc(76px + var(--bottom-inset));
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 99;
+  opacity: 0;
+  transform: translateY(64px) scale(0.8);
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.05, 0.7, 0.1, 1),
+              transform 0.4s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+.tuning-fab-container.fab-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.m3-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 16px; /* M3 FAB Corner radius */
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  box-shadow: var(--md-elevation-3);
+  transition: transform 0.15s var(--transition-easing), box-shadow 0.15s var(--transition-easing), background-color 0.2s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m3-fab:active {
+  transform: scale(0.94);
+  box-shadow: var(--md-elevation-1);
+}
+
+.m3-fab-primary {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.m3-fab-primary:hover {
+  background-color: hsl(var(--theme-h), var(--theme-s), 35%);
+  box-shadow: var(--md-elevation-3);
+}
+
+body.light-mode .m3-fab-primary:hover {
+  background-color: hsl(var(--theme-h), var(--theme-s), 85%);
+}
+
+.m3-fab-secondary {
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  box-shadow: var(--md-elevation-2);
+}
+
+.m3-fab-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.m3-fab-secondary .m3-fab-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Icon-Only FABs */
+.m3-fab.fab-icon-only {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.m3-fab-secondary.fab-icon-only {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.m3-fab.fab-icon-only .m3-fab-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.m3-fab-secondary.fab-icon-only .m3-fab-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Custom M3 Picker Field Trigger */
+.m3-picker-trigger {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--md-corner-medium);
+  border: 1px solid var(--md-sys-color-outline);
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--transition-speed), background-color var(--transition-speed), transform 0.12s;
+}
+
+.m3-picker-trigger:active {
+  transform: scale(0.98);
+  background-color: var(--md-sys-color-surface);
+}
+
+.m3-picker-val {
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.m3-picker-icon {
+  width: 20px;
+  height: 20px;
+  fill: var(--md-sys-color-primary);
+  transition: transform 0.2s;
+}
+
+/* Material 3 Bottom Sheet Dialog */
+.m3-sheet-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1), visibility 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.m3-sheet-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.m3-bottom-sheet {
+  background-color: var(--md-sys-color-surface);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-elevation-3);
+  padding: 12px 20px calc(24px + var(--bottom-inset)) 20px;
+  max-height: 75vh;
+  max-height: 75dvh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+.m3-sheet-backdrop.active .m3-bottom-sheet {
+  transform: translateY(0);
+}
+
+.m3-sheet-handle {
+  width: 32px;
+  height: 4px;
+  background-color: var(--md-sys-color-outline);
+  border-radius: var(--md-corner-full);
+  margin: 0 auto 12px auto;
+  opacity: 0.6;
+}
+
+.m3-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-sheet-title {
+  font-family: 'Outfit', var(--font-family);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.m3-sheet-subtitle {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.m3-sheet-content {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 52vh;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.m3-sheet-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--md-corner-medium);
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1.5px solid transparent;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+  user-select: none;
+}
+
+.m3-sheet-option:active {
+  transform: scale(0.98);
+}
+
+.m3-sheet-option.active {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 700;
+  border-color: var(--md-sys-color-primary);
+}
+
+.m3-option-freq {
+  font-family: 'Inter', var(--font-family);
+  font-size: 0.9rem;
+}
+
+.m3-option-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.m3-option-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--md-corner-full);
+  letter-spacing: 0.2px;
+}
+
+.badge-sweet {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.badge-hwmax {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.m3-radio-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--md-sys-color-outline);
+  display: inline-block;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.m3-sheet-option.active .m3-radio-icon {
+  border: 5px solid var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface);
+}
+
+
+
+

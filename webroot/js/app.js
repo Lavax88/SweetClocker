@@ -25,6 +25,7 @@
     setupNavigation();
     setupPreferencesTab();
     setupLogsControls();
+    setupTuningControls();
     
     // Refresh button action
     document.getElementById("refresh-btn").addEventListener("click", () => {
@@ -46,6 +47,7 @@
   function setupNavigation() {
     const navTabs = document.querySelectorAll(".nav-tab");
     const pages = document.querySelectorAll(".page-section");
+    const fabContainer = document.getElementById("tuning-fab-container");
     
     navTabs.forEach(tab => {
       tab.addEventListener("click", () => {
@@ -57,8 +59,21 @@
         tab.classList.add("active");
         
         pages.forEach(p => p.classList.remove("active"));
-        document.getElementById(target).classList.add("active");
+        const targetPage = document.getElementById(target);
+        if (targetPage) targetPage.classList.add("active");
         
+        if (fabContainer) {
+          if (target === "page-tuning") {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                fabContainer.classList.add("fab-visible");
+              });
+            });
+          } else {
+            fabContainer.classList.remove("fab-visible");
+          }
+        }
+
         activeTab = target;
         
         // 2. Reset polling interval
@@ -166,6 +181,8 @@
   async function runUpdateTick() {
     if (activeTab === 'page-dashboard') {
       await updateCpuDashboard();
+    } else if (activeTab === 'page-tuning') {
+      await updateTuningView();
     } else if (activeTab === 'page-logs') {
       await updateLogsView();
     }
@@ -410,6 +427,302 @@
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  const CLUSTERS_CONFIG = [
+    {
+      id: "cluster-0",
+      name: "Cluster 0 (CPUs 0-1)",
+      clusterLabel: "LITTLE",
+      policy: "policy0",
+      cpus: [0, 1],
+      sweetclockMax: 1286400,
+      defaultMin: 364800,
+      fallbackHwMax: 2016000,
+      fallbackAvail: [364800, 441600, 614400, 748800, 883200, 979200, 1075200, 1190400, 1286400, 1401600, 1516800, 1632000, 1785600, 1900800, 2016000]
+    },
+    {
+      id: "cluster-1",
+      name: "Cluster 1 (CPUs 2-4)",
+      clusterLabel: "BIG 1",
+      policy: "policy2",
+      cpus: [2, 3, 4],
+      sweetclockMax: 1920000,
+      defaultMin: 480000,
+      fallbackHwMax: 3014400,
+      fallbackAvail: [480000, 633600, 787200, 940800, 1056000, 1190400, 1286400, 1401600, 1516800, 1632000, 1728000, 1824000, 1920000, 2073600, 2208000, 2323200, 2438400, 2515200, 2611200, 2707200, 2803200, 2918400, 3014400]
+    },
+    {
+      id: "cluster-2",
+      name: "Cluster 2 (CPUs 5-6)",
+      clusterLabel: "BIG 2",
+      policy: "policy5",
+      cpus: [5, 6],
+      sweetclockMax: 1920000,
+      defaultMin: 480000,
+      fallbackHwMax: 2803200,
+      fallbackAvail: [480000, 633600, 787200, 940800, 1056000, 1190400, 1286400, 1401600, 1516800, 1632000, 1728000, 1824000, 1920000, 2073600, 2208000, 2323200, 2438400, 2515200, 2611200, 2707200, 2803200]
+    },
+    {
+      id: "cluster-3",
+      name: "Cluster 3 (CPU 7)",
+      clusterLabel: "PRIME",
+      policy: "policy7",
+      cpus: [7],
+      sweetclockMax: 2515200,
+      defaultMin: 480000,
+      fallbackHwMax: 3206400,
+      fallbackAvail: [480000, 633600, 787200, 960000, 1094400, 1228800, 1363200, 1478400, 1670400, 1785600, 1920000, 2054400, 2169600, 2284800, 2400000, 2515200, 2630400, 2745600, 2841600, 2956800, 3072000, 3206400]
+    }
+  ];
+
+  function setupTuningControls() {
+    const applyBtn = document.getElementById("apply-tuning-btn");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", async () => {
+        const config = {};
+        CLUSTERS_CONFIG.forEach(cluster => {
+          const minTrigger = document.getElementById(`${cluster.id}-min-trigger`);
+          const maxTrigger = document.getElementById(`${cluster.id}-max-trigger`);
+          if (minTrigger && maxTrigger) {
+            config[cluster.policy] = {
+              min: parseInt(minTrigger.getAttribute("data-val"), 10),
+              max: parseInt(maxTrigger.getAttribute("data-val"), 10)
+            };
+          }
+        });
+
+        KsuApi.toast("Applying custom cluster frequencies...");
+        const ok = await Stats.applyCustomClusterFreqs(config);
+        if (ok) {
+          KsuApi.toast("Custom frequencies applied!");
+          triggerImmediateUpdate();
+        } else {
+          KsuApi.toast("Failed to apply custom frequencies");
+        }
+      });
+    }
+
+    const resetBtn = document.getElementById("reset-sweetclock-btn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", async () => {
+        KsuApi.toast("Resetting to predefined sweetclocks...");
+        const ok = await Stats.resetToSweetclocks();
+        if (ok) {
+          KsuApi.toast("Reset to sweetclocks complete!");
+          triggerImmediateUpdate();
+        } else {
+          KsuApi.toast("Failed to reset sweetclocks");
+        }
+      });
+    }
+  }
+
+  async function updateTuningView() {
+    try {
+      const data = await Stats.getCpuStats();
+      const grid = document.getElementById("tuning-grid");
+      if (!grid) return;
+
+      const existingCards = grid.querySelectorAll(".tuning-card");
+      if (existingCards.length !== CLUSTERS_CONFIG.length) {
+        grid.innerHTML = "";
+        CLUSTERS_CONFIG.forEach(cluster => {
+          const card = renderClusterTuningCard(cluster, data);
+          grid.appendChild(card);
+        });
+      } else {
+        CLUSTERS_CONFIG.forEach((cluster, idx) => {
+          const card = existingCards[idx];
+          if (!card) return;
+          updateClusterTuningCardValues(card, cluster, data);
+        });
+      }
+    } catch (err) {
+      console.error("Tuning view update failed:", err);
+    }
+  }
+
+  // Material 3 Frequency Selector Sheet Handler
+  function openFreqSheet({ title, subtitle, availFreqs, currentVal, sweetclockMax, hwMax, onSelect }) {
+    const backdrop = document.getElementById("freq-sheet-backdrop");
+    const sheetTitle = document.getElementById("freq-sheet-title");
+    const sheetSubtitle = document.getElementById("freq-sheet-subtitle");
+    const sheetOptions = document.getElementById("freq-sheet-options");
+    const closeBtn = document.getElementById("freq-sheet-close");
+
+    if (!backdrop || !sheetOptions) return;
+
+    sheetTitle.innerText = title;
+    sheetSubtitle.innerText = subtitle;
+    sheetOptions.innerHTML = "";
+
+    availFreqs.forEach(freq => {
+      const isSelected = freq === currentVal;
+      const isSweet = freq === sweetclockMax;
+      const isHwMax = freq === hwMax;
+
+      const opt = document.createElement("div");
+      opt.className = `m3-sheet-option ${isSelected ? 'active' : ''}`;
+      
+      let badgeHtml = "";
+      if (isSweet) badgeHtml += `<span class="m3-option-badge badge-sweet">★ Sweetclock</span>`;
+      if (isHwMax) badgeHtml += `<span class="m3-option-badge badge-hwmax">HW Max</span>`;
+
+      opt.innerHTML = `
+        <span class="m3-option-freq">${formatFreq(freq)}</span>
+        <div class="m3-option-right">
+          ${badgeHtml}
+          <span class="m3-radio-icon"></span>
+        </div>
+      `;
+
+      opt.addEventListener("click", () => {
+        backdrop.classList.remove("active");
+        if (onSelect) onSelect(freq);
+      });
+
+      sheetOptions.appendChild(opt);
+    });
+
+    backdrop.onclick = (e) => {
+      if (e.target === backdrop) backdrop.classList.remove("active");
+    };
+
+    if (closeBtn) {
+      closeBtn.onclick = () => backdrop.classList.remove("active");
+    }
+
+    backdrop.classList.add("active");
+
+    setTimeout(() => {
+      const activeOpt = sheetOptions.querySelector(".m3-sheet-option.active");
+      if (activeOpt) activeOpt.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+  }
+
+  function renderClusterTuningCard(cluster, data) {
+    const card = document.createElement("div");
+    card.className = "tuning-card";
+    card.setAttribute("data-cluster-id", cluster.id);
+
+    const coreData = data.cores ? data.cores.find(c => c.id === cluster.cpus[0]) : null;
+    const curMin = coreData ? coreData.minFreq : cluster.defaultMin;
+    const curMax = coreData ? coreData.maxFreq : cluster.sweetclockMax;
+    
+    const polData = data.clusters ? data.clusters[cluster.policy] : null;
+    let avail = (polData && polData.availFreqs && polData.availFreqs.length > 0) ? [...polData.availFreqs] : [...cluster.fallbackAvail];
+    const realHwMax = (polData && polData.hwMax > 0) ? Math.max(polData.hwMax, avail[avail.length - 1]) : (avail.length > 0 ? avail[avail.length - 1] : cluster.fallbackHwMax);
+
+    if (realHwMax > 0) {
+      avail = avail.filter(f => f <= realHwMax);
+    }
+
+    if (!avail.includes(curMin)) avail.push(curMin);
+    if (!avail.includes(curMax) && curMax <= realHwMax) avail.push(curMax);
+    if (!avail.includes(cluster.sweetclockMax) && cluster.sweetclockMax <= realHwMax) avail.push(cluster.sweetclockMax);
+    avail = Array.from(new Set(avail)).sort((a, b) => a - b);
+    const hwMax = avail.length > 0 ? avail[avail.length - 1] : realHwMax;
+
+    card._clusterData = { cluster, avail, sweetclockMax: cluster.sweetclockMax, hwMax };
+
+    let maxLabel = formatFreq(curMax);
+    if (curMax === cluster.sweetclockMax) maxLabel += " ★ Sweetclock";
+    else if (curMax === hwMax) maxLabel += " (HW Max)";
+
+    card.innerHTML = `
+      <div class="tuning-card-header">
+        <div class="tuning-card-title-group">
+          <span class="tuning-card-title">${cluster.name}</span>
+          <span class="cluster-name">${cluster.clusterLabel}</span>
+        </div>
+        <span class="sweetclock-badge">Sweet: ${formatFreqShort(cluster.sweetclockMax)}</span>
+      </div>
+
+      <div class="tuning-stats-row">
+        <span>Current Active Limits</span>
+        <span class="tuning-stat-val" id="${cluster.id}-active-lbl">${formatFreqShort(curMin)} - ${formatFreqShort(curMax)}</span>
+      </div>
+
+      <div class="tuning-controls">
+        <div class="tuning-control-group">
+          <label class="tuning-control-label">Min Frequency</label>
+          <div class="m3-picker-trigger" id="${cluster.id}-min-trigger" data-val="${curMin}">
+            <span class="m3-picker-val" id="${cluster.id}-min-val">${formatFreq(curMin)}</span>
+            <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+
+        <div class="tuning-control-group">
+          <label class="tuning-control-label">Max Frequency</label>
+          <div class="m3-picker-trigger" id="${cluster.id}-max-trigger" data-val="${curMax}">
+            <span class="m3-picker-val" id="${cluster.id}-max-val">${maxLabel}</span>
+            <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Wire up custom M3 Bottom Sheet triggers
+    setTimeout(() => {
+      const minTrigger = card.querySelector(`#${cluster.id}-min-trigger`);
+      const maxTrigger = card.querySelector(`#${cluster.id}-max-trigger`);
+      const minValLbl = card.querySelector(`#${cluster.id}-min-val`);
+      const maxValLbl = card.querySelector(`#${cluster.id}-max-val`);
+
+      if (minTrigger) {
+        minTrigger.onclick = () => {
+          const currentMinVal = parseInt(minTrigger.getAttribute("data-val"), 10) || curMin;
+          openFreqSheet({
+            title: `Select Min Frequency`,
+            subtitle: `${cluster.name} • ${cluster.clusterLabel}`,
+            availFreqs: avail,
+            currentVal: currentMinVal,
+            sweetclockMax: cluster.sweetclockMax,
+            hwMax,
+            onSelect: (selectedFreq) => {
+              minTrigger.setAttribute("data-val", selectedFreq);
+              if (minValLbl) minValLbl.innerText = formatFreq(selectedFreq);
+            }
+          });
+        };
+      }
+
+      if (maxTrigger) {
+        maxTrigger.onclick = () => {
+          const currentMaxVal = parseInt(maxTrigger.getAttribute("data-val"), 10) || curMax;
+          openFreqSheet({
+            title: `Select Max Frequency`,
+            subtitle: `${cluster.name} • ${cluster.clusterLabel}`,
+            availFreqs: avail,
+            currentVal: currentMaxVal,
+            sweetclockMax: cluster.sweetclockMax,
+            hwMax,
+            onSelect: (selectedFreq) => {
+              maxTrigger.setAttribute("data-val", selectedFreq);
+              let lbl = formatFreq(selectedFreq);
+              if (selectedFreq === cluster.sweetclockMax) lbl += " ★ Sweetclock";
+              else if (selectedFreq === hwMax) lbl += " (HW Max)";
+              if (maxValLbl) maxValLbl.innerText = lbl;
+            }
+          });
+        };
+      }
+    }, 0);
+
+    return card;
+  }
+
+  function updateClusterTuningCardValues(card, cluster, data) {
+    const coreData = data.cores ? data.cores.find(c => c.id === cluster.cpus[0]) : null;
+    if (!coreData) return;
+    const curMin = coreData.minFreq;
+    const curMax = coreData.maxFreq;
+
+    const activeLbl = card.querySelector(`#${cluster.id}-active-lbl`);
+    if (activeLbl) {
+      activeLbl.innerText = `${formatFreqShort(curMin)} - ${formatFreqShort(curMax)}`;
+    }
   }
 
   // Launch application on DOM Load
