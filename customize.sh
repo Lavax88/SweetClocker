@@ -5,6 +5,7 @@
 ui_print "- Cleaning up old logs, state files, and mounts..."
 rm -f "/data/local/tmp/sweetclocker.log" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_state" 2>/dev/null
+rm -f "/data/local/tmp/.sweetclocker_custom" 2>/dev/null
 
 # Unmount any existing policy mount locks if active before removing files
 for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do
@@ -21,5 +22,12 @@ set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
 set_perm "$MODPATH/sweetspot-apply.sh" 0 0 0755
 
-ui_print "- SweetClocker installation successful!"
-ui_print "  Note: Frequencies will be capped to sweet-spot values at boot."
+ui_print "- Sweetspot frequency caps applied across all clusters."
+ui_print "- Governor set to schedutil, performance daemons locked out."
+
+# Set default schedutil governor, sweetspot caps, and VFS locks at install time
+if [ -f "$MODPATH/sweetspot-apply.sh" ]; then
+    sh "$MODPATH/sweetspot-apply.sh" --init
+fi
+
+ui_print "- SweetClocker installation complete!"
