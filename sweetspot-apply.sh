@@ -108,6 +108,56 @@ get_freq_target_nodes() {
     echo "$nodes"
 }
 
+get_gov_target_nodes() {
+    lbl="$1"
+    real_path="$2"
+
+    if [ "${lbl#policy}" != "$lbl" ]; then
+        pol_dir="/sys/devices/system/cpu/cpufreq/${lbl}"
+    else
+        pol_dir="/sys/devices/system/cpu/${lbl}/cpufreq"
+    fi
+
+    nodes="${pol_dir}/scaling_governor"
+
+    cpus_str=$(cat "$real_path/related_cpus" 2>/dev/null)
+    [ -z "$cpus_str" ] && cpus_str=$(cat "$real_path/affected_cpus" 2>/dev/null)
+    if [ -n "$cpus_str" ]; then
+        for c in $(echo "$cpus_str" | tr ',' ' '); do
+            nodes="${nodes} /sys/devices/system/cpu/cpu${c}/cpufreq/scaling_governor"
+        done
+    fi
+
+    echo "$nodes"
+}
+
+unmount_gov_locks() {
+    lbl="$1"
+    real_path="$2"
+    for n in $(get_gov_target_nodes "$lbl" "$real_path"); do
+        if grep -q " ${n} " /proc/mounts 2>/dev/null; then
+            umount "${n}" 2>/dev/null
+        fi
+    done
+}
+
+bind_gov_locks() {
+    lbl="$1"
+    src_gov="$2"
+    real_path="$3"
+
+    if [ -n "$src_gov" ] && [ -f "$src_gov" ]; then
+        for n in $(get_gov_target_nodes "$lbl" "$real_path"); do
+            if [ -f "$n" ] || [ -L "$n" ]; then
+                if grep -q " ${n} " /proc/mounts 2>/dev/null; then
+                    umount "${n}" 2>/dev/null
+                fi
+                mount --bind "$src_gov" "${n}" 2>/dev/null
+            fi
+        done
+    fi
+}
+
 unmount_freq_locks() {
     lbl="$1"
     real_path="$2"
@@ -144,7 +194,281 @@ bind_freq_locks() {
         done
     fi
 }
+find_gpu_devfreq_dir() {
+    for d in "${SYSFS_PATH}/class/devfreq/3d00000.qcom,kgsl-3d0" \
+             "${SYSFS_PATH}/devices/platform/soc/3d00000.qcom,kgsl-3d0/devfreq/3d00000.qcom,kgsl-3d0" \
+             "${SYSFS_PATH}/class/devfreq/gpufreq" \
+             "${SYSFS_PATH}/class/kgsl/kgsl-3d0/devfreq"; do
+        if [ -d "$d" ]; then
+            case "$d" in *bw*|*bwmon*) continue ;; esac
+            echo "$d"
+            return
+        fi
+    done
+    for d in ${SYSFS_PATH}/class/devfreq/*kgsl* ${SYSFS_PATH}/class/devfreq/*gpu*; do
+        if [ -d "$d" ]; then
+            case "$d" in *bw*|*bwmon*) continue ;; esac
+            echo "$d"
+            return
+        fi
+    done
+}
 
+find_gpu_kgsl_dir() {
+    for d in "${SYSFS_PATH}/class/kgsl/kgsl-3d0" \
+             "${SYSFS_PATH}/devices/platform/soc/3d00000.qcom,kgsl-3d0"; do
+        if [ -d "$d" ]; then
+            echo "$d"
+            return
+        fi
+    done
+}
+
+get_gpu_target_nodes() {
+    node_type="$1"
+    nodes=""
+
+    for base in "/sys" "${SYSFS_PATH}"; do
+        [ -z "$base" ] && continue
+        for d in "${base}/class/kgsl/kgsl-3d0/devfreq" \
+                 "${base}/class/devfreq/3d00000.qcom,kgsl-3d0" \
+                 "${base}/class/devfreq/gpufreq" \
+                 "${base}/devices/platform/soc/3d00000.qcom,kgsl-3d0/devfreq/3d00000.qcom,kgsl-3d0"; do
+            [ -d "$d" ] || continue
+            if [ "$node_type" = "max" ] && [ -f "$d/max_freq" ]; then
+                nodes="${nodes} ${d}/max_freq"
+            elif [ "$node_type" = "min" ] && [ -f "$d/min_freq" ]; then
+                nodes="${nodes} ${d}/min_freq"
+            elif [ "$node_type" = "gov" ] && [ -f "$d/governor" ]; then
+                nodes="${nodes} ${d}/governor"
+            fi
+        done
+
+        for d in "${base}/class/kgsl/kgsl-3d0" \
+                 "${base}/devices/platform/soc/3d00000.qcom,kgsl-3d0"; do
+            [ -d "$d" ] || continue
+            if [ "$node_type" = "max" ]; then
+                [ -f "$d/max_gpuclk" ] && nodes="${nodes} ${d}/max_gpuclk"
+                [ -f "$d/max_pwrlevel" ] && nodes="${nodes} ${d}/max_pwrlevel"
+                [ -f "$d/thermal_pwrlevel" ] && nodes="${nodes} ${d}/thermal_pwrlevel"
+            elif [ "$node_type" = "min" ]; then
+                [ -f "$d/min_clock_mhz" ] && nodes="${nodes} ${d}/min_clock_mhz"
+                [ -f "$d/min_pwrlevel" ] && nodes="${nodes} ${d}/min_pwrlevel"
+            fi
+        done
+    done
+
+    echo "$nodes" | tr ' ' '\n' | sort -u | tr '\n' ' '
+}
+
+unmount_gpu_locks() {
+    for n in $(get_gpu_target_nodes "max") $(get_gpu_target_nodes "min") $(get_gpu_target_nodes "gov"); do
+        if grep -q " ${n} " /proc/mounts 2>/dev/null; then
+            umount "${n}" 2>/dev/null
+        fi
+    done
+}
+
+bind_gpu_locks() {
+    src_max="$1"
+    src_min="$2"
+    src_gov="$3"
+    src_max_pwr="$4"
+    src_min_pwr="$5"
+
+    if [ -n "$src_max" ] && [ -f "$src_max" ]; then
+        for n in $(get_gpu_target_nodes "max"); do
+            [ -f "$n" ] || [ -L "$n" ] || continue
+            case "$n" in
+                *pwrlevel*)
+                    if [ -n "$src_max_pwr" ] && [ -f "$src_max_pwr" ]; then
+                        grep -q " ${n} " /proc/mounts 2>/dev/null && umount "${n}" 2>/dev/null
+                        mount --bind "$src_max_pwr" "${n}" 2>/dev/null
+                    fi
+                    ;;
+                *)
+                    grep -q " ${n} " /proc/mounts 2>/dev/null && umount "${n}" 2>/dev/null
+                    mount --bind "$src_max" "${n}" 2>/dev/null
+                    ;;
+            esac
+        done
+    fi
+
+    if [ -n "$src_min" ] && [ -f "$src_min" ]; then
+        for n in $(get_gpu_target_nodes "min"); do
+            [ -f "$n" ] || [ -L "$n" ] || continue
+            case "$n" in
+                *min_pwrlevel*)
+                    if [ -n "$src_min_pwr" ] && [ -f "$src_min_pwr" ]; then
+                        grep -q " ${n} " /proc/mounts 2>/dev/null && umount "${n}" 2>/dev/null
+                        mount --bind "$src_min_pwr" "${n}" 2>/dev/null
+                    fi
+                    ;;
+                *)
+                    grep -q " ${n} " /proc/mounts 2>/dev/null && umount "${n}" 2>/dev/null
+                    mount --bind "$src_min" "${n}" 2>/dev/null
+                    ;;
+            esac
+        done
+    fi
+
+    if [ -n "$src_gov" ] && [ -f "$src_gov" ]; then
+        for n in $(get_gpu_target_nodes "gov"); do
+            if [ -f "$n" ] || [ -L "$n" ]; then
+                grep -q " ${n} " /proc/mounts 2>/dev/null && umount "${n}" 2>/dev/null
+                mount --bind "$src_gov" "${n}" 2>/dev/null
+            fi
+        done
+    fi
+}
+
+apply_gpu_config() {
+    gpu_min=$(get_custom_min "gpu")
+    gpu_max=$(get_custom_max "gpu" "")
+    gpu_gov=$(get_custom_gov "gpu")
+
+    if [ -z "$gpu_min" ] && [ -z "$gpu_max" ] && [ -z "$gpu_gov" ]; then
+        return 0
+    fi
+
+    gpu_df=$(find_gpu_devfreq_dir)
+    gpu_kgsl=$(find_gpu_kgsl_dir)
+    [ -z "$gpu_df" ] && [ -z "$gpu_kgsl" ] && return 0
+
+    unmount_gpu_locks
+    mkdir -p /dev/sweetclocker 2>/dev/null
+
+    if [ -f "/sys/class/thermal/thermal_message/sconfig" ]; then
+        if [ -n "$gpu_max" ] && [ "$gpu_max" -gt 937 ] 2>/dev/null; then
+            echo 6 > /sys/class/thermal/thermal_message/sconfig 2>/dev/null
+            log_msg "gpu/thermal: set sconfig 6 (49°C thermal limit unlock for custom max GPU freq ${gpu_max}MHz)"
+        else
+            echo 0 > /sys/class/thermal/thermal_message/sconfig 2>/dev/null
+            log_msg "gpu/thermal: set sconfig 0 (stock thermal profile for max GPU freq <=937MHz)"
+        fi
+    fi
+
+    src_gov_file=""
+    if [ -n "$gpu_gov" ] && [ -n "$gpu_df" ] && [ -f "$gpu_df/governor" ]; then
+        echo "$gpu_gov" > "$gpu_df/governor" 2>/dev/null
+        readback_gov=$(cat "$gpu_df/governor" 2>/dev/null)
+        log_msg "gpu/governor: set custom governor ${readback_gov:-$gpu_gov}"
+        src_gov_file="/dev/sweetclocker/gpu_governor"
+        echo "${readback_gov:-$gpu_gov}" > "$src_gov_file" 2>/dev/null
+        chmod 444 "$src_gov_file" 2>/dev/null
+        update_state "gpu_gov" "${readback_gov:-$gpu_gov}"
+    fi
+
+    src_min_file=""
+    if [ -n "$gpu_min" ]; then
+        if [ "$gpu_min" -le 2000 ] 2>/dev/null; then
+            target_min_hz=$((gpu_min * 1000000))
+            target_min_khz=$((gpu_min * 1000))
+        else
+            target_min_hz="$gpu_min"
+            target_min_khz=$((gpu_min / 1000))
+        fi
+
+        [ -n "$gpu_df" ] && [ -f "$gpu_df/min_freq" ] && echo "$target_min_hz" > "$gpu_df/min_freq" 2>/dev/null
+        [ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/min_clock_mhz" ] && echo "$gpu_min" > "$gpu_kgsl/min_clock_mhz" 2>/dev/null
+
+        if [ -n "$gpu_kgsl" ] && [ -f "$gpu_df/available_frequencies" ]; then
+            avail_str=$(cat "$gpu_df/available_frequencies" 2>/dev/null)
+            if [ -n "$avail_str" ]; then
+                freq_list=$(echo "$avail_str" | tr ' ' '\n' | grep -E '^[0-9]+$' | sort -n)
+                total_freqs=$(echo "$freq_list" | wc -l)
+                if [ "$total_freqs" -gt 1 ]; then
+                    idx=0
+                    target_min_pwr=""
+                    for f in $freq_list; do
+                        if [ "$f" -ge "$target_min_hz" ] 2>/dev/null; then
+                            target_min_pwr=$((total_freqs - 1 - idx))
+                            break
+                        fi
+                        idx=$((idx + 1))
+                    done
+                    if [ -n "$target_min_pwr" ] && [ -f "$gpu_kgsl/min_pwrlevel" ]; then
+                        echo "$target_min_pwr" > "$gpu_kgsl/min_pwrlevel" 2>/dev/null
+                        log_msg "gpu/pwrlevel: set min_pwrlevel ${target_min_pwr} for min freq ${gpu_min}MHz"
+                    fi
+                fi
+            fi
+        fi
+
+        readback_min=""
+        [ -n "$gpu_df" ] && [ -f "$gpu_df/min_freq" ] && readback_min=$(cat "$gpu_df/min_freq" 2>/dev/null)
+        if [ -z "$readback_min" ] || [ "$readback_min" = "0" ]; then
+            [ -n "$gpu_df" ] && [ -f "$gpu_df/min_freq" ] && echo "$target_min_khz" > "$gpu_df/min_freq" 2>/dev/null
+            [ -n "$gpu_df" ] && [ -f "$gpu_df/min_freq" ] && readback_min=$(cat "$gpu_df/min_freq" 2>/dev/null)
+        fi
+
+        log_msg "gpu/min_freq: set custom min ${readback_min:-$target_min_hz}"
+        src_min_file="/dev/sweetclocker/gpu_min_freq"
+        echo "${readback_min:-$target_min_hz}" > "$src_min_file" 2>/dev/null
+        chmod 444 "$src_min_file" 2>/dev/null
+        update_state "gpu_min" "${readback_min:-$target_min_hz}"
+    fi
+
+    src_max_file=""
+    if [ -n "$gpu_max" ]; then
+        if [ "$gpu_max" -le 2000 ] 2>/dev/null; then
+            target_max_hz=$((gpu_max * 1000000))
+            target_max_khz=$((gpu_max * 1000))
+        else
+            target_max_hz="$gpu_max"
+            target_max_khz=$((gpu_max / 1000))
+        fi
+
+        [ -n "$gpu_df" ] && [ -f "$gpu_df/max_freq" ] && echo "$target_max_hz" > "$gpu_df/max_freq" 2>/dev/null
+        [ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/max_gpuclk" ] && echo "$target_max_hz" > "$gpu_kgsl/max_gpuclk" 2>/dev/null
+        [ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/max_clock_mhz" ] && echo "$gpu_max" > "$gpu_kgsl/max_clock_mhz" 2>/dev/null
+
+        readback_max=""
+        [ -n "$gpu_df" ] && [ -f "$gpu_df/max_freq" ] && readback_max=$(cat "$gpu_df/max_freq" 2>/dev/null)
+        [ -z "$readback_max" ] && [ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/max_gpuclk" ] && readback_max=$(cat "$gpu_kgsl/max_gpuclk" 2>/dev/null)
+
+        if [ -z "$readback_max" ] || [ "$readback_max" = "0" ]; then
+            [ -n "$gpu_df" ] && [ -f "$gpu_df/max_freq" ] && echo "$target_max_khz" > "$gpu_df/max_freq" 2>/dev/null
+            [ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/max_gpuclk" ] && echo "$target_max_khz" > "$gpu_kgsl/max_gpuclk" 2>/dev/null
+            [ -n "$gpu_df" ] && [ -f "$gpu_df/max_freq" ] && readback_max=$(cat "$gpu_df/max_freq" 2>/dev/null)
+        fi
+
+        if [ -n "$gpu_kgsl" ] && [ -f "$gpu_df/available_frequencies" ]; then
+            avail_str=$(cat "$gpu_df/available_frequencies" 2>/dev/null)
+            if [ -n "$avail_str" ]; then
+                freq_list=$(echo "$avail_str" | tr ' ' '\n' | grep -E '^[0-9]+$' | sort -n)
+                total_freqs=$(echo "$freq_list" | wc -l)
+                if [ "$total_freqs" -gt 1 ]; then
+                    idx=0
+                    target_pwr=""
+                    for f in $freq_list; do
+                        if [ "$f" -ge "$target_max_hz" ] 2>/dev/null; then
+                            target_pwr=$((total_freqs - 1 - idx))
+                            break
+                        fi
+                        idx=$((idx + 1))
+                    done
+                    if [ -n "$target_pwr" ]; then
+                        [ -f "$gpu_kgsl/max_pwrlevel" ] && echo "$target_pwr" > "$gpu_kgsl/max_pwrlevel" 2>/dev/null
+                        [ -f "$gpu_kgsl/thermal_pwrlevel" ] && echo "$target_pwr" > "$gpu_kgsl/thermal_pwrlevel" 2>/dev/null
+                        src_max_pwr_file="/dev/sweetclocker/gpu_max_pwrlevel"
+                        echo "$target_pwr" > "$src_max_pwr_file" 2>/dev/null
+                        chmod 444 "$src_max_pwr_file" 2>/dev/null
+                        log_msg "gpu/pwrlevel: set max_pwrlevel ${target_pwr}"
+                    fi
+                fi
+            fi
+        fi
+
+        log_msg "gpu/max_freq: set custom max ${readback_max:-$target_max_hz}"
+        src_max_file="/dev/sweetclocker/gpu_max_freq"
+        echo "${readback_max:-$target_max_hz}" > "$src_max_file" 2>/dev/null
+        chmod 444 "$src_max_file" 2>/dev/null
+        update_state "gpu_max" "${readback_max:-$target_max_hz}"
+    fi
+
+    bind_gpu_locks "$src_max_file" "$src_min_file" "$src_gov_file" "$src_max_pwr_file" "$src_min_pwr_file"
+}
 apply_and_log() {
     label="$1"
     path="$2"
@@ -152,28 +476,44 @@ apply_and_log() {
 
     target=$(get_custom_max "$label" "$def_target")
     custom_min=$(get_custom_min "$label")
+    if [ -z "$custom_min" ]; then
+        if [ "$label" = "policy0" ]; then
+            custom_min=364800
+        elif [ "$label" = "policy2" ] || [ "$label" = "policy5" ] || [ "$label" = "policy7" ]; then
+            custom_min=480000
+        fi
+    fi
 
     if [ ! -f "$path/scaling_max_freq" ]; then
         log_msg "error: ${path}/scaling_max_freq not found"
         return 1
     fi
 
-    # Unmount standard policy and per-CPU max/min frequency paths before writing to real sysfs node
+    # Unmount standard policy and per-CPU max/min frequency & governor paths before writing to real sysfs node
     unmount_freq_locks "$label" "$path"
+    unmount_gov_locks "$label" "$path"
 
-    # Write custom governor if configured
+    # Write governor (default to schedutil if no custom governor is configured)
     custom_gov=$(get_custom_gov "$label")
-    if [ -n "$custom_gov" ] && [ -f "$path/scaling_governor" ]; then
-        echo "$custom_gov" > "$path/scaling_governor" 2>/dev/null
+    target_gov="${custom_gov:-schedutil}"
+    if [ -n "$target_gov" ] && [ -f "$path/scaling_governor" ]; then
+        echo "$target_gov" > "$path/scaling_governor" 2>/dev/null
         readback_gov=$(cat "$path/scaling_governor" 2>/dev/null)
-        log_msg "${label}/scaling_governor: set custom governor ${readback_gov:-$custom_gov}"
-        update_state "${label}_gov" "${readback_gov:-$custom_gov}"
+        log_msg "${label}/scaling_governor: set governor ${readback_gov:-$target_gov}"
+        
+        mkdir -p /dev/sweetclocker 2>/dev/null
+        src_gov_file="/dev/sweetclocker/${label}_governor"
+        echo "${readback_gov:-$target_gov}" > "$src_gov_file" 2>/dev/null
+        chmod 444 "$src_gov_file" 2>/dev/null
+        bind_gov_locks "$label" "$src_gov_file" "$path"
+
+        update_state "${label}_gov" "${readback_gov:-$target_gov}"
     fi
 
-    # Write custom min frequency if configured
+    # Write min frequency (default 364800 kHz for LITTLE, 480000 kHz for others)
     if [ -n "$custom_min" ] && [ -f "$path/scaling_min_freq" ]; then
         echo "$custom_min" > "$path/scaling_min_freq" 2>/dev/null
-        log_msg "${label}/scaling_min_freq: set custom min ${custom_min} kHz"
+        log_msg "${label}/scaling_min_freq: set min ${custom_min} kHz"
     fi
 
     # Check against scaling_min_freq to prevent capping below min
@@ -300,6 +640,90 @@ get_custom_gov() {
     echo ""
 }
 
+reset_gpu_config() {
+    gpu_df=$(find_gpu_devfreq_dir)
+    gpu_kgsl=$(find_gpu_kgsl_dir)
+
+    unmount_gpu_locks
+
+    if [ -f "$STATE_FILE" ]; then
+        grep -v "^gpu_" "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null
+        mv "${STATE_FILE}.tmp" "$STATE_FILE" 2>/dev/null
+    fi
+
+    if [ -f "$CUSTOM_FILE" ]; then
+        grep -v "^gpu_" "$CUSTOM_FILE" > "${CUSTOM_FILE}.tmp" 2>/dev/null
+        mv "${CUSTOM_FILE}.tmp" "$CUSTOM_FILE" 2>/dev/null
+        [ ! -s "$CUSTOM_FILE" ] && rm -f "$CUSTOM_FILE" 2>/dev/null
+    fi
+
+    rm -f /dev/sweetclocker/gpu_* 2>/dev/null
+
+    if [ -f "/sys/class/thermal/thermal_message/sconfig" ]; then
+        echo 0 > /sys/class/thermal/thermal_message/sconfig 2>/dev/null
+        log_msg "gpu/thermal: reset sconfig to 0 (default thermal profile)"
+    fi
+
+    [ -z "$gpu_df" ] && return 0
+
+    def_gov="msm-adreno-tz"
+    if [ -f "$gpu_df/available_governors" ]; then
+        if ! grep -q "msm-adreno-tz" "$gpu_df/available_governors" 2>/dev/null; then
+            def_gov=$(head -n 1 "$gpu_df/available_governors" | awk '{print $1}')
+        fi
+    fi
+    if [ -n "$def_gov" ] && [ -f "$gpu_df/governor" ]; then
+        echo "$def_gov" > "$gpu_df/governor" 2>/dev/null
+        log_msg "gpu/governor: reset to default ${def_gov}"
+    fi
+
+    if [ -f "$gpu_df/min_freq" ]; then
+        curr_raw_min=$(cat "$gpu_df/min_freq" 2>/dev/null)
+        def_min="264"
+        if [ -f "$gpu_df/available_frequencies" ]; then
+            lowest_raw=$(tr ' ' '\n' < "$gpu_df/available_frequencies" 2>/dev/null | grep -E '^[0-9]+$' | sort -n | head -n 1)
+            [ -n "$lowest_raw" ] && def_min="$lowest_raw"
+        fi
+        if [ "$def_min" = "264" ]; then
+            if [ "${#curr_raw_min}" -ge 9 ]; then
+                def_min=264000000
+            elif [ "${#curr_raw_min}" -ge 6 ]; then
+                def_min=264000
+            fi
+        fi
+        echo "$def_min" > "$gpu_df/min_freq" 2>/dev/null
+        log_msg "gpu/min_freq: reset to default ${def_min}"
+    fi
+
+    if [ -n "$gpu_kgsl" ]; then
+        [ -f "$gpu_kgsl/max_pwrlevel" ] && echo 0 > "$gpu_kgsl/max_pwrlevel" 2>/dev/null
+        [ -f "$gpu_kgsl/thermal_pwrlevel" ] && echo 0 > "$gpu_kgsl/thermal_pwrlevel" 2>/dev/null
+        [ -f "$gpu_kgsl/min_clock_mhz" ] && echo 264 > "$gpu_kgsl/min_clock_mhz" 2>/dev/null
+        if [ -f "$gpu_df/available_frequencies" ]; then
+            total_freqs=$(tr ' ' '\n' < "$gpu_df/available_frequencies" 2>/dev/null | grep -E '^[0-9]+$' | wc -l)
+            if [ "$total_freqs" -gt 1 ]; then
+                def_min_pwr=$((total_freqs - 1))
+                [ -f "$gpu_kgsl/min_pwrlevel" ] && echo "$def_min_pwr" > "$gpu_kgsl/min_pwrlevel" 2>/dev/null
+            fi
+        fi
+        log_msg "gpu/pwrlevel: reset max_pwrlevel & thermal_pwrlevel to 0 (unlocked)"
+    fi
+
+    if [ -f "$gpu_df/max_freq" ] || ([ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/max_gpuclk" ]); then
+        curr_raw_max=$(cat "$gpu_df/max_freq" 2>/dev/null)
+        [ -z "$curr_raw_max" ] && [ -n "$gpu_kgsl" ] && curr_raw_max=$(cat "$gpu_kgsl/max_gpuclk" 2>/dev/null)
+        def_max=937000000
+        if [ "${#curr_raw_max}" -le 4 ]; then
+            def_max=937
+        elif [ "${#curr_raw_max}" -le 7 ]; then
+            def_max=937000
+        fi
+        [ -f "$gpu_df/max_freq" ] && echo "$def_max" > "$gpu_df/max_freq" 2>/dev/null
+        [ -n "$gpu_kgsl" ] && [ -f "$gpu_kgsl/max_gpuclk" ] && echo "$def_max" > "$gpu_kgsl/max_gpuclk" 2>/dev/null
+        log_msg "gpu/max_freq: reset to default ${def_max}"
+    fi
+}
+
 MODE="$1"
 CHECK_NUM="$2"
 
@@ -310,8 +734,36 @@ fi
 
 if [ "$MODE" = "--reset-sweetclock" ]; then
     rm -f "$CUSTOM_FILE" 2>/dev/null
-    log_msg "sweetspot-apply.sh: Reset custom cluster frequencies to predefined sweetclocks"
+    for p in 0 2 5 7; do
+        unmount_gov_locks "policy${p}" "${SYSFS_PATH}/devices/system/cpu/cpufreq/policy${p}"
+        unmount_freq_locks "policy${p}" "${SYSFS_PATH}/devices/system/cpu/cpufreq/policy${p}"
+    done
+    reset_gpu_config
+    log_msg "sweetspot-apply.sh: Reset custom cluster frequencies, governors, and GPU settings to defaults"
     MODE="--init"
+fi
+
+if [ "$MODE" = "--reset-cpu" ]; then
+    if [ -f "$CUSTOM_FILE" ]; then
+        grep -v "^policy[0-9]" "$CUSTOM_FILE" > "${CUSTOM_FILE}.tmp" 2>/dev/null
+        mv "${CUSTOM_FILE}.tmp" "$CUSTOM_FILE" 2>/dev/null
+        [ ! -s "$CUSTOM_FILE" ] && rm -f "$CUSTOM_FILE" 2>/dev/null
+    fi
+    log_msg "sweetspot-apply.sh: Reset CPU cluster frequencies and governors to sweetclock defaults"
+    MODE="--apply-cpu"
+fi
+
+if [ "$MODE" = "--reset-gpu" ]; then
+    check_is_sd8s_gen4 || exit 1
+    reset_gpu_config
+    log_msg "sweetspot-apply.sh: Reset GPU configuration to defaults"
+    exit 0
+fi
+
+if [ "$MODE" = "--apply-gpu" ]; then
+    check_is_sd8s_gen4 || exit 1
+    apply_gpu_config
+    exit 0
 fi
 
 check_is_sd8s_gen4 || exit 1
@@ -421,13 +873,18 @@ if [ "$layout_mismatch" = "1" ] && [ "$MODE" = "--init" ]; then
     log_msg "WARNING: Discovered grouping does not match expected SoC split. Sweet-spot numbers were derived for SD8s Gen 4."
 fi
 
-if [ "$MODE" = "--init" ]; then
+if [ "$MODE" = "--init" ] || [ "$MODE" = "--apply-cpu" ]; then
     for item in $POLICY_TARGETS $CPU_TARGETS; do
         label=$(echo "$item" | cut -d: -f1)
         path=$(echo "$item" | cut -d: -f2)
         target=$(echo "$item" | cut -d: -f3)
         apply_and_log "$label" "$path" "$target"
     done
+    if [ "$MODE" = "--init" ]; then
+        apply_gpu_config
+    fi
+elif [ "$MODE" = "--apply-gpu" ]; then
+    apply_gpu_config
 elif [ "$MODE" = "--check" ] || [ "$MODE" = "--check-slow" ]; then
     drift_count=0
     for item in $POLICY_TARGETS $CPU_TARGETS; do
@@ -445,22 +902,74 @@ elif [ "$MODE" = "--check" ] || [ "$MODE" = "--check-slow" ]; then
         [ -z "$expected_landed" ] && expected_landed="$target"
 
         if [ "$curr_freq" != "$expected_landed" ] && [ "$curr_freq" != "$target" ]; then
-            drift_count=$((drift_count + 1))
-            log_msg "service.sh: drift detected on ${label}, was reset to ${curr_freq}, re-applying ${target}"
-            apply_and_log "$label" "$path" "$target"
+            avail_freqs=$(cat "$path/scaling_available_frequencies" 2>/dev/null)
+            is_thermal_snap=0
+            if [ -n "$avail_freqs" ] && [ -n "$curr_freq" ] && [ "$curr_freq" -le "$target" ] 2>/dev/null; then
+                if echo " $avail_freqs " | grep -q " $curr_freq " 2>/dev/null; then
+                    is_thermal_snap=1
+                fi
+            fi
+
+            if [ "$is_thermal_snap" -eq 1 ]; then
+                update_state "$label" "$curr_freq"
+            else
+                drift_count=$((drift_count + 1))
+                log_msg "service.sh: drift detected on ${label}, was reset to ${curr_freq}, re-applying ${target}"
+                apply_and_log "$label" "$path" "$target"
+            fi
         else
             custom_gov=$(get_custom_gov "$label")
             if [ -n "$custom_gov" ] && [ -f "$path/scaling_governor" ]; then
                 curr_gov=$(cat "$path/scaling_governor" 2>/dev/null)
                 if [ "$curr_gov" != "$custom_gov" ]; then
                     drift_count=$((drift_count + 1))
-                    log_msg "service.sh: governor drift detected on ${label}, was ${curr_gov}, re-applying ${custom_gov}"
+                    log_msg "service.sh: governor drift detected on ${label}, was ${curr_gov}, re-applying ${custom_gov} with VFS lock"
+                    unmount_gov_locks "$label" "$path"
                     echo "$custom_gov" > "$path/scaling_governor" 2>/dev/null
-                    update_state "${label}_gov" "$custom_gov"
+                    readback_gov=$(cat "$path/scaling_governor" 2>/dev/null)
+                    mkdir -p /dev/sweetclocker 2>/dev/null
+                    src_gov_file="/dev/sweetclocker/${label}_governor"
+                    echo "${readback_gov:-$custom_gov}" > "$src_gov_file" 2>/dev/null
+                    chmod 444 "$src_gov_file" 2>/dev/null
+                    bind_gov_locks "$label" "$src_gov_file" "$path"
+                    update_state "${label}_gov" "${readback_gov:-$custom_gov}"
                 fi
             fi
         fi
     done
+
+    gpu_custom_gov=$(get_custom_gov "gpu")
+    gpu_custom_min=$(get_custom_min "gpu")
+    gpu_custom_max=$(get_custom_max "gpu" "")
+    if [ -n "$gpu_custom_gov" ] || [ -n "$gpu_custom_min" ] || [ -n "$gpu_custom_max" ]; then
+        real_kgsl="${SYSFS_PATH}/class/kgsl/kgsl-3d0"
+        real_df="${SYSFS_PATH}/class/devfreq/3d00000.qcom,kgsl-3d0"
+        [ ! -d "$real_df" ] && real_df="${SYSFS_PATH}/devices/platform/soc/3d00000.qcom,kgsl-3d0/devfreq/3d00000.qcom,kgsl-3d0"
+
+        gpu_drift=0
+        if [ -n "$gpu_custom_gov" ] && [ -f "$real_df/governor" ]; then
+            curr_gpu_gov=$(cat "$real_df/governor" 2>/dev/null)
+            if [ "$curr_gpu_gov" != "$gpu_custom_gov" ]; then
+                gpu_drift=1
+                log_msg "service.sh: GPU governor drift detected (was ${curr_gpu_gov}, expected ${gpu_custom_gov})"
+            fi
+        fi
+        if [ -n "$gpu_custom_max" ]; then
+            curr_gpu_max=""
+            [ -f "$real_df/max_freq" ] && curr_gpu_max=$(cat "$real_df/max_freq" 2>/dev/null)
+            [ -z "$curr_gpu_max" ] && [ -f "$real_kgsl/max_gpuclk" ] && curr_gpu_max=$(cat "$real_kgsl/max_gpuclk" 2>/dev/null)
+            exp_gpu_max=$(get_state "gpu_max")
+            if [ -n "$exp_gpu_max" ] && [ "$curr_gpu_max" != "$exp_gpu_max" ]; then
+                gpu_drift=1
+                log_msg "service.sh: GPU max freq drift detected (was ${curr_gpu_max}, expected ${exp_gpu_max})"
+            fi
+        fi
+        if [ "$gpu_drift" -eq 1 ]; then
+            log_msg "service.sh: GPU drift detected, re-applying custom GPU settings with VFS locks"
+            apply_gpu_config
+            drift_count=$((drift_count + 1))
+        fi
+    fi
 
     if [ "$drift_count" -eq 0 ]; then
         if [ "$MODE" = "--check" ] && [ "$CHECK_NUM" = "1" ]; then
