@@ -109,6 +109,14 @@
     };
   });
 
+  let mockGpuState = {
+    min: 305,
+    max: 900,
+    gov: "msm-adreno-tz",
+    availGovs: "msm-adreno-tz performance powersave userspace simple_ondemand bw_hwmon",
+    availFreqs: "305000000 401000000 480000000 550000000 640000000 750000000 900000000 1000000000"
+  };
+
   let mockBypass = false;
   let mockLog = `[2026-07-20 00:02:18] post-fs-data.sh: boot start, log truncated
 [2026-07-20 00:02:18] discovered policy0 -> cpus [0,1] -> target 1286400 kHz (LITTLE, matches expected)
@@ -201,6 +209,16 @@
       return { errno: 0, stdout: outputs, stderr: "" };
     }
 
+    if (command.includes("gpu_busy_percent") || command.includes("gpu_model") || command.includes("gpu_dir")) {
+      const busy = Math.floor(Math.random() * 40);
+      const cur = Math.floor(mockGpuState.min + Math.random() * (mockGpuState.max - mockGpuState.min));
+      return {
+        errno: 0,
+        stdout: `${busy}|${cur}|${mockGpuState.min}|${mockGpuState.max}|Adreno 735 GPU|${mockGpuState.gov}|${mockGpuState.availGovs}|${mockGpuState.availFreqs}\n`,
+        stderr: ""
+      };
+    }
+
     if (command.includes(".sweetclocker_custom")) {
       const lines = command.split("\n");
       lines.forEach(l => {
@@ -243,6 +261,9 @@
             mockCoresState[7].gov = govVal;
           }
         }
+        if (l.includes("gpu_max=")) mockGpuState.max = parseInt(l.split("=")[1], 10);
+        if (l.includes("gpu_min=")) mockGpuState.min = parseInt(l.split("=")[1], 10);
+        if (l.includes("gpu_gov=")) mockGpuState.gov = l.split("=")[1].trim();
       });
       mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Applied custom cluster frequency limits & governor settings`;
       return { errno: 0, stdout: "", stderr: "" };
@@ -258,6 +279,9 @@
       mockCoresState[5].min = 600000; mockCoresState[6].min = 600000;
       mockCoresState[7].min = 800000;
       mockCoresState.forEach(c => c.gov = "schedutil");
+      mockGpuState.min = 305;
+      mockGpuState.max = 900;
+      mockGpuState.gov = "msm-adreno-tz";
       mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Reset custom cluster frequencies & governors to predefined sweetclocks`;
       return { errno: 0, stdout: "", stderr: "" };
     }
@@ -274,9 +298,33 @@
     return { errno: 0, stdout: "", stderr: "" };
   }
 
+  /**
+   * Opens an external web URL in the system's default Android browser
+   * @param {string} url - Target URL to open
+   */
+  async function openUrl(url) {
+    if (!url) return;
+    try {
+      if (typeof window.ksu !== "undefined" && window.ksu.openUrl) {
+        window.ksu.openUrl(url);
+        return;
+      }
+    } catch (e) {
+      console.warn("ksu.openUrl failed, using am start VIEW intent fallback:", e);
+    }
+
+    const safeUrl = url.replace(/'/g, "'\\''");
+    const cmd = `am start -a android.intent.action.VIEW -d '${safeUrl}' 2>/dev/null`;
+    const res = await exec(cmd);
+    if (res.errno !== 0) {
+      window.open(url, "_blank");
+    }
+  }
+
   // Expose to window namespace
   window.KsuApi = {
     exec,
-    toast
+    toast,
+    openUrl
   };
 })();

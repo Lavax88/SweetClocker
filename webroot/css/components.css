@@ -648,6 +648,112 @@ body.light-mode .log-line-info { color: #0969da; }
   width: 100%;
 }
 
+/* Credits Section Cards */
+.credits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.credit-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--md-corner-medium);
+  background-color: var(--md-sys-color-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition: transform var(--transition-speed), border-color var(--transition-speed);
+}
+
+.credit-card:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.credit-avatar-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface);
+}
+
+.credit-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.credit-details {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.credit-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credit-role {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 2px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.credit-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant);
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--md-sys-color-outline);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+body.light-mode .credit-action-btn {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.credit-action-btn:hover,
+.credit-action-btn:active {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: var(--md-sys-color-primary);
+  transform: scale(1.08);
+}
+
+.credit-action-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .gpu-card {
   background-color: var(--md-sys-color-surface);
   border-radius: var(--md-corner-large);
@@ -677,8 +783,8 @@ body.light-mode .log-line-info { color: #0969da; }
 
 .gpu-icon {
   fill: var(--md-sys-color-primary);
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
@@ -701,6 +807,26 @@ body.light-mode .log-line-info { color: #0969da; }
   letter-spacing: 0.5px;
   color: var(--md-sys-color-primary);
   opacity: 0.85;
+}
+
+.gpu-sub-compact {
+  font-family: var(--font-family);
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.9;
+  margin-top: 1px;
+}
+
+.gpu-gov-badge {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--md-corner-full);
+  text-transform: lowercase;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .gpu-temp-badge {
@@ -927,7 +1053,8 @@ body.light-mode .m3-select {
 }
 
 /* M3 Floating Action Buttons Container (Bottom-Right FAB Stack) with Fly-in Animation */
-.tuning-fab-container {
+.tuning-fab-container,
+.logs-fab-container {
   position: fixed;
   bottom: calc(76px + var(--bottom-inset));
   right: 20px;
@@ -943,7 +1070,8 @@ body.light-mode .m3-select {
               transform 0.4s cubic-bezier(0.05, 0.7, 0.1, 1);
 }
 
-.tuning-fab-container.fab-visible {
+.tuning-fab-container.fab-visible,
+.logs-fab-container.fab-visible {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
@@ -1208,11 +1336,7 @@ body.light-mode .m3-fab-primary:hover {
   letter-spacing: 0.2px;
 }
 
-.badge-sweet {
-  background-color: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
-}
-
+.badge-sweet,
 .badge-hwmax {
   background-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
@@ -1235,27 +1359,21 @@ body.light-mode .m3-fab-primary:hover {
 
 /* 6. TUNING FEATURE HUB GRID CARDS */
 .tune-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 4px 0 16px 0;
-  justify-content: center;
-}
-
-@media (max-width: 320px) {
-  .tune-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .tune-card {
   background-color: var(--md-sys-color-surface);
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 22px;
-  padding: 22px 18px;
+  border-radius: 20px;
+  padding: 16px 20px;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
   cursor: pointer;
   box-shadow: var(--md-elevation-1);
   transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
@@ -1268,21 +1386,19 @@ body.light-mode .m3-fab-primary:hover {
 }
 
 .tune-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--md-elevation-2);
   border-color: var(--md-sys-color-primary);
 }
 
 .tune-card:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
-.tune-card-centered {
+.tune-card-row {
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 32px 20px;
-  gap: 14px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1293,8 +1409,7 @@ body.light-mode .m3-fab-primary:hover {
   justify-content: center;
   color: var(--md-sys-color-primary);
   transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
-  margin: 0 auto;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 .tune-card:hover .tune-card-icon-bare {
@@ -1302,21 +1417,43 @@ body.light-mode .m3-fab-primary:hover {
 }
 
 .tune-card-svg-bare {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   display: block;
-  margin: 0 auto;
+}
+
+.tune-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .tune-card-title {
   font-family: var(--font-family);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface);
   line-height: 1.25;
   margin: 0;
-  text-align: center;
-  width: 100%;
+  text-align: left;
+}
+
+.tune-card-sub {
+  font-size: 0.775rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.tune-card-chevron {
+  width: 22px;
+  height: 22px;
+  fill: var(--md-sys-color-on-surface-variant);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
   display: block;
 }
 
@@ -1328,6 +1465,174 @@ body.light-mode .m3-fab-primary:hover {
 
 .subview-header .btn {
   padding: 0 14px;
+}
+
+/* Persistent Warning Banner (Yellow / Amber M3 Warning Container) */
+.card-warning-banner {
+  background-color: rgba(255, 179, 0, 0.12);
+  border: 1px solid rgba(255, 179, 0, 0.35);
+  border-radius: var(--md-corner-large, 16px);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.warning-banner-header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.warning-banner-icon {
+  width: 24px;
+  height: 24px;
+  fill: #ffb100;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.warning-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.warning-banner-title {
+  font-family: var(--font-family);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.warning-banner-sub {
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.warning-banner-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 179, 0, 0.2);
+}
+
+.warning-banner-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #ffb100;
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Disabled state for GPU controls when checkbox is unchecked */
+.gpu-controls-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: grayscale(0.5);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* M3 Warning Dialog Modal */
+.m3-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s cubic-bezier(0.2, 0, 0, 1), visibility 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.m3-dialog-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.m3-dialog {
+  background-color: var(--md-sys-color-surface);
+  border-radius: 28px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-elevation-3);
+  padding: 24px;
+  max-width: 380px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transform: scale(0.92);
+  transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.m3-dialog-backdrop.active .m3-dialog {
+  transform: scale(1);
+}
+
+.m3-dialog-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
+}
+
+.m3-dialog-icon svg {
+  width: 32px;
+  height: 32px;
+  fill: #ffb100;
+}
+
+.m3-dialog-title {
+  font-family: var(--font-family);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.m3-dialog-text {
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.m3-dialog-subtext {
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.m3-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 

@@ -257,8 +257,12 @@ body.system-font *::after {
 .page-section {
   display: none;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   animation: pageFadeIn 0.35s var(--transition-easing);
+}
+
+#page-preferences {
+  gap: 12px;
 }
 
 .page-section.active {

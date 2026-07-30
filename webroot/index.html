@@ -39,10 +39,48 @@
       <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
     </symbol>
     <symbol id="icon-cpu" viewBox="0 0 24 24">
-      <rect x="5.5" y="5.5" width="13" height="13" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-      <rect x="9.25" y="9.25" width="5.5" height="5.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-      <rect x="11" y="11" width="2" height="2" rx="0.4" fill="currentColor"/>
-      <path d="M9 1.8v3.7 M15 1.8v3.7 M9 18.5v3.7 M15 18.5v3.7 M1.8 9h3.7 M1.8 15h3.7 M18.5 9h3.7 M18.5 15h3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <!-- Chip body -->
+      <rect x="2" y="2" width="20" height="20" rx="3.5" fill="currentColor"/>
+      <!-- Inner window -->
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <!-- CPU die (solid square center) -->
+      <rect x="8" y="8" width="8" height="8" fill="currentColor"/>
+      <!-- Pin stubs: top (3 pins) -->
+      <rect x="6.25" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="11.25" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="16.25" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <!-- Pin stubs: bottom (3 pins) -->
+      <rect x="6.25" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="11.25" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="16.25" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <!-- Pin stubs: left (3 pins) -->
+      <rect x="0" y="6.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="11.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="16.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <!-- Pin stubs: right (3 pins) -->
+      <rect x="21.5" y="6.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="11.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="16.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-gpu" viewBox="0 0 24 24">
+      <!-- Chip body: larger, only 2px inset -->
+      <rect x="2" y="2" width="20" height="20" rx="3.5" fill="currentColor"/>
+      <!-- Inner window -->
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <!-- Lightning bolt: centered at x=12 -->
+      <path d="M13 6l-4 7h3l-1.5 5.5 5-7.5h-3z" fill="currentColor"/>
+      <!-- Pin stubs: top -->
+      <rect x="8" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="14.5" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <!-- Pin stubs: bottom -->
+      <rect x="8" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="14.5" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <!-- Pin stubs: left -->
+      <rect x="0" y="8" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="14.5" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <!-- Pin stubs: right -->
+      <rect x="21.5" y="8" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="14.5" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
     </symbol>
     <symbol id="icon-tune" viewBox="0 0 24 24">
       <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
@@ -96,14 +134,16 @@
               <div class="gpu-card-header">
                 <div class="gpu-title-group">
                   <svg class="gpu-icon" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 15H5v-2h7v2zm7 0h-5v-2h5v2zm0-4H5v-2h14v2zm0-4H5V8h14v2z"/>
+                    <use href="#icon-gpu"></use>
                   </svg>
                   <div class="gpu-title-text">
                     <span class="gpu-name" id="gpu-card-name">Adreno GPU</span>
-                    <span class="gpu-class-label">3D GRAPHICS ACCELERATOR</span>
+                    <span class="gpu-sub-compact" id="gpu-card-gov">--</span>
                   </div>
                 </div>
-                <span class="gpu-temp-badge" id="gpu-temp-badge">--°C</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="gpu-temp-badge" id="gpu-temp-badge">--°C</span>
+                </div>
               </div>
               
               <div class="gpu-usage-section">
@@ -150,6 +190,13 @@
             <div class="log-viewer" id="log-viewer">
               <pre class="log-pre" id="log-pre">Reading /data/local/tmp/sweetclocker.log...</pre>
             </div>
+          </div>
+
+          <!-- Floating Action Button for Logs Section -->
+          <div class="logs-fab-container" id="logs-fab-container">
+            <button class="m3-fab m3-fab-primary fab-icon-only" id="copy-log-btn" title="Copy Log to Clipboard">
+              <svg class="m3-fab-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            </button>
           </div>
         </section>
 
@@ -207,6 +254,51 @@
               </div>
             </div>
           </div>
+
+          <!-- Author & Credits Card -->
+          <div class="card card-elevated">
+            <h3 class="section-header" style="margin-bottom: 16px; margin-top: 0px;">Author & Credits</h3>
+            
+            <div class="credits-grid">
+              <!-- Author Card -->
+              <div class="credit-card">
+                <div class="credit-avatar-wrap">
+                  <img src="https://github.com/Lavax88.png" alt="Lavax88" class="credit-avatar" loading="lazy">
+                </div>
+                <div class="credit-details">
+                  <h4 class="credit-name">Lava</h4>
+                  <span class="credit-role">Author</span>
+                </div>
+                <div class="credit-actions">
+                  <a href="https://t.me/FreakyLava" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-tg-btn" title="Telegram Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.128.832.942z"/></svg>
+                  </a>
+                  <a href="https://github.com/Lavax88" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-github-btn" title="View GitHub Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Sweetclock Values Finder Card -->
+              <div class="credit-card">
+                <div class="credit-avatar-wrap">
+                  <img src="https://github.com/iRedDragonICY.png" alt="iRedDragonICY" class="credit-avatar" loading="lazy">
+                </div>
+                <div class="credit-details">
+                  <h4 class="credit-name">iRedDragonICY</h4>
+                  <span class="credit-role">Sweetclock Values Discovery</span>
+                </div>
+                <div class="credit-actions">
+                  <a href="https://t.me/ireddragonicy" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-tg-btn" title="Telegram Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.128.832.942z"/></svg>
+                  </a>
+                  <a href="https://github.com/iRedDragonICY" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-github-btn" title="View GitHub Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- PAGE 4: TUNING HUB & FEATURES -->
@@ -215,24 +307,31 @@
           <!-- TUNING MAIN HUB (Category Cards Grid) -->
           <div id="tuning-hub-view" class="tuning-subview active">
             <div class="tune-grid">
-              <div class="tune-card tune-card-centered" data-tune-feature="performance-profile">
+              <div class="tune-card tune-card-row" data-tune-feature="performance-profile">
                 <div class="tune-card-icon-bare">
                   <svg class="tune-card-svg-bare"><use href="#icon-cpu"></use></svg>
                 </div>
-                <h4 class="tune-card-title">CPU</h4>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">CPU Configuration</h4>
+                  <span class="tune-card-sub">Cluster frequency limits & governors</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
+              <div class="tune-card tune-card-row" data-tune-feature="gpu-clocks">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare"><use href="#icon-gpu"></use></svg>
+                </div>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">GPU Configuration</h4>
+                  <span class="tune-card-sub">GPU min & max frequency limits & governor</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
               </div>
             </div>
           </div>
 
           <!-- CLUSTER FREQUENCY TUNING DETAIL VIEW -->
           <div id="tuning-cpu-clocks-view" class="tuning-subview" style="display: none;">
-            <div class="subview-header">
-              <button class="btn btn-outlined btn-small" id="tune-back-btn">
-                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                Back to Tuning
-              </button>
-            </div>
-
             <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
               <div style="display: flex; flex-direction: column; gap: 6px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -240,13 +339,51 @@
                   <span class="cluster-name" style="font-size: 0.7rem; padding: 3px 8px;">CUSTOM LIMITS</span>
                 </div>
                 <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
-                  Set custom min and max frequencies for each cluster (0-1, 2-4, 5-6, 7). Max values range up to maximum hardware clocks.
+                  Set custom min/max frequencies and governor for each cluster. Frequency and governor changes are locked against performance daemons.
                 </p>
               </div>
             </div>
 
             <div class="tuning-grid" id="tuning-grid">
               <div class="grid-placeholder">Loading cluster frequency controls...</div>
+            </div>
+          </div>
+
+          <!-- GPU FREQUENCY & GOVERNOR TUNING DETAIL VIEW -->
+          <div id="tuning-gpu-clocks-view" class="tuning-subview" style="display: none;">
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="section-header" style="margin: 0;">GPU Configuration</h3>
+                  <span class="cluster-name" style="font-size: 0.7rem; padding: 3px 8px;">CUSTOM LIMITS</span>
+                </div>
+                <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
+                  Configure minimum and maximum frequency limits and governor for the GPU.
+                </p>
+              </div>
+            </div>
+
+            <!-- GPU THERMAL LIMIT WARNING BANNER -->
+            <div class="card card-warning-banner" id="gpu-thermal-warning-card">
+              <div class="warning-banner-header">
+                <svg class="warning-banner-icon" viewBox="0 0 24 24">
+                  <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+                <div class="warning-banner-text">
+                  <h4 class="warning-banner-title">Thermal Limit Warning (49°C)</h4>
+                  <p class="warning-banner-sub">
+                    Applying custom GPU clocks unlocks the MiThermal profile (<code style="font-family: monospace; background: rgba(0,0,0,0.15); padding: 1px 4px; border-radius: 4px;">sconfig 6</code>) to increase the thermal cap to 49°C. This allows higher surface temperatures under high GPU load.
+                  </p>
+                </div>
+              </div>
+              <label class="warning-banner-checkbox-label">
+                <input type="checkbox" id="gpu-acknowledge-checkbox" class="warning-banner-checkbox">
+                <span class="checkbox-text">I know what am doing</span>
+              </label>
+            </div>
+
+            <div class="tuning-grid" id="gpu-tuning-grid">
+              <div class="grid-placeholder">Loading GPU configuration controls...</div>
             </div>
           </div>
 
@@ -313,13 +450,13 @@
     </div>
   </div>
 
-  <!-- Material 3 CPU Scheduler (Governor) Selector Bottom Sheet -->
+  <!-- Material 3 Governor Selector Bottom Sheet -->
   <div class="m3-sheet-backdrop" id="gov-sheet-backdrop">
     <div class="m3-bottom-sheet" id="gov-sheet">
       <div class="m3-sheet-handle"></div>
       <div class="m3-sheet-header">
         <div class="m3-sheet-title-group">
-          <h4 class="m3-sheet-title" id="gov-sheet-title">Select CPU Scheduler</h4>
+          <h4 class="m3-sheet-title" id="gov-sheet-title">Select Governor</h4>
           <span class="m3-sheet-subtitle" id="gov-sheet-subtitle">Cluster 0 • LITTLE</span>
         </div>
         <button class="icon-btn" id="gov-sheet-close" aria-label="Close">
@@ -328,6 +465,29 @@
       </div>
       <div class="m3-sheet-content" id="gov-sheet-options">
         <!-- Governor Option Items dynamically rendered in app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- GPU Thermal Warning Dialog Modal -->
+  <div class="m3-dialog-backdrop" id="gpu-warning-dialog-backdrop" style="display: none;">
+    <div class="m3-dialog" id="gpu-warning-dialog">
+      <div class="m3-dialog-icon">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      </div>
+      <h3 class="m3-dialog-title">GPU Thermal Limit Notice</h3>
+      <p class="m3-dialog-text">
+        Custom GPU frequencies (>937 MHz) set the MiThermal profile (<code style="font-family: monospace; background: rgba(0,0,0,0.15); padding: 1px 4px; border-radius: 4px;">sconfig 6</code>) to increase the thermal cap to 49°C.
+      </p>
+      <p class="m3-dialog-subtext">
+        To unlock GPU tuning controls, check the <strong>"I know what am doing"</strong> box inside the GPU section.
+      </p>
+      <div class="m3-dialog-actions" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <label class="warning-banner-checkbox-label" style="padding-top: 0; border-top: none;">
+          <input type="checkbox" id="gpu-dont-show-again-checkbox" class="warning-banner-checkbox">
+          <span class="checkbox-text" style="font-size: 0.8rem;">Don't show again</span>
+        </label>
+        <button class="btn btn-filled" id="gpu-warning-dialog-dismiss">I Understand</button>
       </div>
     </div>
   </div>

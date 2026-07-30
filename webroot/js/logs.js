@@ -100,9 +100,41 @@ tail -n 250 /data/local/tmp/sweetclocker.log 2>/dev/null || cat /data/local/tmp/
     }
   }
 
+  /**
+   * Copies current log file contents to clipboard
+   */
+  async function copyLogs() {
+    try {
+      const { raw } = await getFormattedLogs();
+      if (!raw) {
+        KsuApi.toast("Log file is empty");
+        return;
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(raw);
+        KsuApi.toast("Log contents copied to clipboard!");
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = raw;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        KsuApi.toast("Log contents copied to clipboard!");
+      }
+    } catch (err) {
+      console.error("Failed to copy logs:", err);
+      KsuApi.toast("Failed to copy logs to clipboard");
+    }
+  }
+
   // Expose to window namespace
   window.Logs = {
     getFormattedLogs,
-    clearLogs
+    clearLogs,
+    copyLogs
   };
 })();

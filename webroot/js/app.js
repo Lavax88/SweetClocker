@@ -27,6 +27,7 @@
     setupPreferencesTab();
     setupLogsControls();
     setupTuningControls();
+    setupExternalLinks();
     
     // Refresh button action
     document.getElementById("refresh-btn").addEventListener("click", () => {
@@ -75,10 +76,16 @@
         const targetPage = document.getElementById(target);
         if (targetPage) targetPage.classList.add("active");
         
+        const logsFab = document.getElementById("logs-fab-container");
         if (target === "page-tuning") {
           showTuningSubView("hub", false);
+          if (logsFab) logsFab.classList.remove("fab-visible");
+        } else if (target === "page-logs") {
+          if (fabContainer) fabContainer.classList.remove("fab-visible");
+          if (logsFab) logsFab.classList.add("fab-visible");
         } else {
           if (fabContainer) fabContainer.classList.remove("fab-visible");
+          if (logsFab) logsFab.classList.remove("fab-visible");
         }
 
         activeTab = target;
@@ -160,22 +167,51 @@
   }
 
   /**
+   * Intercepts all external web link clicks (target="_blank" or http/https) 
+   * and opens them in the Android system's default browser via KsuApi.openUrl.
+   */
+  function setupExternalLinks() {
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest("a[href]");
+      if (!link) return;
+      
+      const href = link.getAttribute("href");
+      if (href && (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("tg://"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        KsuApi.openUrl(href);
+      }
+    }, true);
+  }
+
+  /**
    * Log viewer search filtering and clear controls
    */
   function setupLogsControls() {
     const searchInput = document.getElementById("log-search");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        const term = e.target.value.toLowerCase();
+        filterLogLines(term);
+      });
+    }
     
-    searchInput.addEventListener("input", (e) => {
-      const term = e.target.value.toLowerCase();
-      filterLogLines(term);
-    });
-    
-    document.getElementById("clear-log-btn").addEventListener("click", async () => {
-      if (confirm("Are you sure you want to clear the system log file? This cannot be undone.")) {
-        await Logs.clearLogs();
-        triggerImmediateUpdate();
-      }
-    });
+    const clearBtn = document.getElementById("clear-log-btn");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", async () => {
+        if (confirm("Are you sure you want to clear the system log file? This cannot be undone.")) {
+          await Logs.clearLogs();
+          triggerImmediateUpdate();
+        }
+      });
+    }
+
+    const copyBtn = document.getElementById("copy-log-btn");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        Logs.copyLogs();
+      });
+    }
   }
 
   /**
@@ -198,7 +234,7 @@
     if (activeTab === 'page-dashboard') {
       await updateCpuDashboard();
     } else if (activeTab === 'page-tuning') {
-      if (currentTuningSubView === 'cpu-clocks') {
+      if (currentTuningSubView === 'cpu-clocks' || currentTuningSubView === 'gpu-clocks') {
         await updateTuningView();
       }
     } else if (activeTab === 'page-logs') {
@@ -275,6 +311,11 @@
         const gpuProgress = document.getElementById("gpu-progress-bar");
         if (gpuProgress) gpuProgress.style.width = `${data.gpu.usage}%`;
         
+        const gpuGov = document.getElementById("gpu-card-gov");
+        if (gpuGov && data.gpu.governor) {
+          gpuGov.innerText = data.gpu.governor;
+        }
+
         const gpuFreqMin = document.getElementById("gpu-freq-min");
         if (gpuFreqMin) {
           gpuFreqMin.innerText = data.gpu.minFreq > 0 ? `${data.gpu.minFreq} MHz` : "—";
@@ -504,10 +545,12 @@
   function showTuningSubView(viewName, pushHistory = true) {
     const hubView = document.getElementById("tuning-hub-view");
     const cpuClocksView = document.getElementById("tuning-cpu-clocks-view");
+    const gpuClocksView = document.getElementById("tuning-gpu-clocks-view");
     const fabContainer = document.getElementById("tuning-fab-container");
 
     if (viewName === 'cpu-clocks') {
       if (hubView) hubView.style.display = "none";
+      if (gpuClocksView) gpuClocksView.style.display = "none";
       if (cpuClocksView) cpuClocksView.style.display = "block";
       if (fabContainer) {
         requestAnimationFrame(() => {
@@ -523,8 +566,27 @@
       }
       currentTuningSubView = 'cpu-clocks';
       triggerImmediateUpdate();
+    } else if (viewName === 'gpu-clocks') {
+      if (hubView) hubView.style.display = "none";
+      if (cpuClocksView) cpuClocksView.style.display = "none";
+      if (gpuClocksView) gpuClocksView.style.display = "block";
+      if (fabContainer) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            fabContainer.classList.add("fab-visible");
+          });
+        });
+      }
+      if (pushHistory && currentTuningSubView !== 'gpu-clocks') {
+        try {
+          history.pushState({ subview: 'gpu-clocks' }, '');
+        } catch (e) {}
+      }
+      currentTuningSubView = 'gpu-clocks';
+      triggerImmediateUpdate();
     } else {
       if (cpuClocksView) cpuClocksView.style.display = "none";
+      if (gpuClocksView) gpuClocksView.style.display = "none";
       if (hubView) hubView.style.display = "block";
       if (fabContainer) fabContainer.classList.remove("fab-visible");
       currentTuningSubView = 'hub';
@@ -533,12 +595,66 @@
 
   // Handle system back gesture in Android WebView
   window.addEventListener("popstate", () => {
-    if (currentTuningSubView === 'cpu-clocks') {
+    if (currentTuningSubView === 'cpu-clocks' || currentTuningSubView === 'gpu-clocks') {
       showTuningSubView('hub', false);
     }
   });
 
+  function showGpuWarningDialog() {
+    if (localStorage.getItem("sweetclocker_hide_gpu_warning") === "true") {
+      return;
+    }
+    const backdrop = document.getElementById("gpu-warning-dialog-backdrop");
+    if (backdrop) {
+      backdrop.style.display = "flex";
+      requestAnimationFrame(() => backdrop.classList.add("active"));
+    }
+  }
+
+  function hideGpuWarningDialog() {
+    const dontShowCheckbox = document.getElementById("gpu-dont-show-again-checkbox");
+    if (dontShowCheckbox && dontShowCheckbox.checked) {
+      localStorage.setItem("sweetclocker_hide_gpu_warning", "true");
+    }
+    const backdrop = document.getElementById("gpu-warning-dialog-backdrop");
+    if (backdrop) {
+      backdrop.classList.remove("active");
+      setTimeout(() => {
+        backdrop.style.display = "none";
+      }, 250);
+    }
+  }
+
+  function updateGpuControlsLockState() {
+    const checkbox = document.getElementById("gpu-acknowledge-checkbox");
+    const gpuGrid = document.getElementById("gpu-tuning-grid");
+    if (!gpuGrid) return;
+    if (checkbox && checkbox.checked) {
+      gpuGrid.classList.remove("gpu-controls-disabled");
+    } else {
+      gpuGrid.classList.add("gpu-controls-disabled");
+    }
+  }
+
   function setupTuningControls() {
+    // GPU Warning Dialog dismissal listeners
+    const dialogDismiss = document.getElementById("gpu-warning-dialog-dismiss");
+    if (dialogDismiss) {
+      dialogDismiss.addEventListener("click", hideGpuWarningDialog);
+    }
+    const dialogBackdrop = document.getElementById("gpu-warning-dialog-backdrop");
+    if (dialogBackdrop) {
+      dialogBackdrop.addEventListener("click", (e) => {
+        if (e.target === dialogBackdrop) hideGpuWarningDialog();
+      });
+    }
+
+    // GPU Acknowledge Checkbox listener
+    const acknowledgeCheckbox = document.getElementById("gpu-acknowledge-checkbox");
+    if (acknowledgeCheckbox) {
+      acknowledgeCheckbox.addEventListener("change", updateGpuControlsLockState);
+    }
+
     // Feature Grid Card Click Listeners
     const tuneCards = document.querySelectorAll("[data-tune-feature]");
     tuneCards.forEach(card => {
@@ -546,11 +662,15 @@
         const feature = card.getAttribute("data-tune-feature");
         if (feature === "performance-profile") {
           showTuningSubView("cpu-clocks", true);
+        } else if (feature === "gpu-clocks") {
+          showTuningSubView("gpu-clocks", true);
+          showGpuWarningDialog();
+          updateGpuControlsLockState();
         }
       });
     });
 
-    // Back to Tuning button
+    // Back to Tuning buttons
     const backBtn = document.getElementById("tune-back-btn");
     if (backBtn) {
       backBtn.addEventListener("click", () => {
@@ -562,30 +682,68 @@
       });
     }
 
+    const gpuBackBtn = document.getElementById("tune-gpu-back-btn");
+    if (gpuBackBtn) {
+      gpuBackBtn.addEventListener("click", () => {
+        if (history.state && history.state.subview === 'gpu-clocks') {
+          history.back();
+        } else {
+          showTuningSubView("hub", false);
+        }
+      });
+    }
+
     const applyBtn = document.getElementById("apply-tuning-btn");
     if (applyBtn) {
       applyBtn.addEventListener("click", async () => {
-        const config = {};
-        CLUSTERS_CONFIG.forEach(cluster => {
-          const minTrigger = document.getElementById(`${cluster.id}-min-trigger`);
-          const maxTrigger = document.getElementById(`${cluster.id}-max-trigger`);
-          const govTrigger = document.getElementById(`${cluster.id}-gov-trigger`);
-          if (minTrigger && maxTrigger) {
-            config[cluster.policy] = {
-              min: parseInt(minTrigger.getAttribute("data-val"), 10),
-              max: parseInt(maxTrigger.getAttribute("data-val"), 10),
-              gov: govTrigger ? govTrigger.getAttribute("data-val") : undefined
-            };
+        if (currentTuningSubView === 'gpu-clocks') {
+          const checkbox = document.getElementById("gpu-acknowledge-checkbox");
+          if (!checkbox || !checkbox.checked) {
+            KsuApi.toast("Please check 'I know what am doing' before applying GPU custom clocks");
+            showGpuWarningDialog();
+            return;
           }
-        });
-
-        KsuApi.toast("Applying custom cluster configurations...");
-        const ok = await Stats.applyCustomClusterFreqs(config);
-        if (ok) {
-          KsuApi.toast("Custom configuration applied!");
-          triggerImmediateUpdate();
-        } else {
-          KsuApi.toast("Failed to apply custom configuration");
+          const gpuMinTrig = document.getElementById("gpu-min-trigger");
+          const gpuMaxTrig = document.getElementById("gpu-max-trigger");
+          const gpuGovTrig = document.getElementById("gpu-gov-trigger");
+          if (!gpuMinTrig && !gpuMaxTrig && !gpuGovTrig) return;
+          const gpuConfig = {
+            min: gpuMinTrig ? parseInt(gpuMinTrig.getAttribute("data-val"), 10) : undefined,
+            max: gpuMaxTrig ? parseInt(gpuMaxTrig.getAttribute("data-val"), 10) : undefined,
+            gov: gpuGovTrig ? gpuGovTrig.getAttribute("data-val") : undefined
+          };
+          KsuApi.toast("Applying GPU configuration...");
+          const ok = await Stats.applyGpuConfig(gpuConfig);
+          if (ok) {
+            KsuApi.toast("GPU configuration applied!");
+            const data = await Stats.getCpuStats();
+            renderTuningViewWithData(data, true);
+          } else {
+            KsuApi.toast("Failed to apply GPU configuration");
+          }
+        } else if (currentTuningSubView === 'cpu-clocks') {
+          const config = {};
+          CLUSTERS_CONFIG.forEach(cluster => {
+            const minTrigger = document.getElementById(`${cluster.id}-min-trigger`);
+            const maxTrigger = document.getElementById(`${cluster.id}-max-trigger`);
+            const govTrigger = document.getElementById(`${cluster.id}-gov-trigger`);
+            if (minTrigger && maxTrigger) {
+              config[cluster.policy] = {
+                min: parseInt(minTrigger.getAttribute("data-val"), 10),
+                max: parseInt(maxTrigger.getAttribute("data-val"), 10),
+                gov: govTrigger ? govTrigger.getAttribute("data-val") : undefined
+              };
+            }
+          });
+          KsuApi.toast("Applying CPU configuration...");
+          const ok = await Stats.applyCpuConfig(config);
+          if (ok) {
+            KsuApi.toast("CPU configuration applied!");
+            const data = await Stats.getCpuStats();
+            renderTuningViewWithData(data, true);
+          } else {
+            KsuApi.toast("Failed to apply CPU configuration");
+          }
         }
       });
     }
@@ -593,24 +751,35 @@
     const resetBtn = document.getElementById("reset-sweetclock-btn");
     if (resetBtn) {
       resetBtn.addEventListener("click", async () => {
-        KsuApi.toast("Resetting to predefined sweetclocks...");
-        const ok = await Stats.resetToSweetclocks();
-        if (ok) {
-          KsuApi.toast("Reset to sweetclocks complete!");
-          triggerImmediateUpdate();
-        } else {
-          KsuApi.toast("Failed to reset sweetclocks");
+        if (currentTuningSubView === 'gpu-clocks') {
+          KsuApi.toast("Resetting GPU to defaults...");
+          const ok = await Stats.resetGpuConfig();
+          if (ok) {
+            KsuApi.toast("GPU reset to defaults & thermal limit!");
+            const data = await Stats.getCpuStats();
+            renderTuningViewWithData(data, true);
+          } else {
+            KsuApi.toast("Failed to reset GPU configuration");
+          }
+        } else if (currentTuningSubView === 'cpu-clocks') {
+          KsuApi.toast("Resetting CPU to sweetclocks...");
+          const ok = await Stats.resetCpuConfig();
+          if (ok) {
+            KsuApi.toast("CPU reset to sweetclocks!");
+            const data = await Stats.getCpuStats();
+            renderTuningViewWithData(data, true);
+          } else {
+            KsuApi.toast("Failed to reset CPU configuration");
+          }
         }
       });
     }
   }
 
-  async function updateTuningView() {
-    try {
-      const data = await Stats.getCpuStats();
-      const grid = document.getElementById("tuning-grid");
-      if (!grid) return;
-
+  function renderTuningViewWithData(data, forceUpdateTriggers = false) {
+    if (!data) return;
+    const grid = document.getElementById("tuning-grid");
+    if (grid) {
       const existingCards = grid.querySelectorAll(".tuning-card");
       if (existingCards.length !== CLUSTERS_CONFIG.length) {
         grid.innerHTML = "";
@@ -622,16 +791,163 @@
         CLUSTERS_CONFIG.forEach((cluster, idx) => {
           const card = existingCards[idx];
           if (!card) return;
-          updateClusterTuningCardValues(card, cluster, data);
+          updateClusterTuningCardValues(card, cluster, data, forceUpdateTriggers);
         });
       }
+    }
+
+    const gpuGrid = document.getElementById("gpu-tuning-grid");
+    if (gpuGrid) {
+      const gpuCard = gpuGrid.querySelector(".tuning-card");
+      if (!gpuCard) {
+        gpuGrid.innerHTML = "";
+        gpuGrid.appendChild(renderGpuTuningCard(data));
+      } else {
+        updateGpuTuningCardValues(gpuCard, data, forceUpdateTriggers);
+      }
+    }
+  }
+
+  async function updateTuningView() {
+    try {
+      const cached = Stats.getLastStats();
+      if (cached) {
+        renderTuningViewWithData(cached);
+      }
+      const data = await Stats.getCpuStats();
+      renderTuningViewWithData(data);
     } catch (err) {
       console.error("Tuning view update failed:", err);
     }
   }
 
+  function renderGpuTuningCard(data) {
+    const card = document.createElement("div");
+    card.className = "tuning-card";
+    card.setAttribute("data-gpu-card", "true");
+
+    const gpuData = data.gpu || {};
+    const curMin = gpuData.minFreq || 264;
+    const curMax = gpuData.maxFreq || 937;
+    const curGov = gpuData.governor || "msm-adreno-tz";
+    const availGovs = (gpuData.availGovs && gpuData.availGovs.length > 0) ? gpuData.availGovs : ["msm-adreno-tz", "performance", "powersave", "userspace", "simple_ondemand", "bw_hwmon"];
+    const availFreqs = (gpuData.availFreqs && gpuData.availFreqs.length > 0) ? gpuData.availFreqs : [264, 355, 443, 540, 650, 738, 855, 937];
+
+    const hwMin = gpuData.hwMin || availFreqs[0];
+    const hwMax = gpuData.hwMax || availFreqs[availFreqs.length - 1];
+
+    let maxLabel = `${curMax} MHz`;
+    if (curMax === hwMax) maxLabel += " (HW Max)";
+
+    card.innerHTML = `
+      <div class="tuning-card-header">
+        <div class="tuning-card-title-group">
+          <span class="tuning-card-title">${gpuData.model || "Adreno GPU"}</span>
+          <span class="cluster-name">GPU CLOCK LIMITS</span>
+        </div>
+      </div>
+
+      <div class="tuning-stats-row">
+        <span>Current Active Settings</span>
+        <span class="tuning-stat-val" id="gpu-active-lbl">${curMin} MHz - ${curMax} MHz • ${curGov}</span>
+      </div>
+
+      <div class="tuning-controls">
+        <div class="tuning-control-group">
+          <label class="tuning-control-label">Governor</label>
+          <div class="m3-picker-trigger" id="gpu-gov-trigger" data-val="${curGov}">
+            <span class="m3-picker-val" id="gpu-gov-val">${curGov}</span>
+            <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+
+        <div class="tuning-control-group">
+          <label class="tuning-control-label">Min Frequency</label>
+          <div class="m3-picker-trigger" id="gpu-min-trigger" data-val="${curMin}">
+            <span class="m3-picker-val" id="gpu-min-val">${curMin} MHz</span>
+            <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+
+        <div class="tuning-control-group">
+          <label class="tuning-control-label">Max Frequency</label>
+          <div class="m3-picker-trigger" id="gpu-max-trigger" data-val="${curMax}">
+            <span class="m3-picker-val" id="gpu-max-val">${maxLabel}</span>
+            <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+      </div>
+    `;
+
+    setTimeout(() => {
+      const minTrigger = card.querySelector("#gpu-min-trigger");
+      const maxTrigger = card.querySelector("#gpu-max-trigger");
+      const govTrigger = card.querySelector("#gpu-gov-trigger");
+      const minValLbl = card.querySelector("#gpu-min-val");
+      const maxValLbl = card.querySelector("#gpu-max-val");
+      const govValLbl = card.querySelector("#gpu-gov-val");
+
+      if (govTrigger) {
+        govTrigger.onclick = () => {
+          const currentGovVal = govTrigger.getAttribute("data-val") || curGov;
+          openGovSheet({
+            title: `Select GPU Governor`,
+            subtitle: `${gpuData.model || "Adreno GPU"} • Governor`,
+            availGovs: availGovs,
+            currentGov: currentGovVal,
+            onSelect: (selectedGov) => {
+              govTrigger.setAttribute("data-val", selectedGov);
+              if (govValLbl) govValLbl.innerText = selectedGov;
+            }
+          });
+        };
+      }
+
+      if (minTrigger) {
+        minTrigger.onclick = () => {
+          const currentMinVal = parseInt(minTrigger.getAttribute("data-val"), 10) || curMin;
+          openFreqSheet({
+            title: `Select GPU Min Frequency`,
+            subtitle: `${gpuData.model || "Adreno GPU"} • Min Clock`,
+            availFreqs: availFreqs,
+            currentVal: currentMinVal,
+            hwMax,
+            isGpu: true,
+            onSelect: (selectedFreq) => {
+              minTrigger.setAttribute("data-val", selectedFreq);
+              if (minValLbl) minValLbl.innerText = `${selectedFreq} MHz`;
+            }
+          });
+        };
+      }
+
+      if (maxTrigger) {
+        maxTrigger.onclick = () => {
+          const currentMaxVal = parseInt(maxTrigger.getAttribute("data-val"), 10) || curMax;
+          openFreqSheet({
+            title: `Select GPU Max Frequency`,
+            subtitle: `${gpuData.model || "Adreno GPU"} • Max Clock`,
+            availFreqs: availFreqs,
+            currentVal: currentMaxVal,
+            hwMax,
+            isGpu: true,
+            onSelect: (selectedFreq) => {
+              maxTrigger.setAttribute("data-val", selectedFreq);
+              let lbl = `${selectedFreq} MHz`;
+              if (selectedFreq === hwMax) lbl += " (HW Max)";
+              if (maxValLbl) maxValLbl.innerText = lbl;
+            }
+          });
+        };
+      }
+      updateGpuControlsLockState();
+    }, 0);
+
+    return card;
+  }
+
   // Material 3 Frequency Selector Sheet Handler
-  function openFreqSheet({ title, subtitle, availFreqs, currentVal, sweetclockMax, hwMax, onSelect }) {
+  function openFreqSheet({ title, subtitle, availFreqs, currentVal, sweetclockMax, hwMax, isGpu = false, onSelect }) {
     const backdrop = document.getElementById("freq-sheet-backdrop");
     const sheetTitle = document.getElementById("freq-sheet-title");
     const sheetSubtitle = document.getElementById("freq-sheet-subtitle");
@@ -646,18 +962,22 @@
 
     availFreqs.forEach(freq => {
       const isSelected = freq === currentVal;
-      const isSweet = freq === sweetclockMax;
+      const isSweet = !isGpu && (freq === sweetclockMax);
       const isHwMax = freq === hwMax;
+      const isDefault = isGpu && ((title.includes('Min') && freq === 264) || (title.includes('Max') && freq === 937));
 
       const opt = document.createElement("div");
       opt.className = `m3-sheet-option ${isSelected ? 'active' : ''}`;
       
       let badgeHtml = "";
       if (isSweet) badgeHtml += `<span class="m3-option-badge badge-sweet">★ Sweetclock</span>`;
+      if (isDefault) badgeHtml += `<span class="m3-option-badge badge-hwmax">Default</span>`;
       if (isHwMax) badgeHtml += `<span class="m3-option-badge badge-hwmax">HW Max</span>`;
 
+      const freqLabel = isGpu ? `${freq} MHz` : formatFreqMHz(freq);
+
       opt.innerHTML = `
-        <span class="m3-option-freq">${formatFreqMHz(freq)}</span>
+        <span class="m3-option-freq">${freqLabel}</span>
         <div class="m3-option-right">
           ${badgeHtml}
           <span class="m3-radio-icon"></span>
@@ -781,7 +1101,6 @@
           <span class="tuning-card-title">${cluster.name}</span>
           <span class="cluster-name">${cluster.clusterLabel}</span>
         </div>
-        <span class="sweetclock-badge">Sweet: ${formatFreqMHz(cluster.sweetclockMax)}</span>
       </div>
 
       <div class="tuning-stats-row">
@@ -791,7 +1110,7 @@
 
       <div class="tuning-controls">
         <div class="tuning-control-group">
-          <label class="tuning-control-label">CPU Scheduler (Governor)</label>
+          <label class="tuning-control-label">Governor</label>
           <div class="m3-picker-trigger" id="${cluster.id}-gov-trigger" data-val="${curGov}">
             <span class="m3-picker-val" id="${cluster.id}-gov-val">${curGov}</span>
             <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
@@ -829,7 +1148,7 @@
         govTrigger.onclick = () => {
           const currentGovVal = govTrigger.getAttribute("data-val") || curGov;
           openGovSheet({
-            title: `Select CPU Scheduler`,
+            title: `Select Governor`,
             subtitle: `${cluster.name} • ${cluster.clusterLabel}`,
             availGovs: availGovs,
             currentGov: currentGovVal,
@@ -884,7 +1203,7 @@
     return card;
   }
 
-  function updateClusterTuningCardValues(card, cluster, data) {
+  function updateClusterTuningCardValues(card, cluster, data, forceUpdateTriggers = false) {
     const coreData = data.cores ? data.cores.find(c => c.id === cluster.cpus[0]) : null;
     if (!coreData) return;
     const curMin = coreData.minFreq;
@@ -895,6 +1214,61 @@
     const activeLbl = card.querySelector(`#${cluster.id}-active-lbl`);
     if (activeLbl) {
       activeLbl.innerText = `${formatFreqMHz(curMin)} - ${formatFreqMHz(curMax)} • ${curGov}`;
+    }
+
+    if (forceUpdateTriggers) {
+      const minTrig = card.querySelector(`#${cluster.id}-min-trigger`);
+      const minValLbl = card.querySelector(`#${cluster.id}-min-val`);
+      if (minTrig) minTrig.setAttribute("data-val", curMin);
+      if (minValLbl) minValLbl.innerText = formatFreqMHz(curMin);
+
+      const maxTrig = card.querySelector(`#${cluster.id}-max-trigger`);
+      const maxValLbl = card.querySelector(`#${cluster.id}-max-val`);
+      if (maxTrig) maxTrig.setAttribute("data-val", curMax);
+      if (maxValLbl) {
+        let lbl = formatFreqMHz(curMax);
+        if (curMax === cluster.sweetclockMax) lbl += " ★ Sweetclock";
+        else if (card._clusterData && curMax === card._clusterData.hwMax) lbl += " (HW Max)";
+        maxValLbl.innerText = lbl;
+      }
+
+      const govTrig = card.querySelector(`#${cluster.id}-gov-trigger`);
+      const govValLbl = card.querySelector(`#${cluster.id}-gov-val`);
+      if (govTrig) govTrig.setAttribute("data-val", curGov);
+      if (govValLbl) govValLbl.innerText = curGov;
+    }
+  }
+
+  function updateGpuTuningCardValues(card, data, forceUpdateTriggers = false) {
+    const gpuData = data.gpu || {};
+    const curMin = gpuData.minFreq || 264;
+    const curMax = gpuData.maxFreq || 937;
+    const curGov = gpuData.governor || "msm-adreno-tz";
+
+    const activeLbl = card.querySelector("#gpu-active-lbl");
+    if (activeLbl) {
+      activeLbl.innerText = `${curMin} MHz - ${curMax} MHz • ${curGov}`;
+    }
+
+    if (forceUpdateTriggers) {
+      const minTrig = card.querySelector("#gpu-min-trigger");
+      const minValLbl = card.querySelector("#gpu-min-val");
+      if (minTrig) minTrig.setAttribute("data-val", curMin);
+      if (minValLbl) minValLbl.innerText = `${curMin} MHz`;
+
+      const maxTrig = card.querySelector("#gpu-max-trigger");
+      const maxValLbl = card.querySelector("#gpu-max-val");
+      if (maxTrig) maxTrig.setAttribute("data-val", curMax);
+      if (maxValLbl) {
+        let lbl = `${curMax} MHz`;
+        if (card._gpuData && curMax === card._gpuData.hwMax) lbl += " (HW Max)";
+        maxValLbl.innerText = lbl;
+      }
+
+      const govTrig = card.querySelector("#gpu-gov-trigger");
+      const govValLbl = card.querySelector("#gpu-gov-val");
+      if (govTrig) govTrig.setAttribute("data-val", curGov);
+      if (govValLbl) govValLbl.innerText = curGov;
     }
   }
 
