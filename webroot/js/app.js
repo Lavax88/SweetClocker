@@ -1,6 +1,7 @@
 /* app.js - Main Application Orchestrator (Classic Script version) */
 (function() {
   let activeTab = 'page-dashboard';
+  let currentTuningSubView = 'hub';
   let pollInterval = null;
 
   /**
@@ -52,8 +53,20 @@
     navTabs.forEach(tab => {
       tab.addEventListener("click", () => {
         const target = tab.getAttribute("data-target");
-        if (target === activeTab) return;
+        if (target === activeTab) {
+          if (target === "page-tuning" && currentTuningSubView !== "hub") {
+            showTuningSubView("hub", false);
+          }
+          return;
+        }
         
+        // Clear any subview history state so back gesture on any main tab exits to Root Manager
+        if (history.state && history.state.subview) {
+          try {
+            history.replaceState(null, '');
+          } catch (e) {}
+        }
+
         // 1. Immediately toggle classes (instant visual change)
         navTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
@@ -62,16 +75,10 @@
         const targetPage = document.getElementById(target);
         if (targetPage) targetPage.classList.add("active");
         
-        if (fabContainer) {
-          if (target === "page-tuning") {
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                fabContainer.classList.add("fab-visible");
-              });
-            });
-          } else {
-            fabContainer.classList.remove("fab-visible");
-          }
+        if (target === "page-tuning") {
+          showTuningSubView("hub", false);
+        } else {
+          if (fabContainer) fabContainer.classList.remove("fab-visible");
         }
 
         activeTab = target;
@@ -96,6 +103,15 @@
       seg.addEventListener("click", () => {
         const mode = seg.getAttribute("data-theme-mode");
         Theme.setThemeMode(mode);
+      });
+    });
+
+    const fontSegments = document.querySelectorAll("[data-font-mode]");
+    fontSegments.forEach(seg => {
+      seg.addEventListener("click", () => {
+        const mode = seg.getAttribute("data-font-mode");
+        Theme.setFontMode(mode);
+        KsuApi.toast(`Font family set to ${mode === 'system' ? 'System Font' : 'Outfit (Default)'}`);
       });
     });
     
@@ -182,7 +198,9 @@
     if (activeTab === 'page-dashboard') {
       await updateCpuDashboard();
     } else if (activeTab === 'page-tuning') {
-      await updateTuningView();
+      if (currentTuningSubView === 'cpu-clocks') {
+        await updateTuningView();
+      }
     } else if (activeTab === 'page-logs') {
       await updateLogsView();
     }
@@ -289,6 +307,13 @@
       return `${(mhz / 1000).toFixed(2)} GHz`;
     }
     return `${Math.round(mhz)} MHz`;
+  }
+
+  function formatFreqMHz(khz) {
+    if (!khz || khz === 0) return "—";
+    const mhz = khz / 1000;
+    const rounded = Math.round(mhz * 10) / 10;
+    return `${rounded} MHz`;
   }
 
   function formatFreqShort(khz) {
@@ -476,7 +501,67 @@
     }
   ];
 
+  function showTuningSubView(viewName, pushHistory = true) {
+    const hubView = document.getElementById("tuning-hub-view");
+    const cpuClocksView = document.getElementById("tuning-cpu-clocks-view");
+    const fabContainer = document.getElementById("tuning-fab-container");
+
+    if (viewName === 'cpu-clocks') {
+      if (hubView) hubView.style.display = "none";
+      if (cpuClocksView) cpuClocksView.style.display = "block";
+      if (fabContainer) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            fabContainer.classList.add("fab-visible");
+          });
+        });
+      }
+      if (pushHistory && currentTuningSubView !== 'cpu-clocks') {
+        try {
+          history.pushState({ subview: 'cpu-clocks' }, '');
+        } catch (e) {}
+      }
+      currentTuningSubView = 'cpu-clocks';
+      triggerImmediateUpdate();
+    } else {
+      if (cpuClocksView) cpuClocksView.style.display = "none";
+      if (hubView) hubView.style.display = "block";
+      if (fabContainer) fabContainer.classList.remove("fab-visible");
+      currentTuningSubView = 'hub';
+    }
+  }
+
+  // Handle system back gesture in Android WebView
+  window.addEventListener("popstate", () => {
+    if (currentTuningSubView === 'cpu-clocks') {
+      showTuningSubView('hub', false);
+    }
+  });
+
   function setupTuningControls() {
+    // Feature Grid Card Click Listeners
+    const tuneCards = document.querySelectorAll("[data-tune-feature]");
+    tuneCards.forEach(card => {
+      card.addEventListener("click", () => {
+        const feature = card.getAttribute("data-tune-feature");
+        if (feature === "performance-profile") {
+          showTuningSubView("cpu-clocks", true);
+        }
+      });
+    });
+
+    // Back to Tuning button
+    const backBtn = document.getElementById("tune-back-btn");
+    if (backBtn) {
+      backBtn.addEventListener("click", () => {
+        if (history.state && history.state.subview === 'cpu-clocks') {
+          history.back();
+        } else {
+          showTuningSubView("hub", false);
+        }
+      });
+    }
+
     const applyBtn = document.getElementById("apply-tuning-btn");
     if (applyBtn) {
       applyBtn.addEventListener("click", async () => {
@@ -484,21 +569,23 @@
         CLUSTERS_CONFIG.forEach(cluster => {
           const minTrigger = document.getElementById(`${cluster.id}-min-trigger`);
           const maxTrigger = document.getElementById(`${cluster.id}-max-trigger`);
+          const govTrigger = document.getElementById(`${cluster.id}-gov-trigger`);
           if (minTrigger && maxTrigger) {
             config[cluster.policy] = {
               min: parseInt(minTrigger.getAttribute("data-val"), 10),
-              max: parseInt(maxTrigger.getAttribute("data-val"), 10)
+              max: parseInt(maxTrigger.getAttribute("data-val"), 10),
+              gov: govTrigger ? govTrigger.getAttribute("data-val") : undefined
             };
           }
         });
 
-        KsuApi.toast("Applying custom cluster frequencies...");
+        KsuApi.toast("Applying custom cluster configurations...");
         const ok = await Stats.applyCustomClusterFreqs(config);
         if (ok) {
-          KsuApi.toast("Custom frequencies applied!");
+          KsuApi.toast("Custom configuration applied!");
           triggerImmediateUpdate();
         } else {
-          KsuApi.toast("Failed to apply custom frequencies");
+          KsuApi.toast("Failed to apply custom configuration");
         }
       });
     }
@@ -570,7 +657,7 @@
       if (isHwMax) badgeHtml += `<span class="m3-option-badge badge-hwmax">HW Max</span>`;
 
       opt.innerHTML = `
-        <span class="m3-option-freq">${formatFreq(freq)}</span>
+        <span class="m3-option-freq">${formatFreqMHz(freq)}</span>
         <div class="m3-option-right">
           ${badgeHtml}
           <span class="m3-radio-icon"></span>
@@ -580,6 +667,61 @@
       opt.addEventListener("click", () => {
         backdrop.classList.remove("active");
         if (onSelect) onSelect(freq);
+      });
+
+      sheetOptions.appendChild(opt);
+    });
+
+    backdrop.onclick = (e) => {
+      if (e.target === backdrop) backdrop.classList.remove("active");
+    };
+
+    if (closeBtn) {
+      closeBtn.onclick = () => backdrop.classList.remove("active");
+    }
+
+    backdrop.classList.add("active");
+
+    setTimeout(() => {
+      const activeOpt = sheetOptions.querySelector(".m3-sheet-option.active");
+      if (activeOpt) activeOpt.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+  }
+
+  // Material 3 CPU Scheduler (Governor) Selector Sheet Handler
+  function openGovSheet({ title, subtitle, availGovs, currentGov, onSelect }) {
+    const backdrop = document.getElementById("gov-sheet-backdrop");
+    const sheetTitle = document.getElementById("gov-sheet-title");
+    const sheetSubtitle = document.getElementById("gov-sheet-subtitle");
+    const sheetOptions = document.getElementById("gov-sheet-options");
+    const closeBtn = document.getElementById("gov-sheet-close");
+
+    if (!backdrop || !sheetOptions) return;
+
+    sheetTitle.innerText = title;
+    sheetSubtitle.innerText = subtitle;
+    sheetOptions.innerHTML = "";
+
+    availGovs.forEach(gov => {
+      const isSelected = gov === currentGov;
+
+      const opt = document.createElement("div");
+      opt.className = `m3-sheet-option ${isSelected ? 'active' : ''}`;
+      
+      let badgeHtml = "";
+      if (gov === "schedutil") badgeHtml = `<span class="m3-option-badge badge-sweet">Recommended</span>`;
+
+      opt.innerHTML = `
+        <span class="m3-option-freq" style="font-family: var(--font-family); text-transform: lowercase;">${gov}</span>
+        <div class="m3-option-right">
+          ${badgeHtml}
+          <span class="m3-radio-icon"></span>
+        </div>
+      `;
+
+      opt.addEventListener("click", () => {
+        backdrop.classList.remove("active");
+        if (onSelect) onSelect(gov);
       });
 
       sheetOptions.appendChild(opt);
@@ -611,6 +753,9 @@
     const curMax = coreData ? coreData.maxFreq : cluster.sweetclockMax;
     
     const polData = data.clusters ? data.clusters[cluster.policy] : null;
+    const curGov = (polData && polData.governor) ? polData.governor : (coreData ? coreData.governor : "schedutil");
+    const availGovs = (polData && polData.availGovs && polData.availGovs.length > 0) ? [...polData.availGovs] : ["schedutil", "performance", "powersave", "userspace", "ondemand", "conservative"];
+
     let avail = (polData && polData.availFreqs && polData.availFreqs.length > 0) ? [...polData.availFreqs] : [...cluster.fallbackAvail];
     const realHwMax = (polData && polData.hwMax > 0) ? Math.max(polData.hwMax, avail[avail.length - 1]) : (avail.length > 0 ? avail[avail.length - 1] : cluster.fallbackHwMax);
 
@@ -624,9 +769,9 @@
     avail = Array.from(new Set(avail)).sort((a, b) => a - b);
     const hwMax = avail.length > 0 ? avail[avail.length - 1] : realHwMax;
 
-    card._clusterData = { cluster, avail, sweetclockMax: cluster.sweetclockMax, hwMax };
+    card._clusterData = { cluster, avail, sweetclockMax: cluster.sweetclockMax, hwMax, curGov, availGovs };
 
-    let maxLabel = formatFreq(curMax);
+    let maxLabel = formatFreqMHz(curMax);
     if (curMax === cluster.sweetclockMax) maxLabel += " ★ Sweetclock";
     else if (curMax === hwMax) maxLabel += " (HW Max)";
 
@@ -636,19 +781,27 @@
           <span class="tuning-card-title">${cluster.name}</span>
           <span class="cluster-name">${cluster.clusterLabel}</span>
         </div>
-        <span class="sweetclock-badge">Sweet: ${formatFreqShort(cluster.sweetclockMax)}</span>
+        <span class="sweetclock-badge">Sweet: ${formatFreqMHz(cluster.sweetclockMax)}</span>
       </div>
 
       <div class="tuning-stats-row">
-        <span>Current Active Limits</span>
-        <span class="tuning-stat-val" id="${cluster.id}-active-lbl">${formatFreqShort(curMin)} - ${formatFreqShort(curMax)}</span>
+        <span>Current Active Settings</span>
+        <span class="tuning-stat-val" id="${cluster.id}-active-lbl">${formatFreqMHz(curMin)} - ${formatFreqMHz(curMax)} • ${curGov}</span>
       </div>
 
       <div class="tuning-controls">
         <div class="tuning-control-group">
+          <label class="tuning-control-label">CPU Scheduler (Governor)</label>
+          <div class="m3-picker-trigger" id="${cluster.id}-gov-trigger" data-val="${curGov}">
+            <span class="m3-picker-val" id="${cluster.id}-gov-val">${curGov}</span>
+            <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+
+        <div class="tuning-control-group">
           <label class="tuning-control-label">Min Frequency</label>
           <div class="m3-picker-trigger" id="${cluster.id}-min-trigger" data-val="${curMin}">
-            <span class="m3-picker-val" id="${cluster.id}-min-val">${formatFreq(curMin)}</span>
+            <span class="m3-picker-val" id="${cluster.id}-min-val">${formatFreqMHz(curMin)}</span>
             <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </div>
         </div>
@@ -667,8 +820,26 @@
     setTimeout(() => {
       const minTrigger = card.querySelector(`#${cluster.id}-min-trigger`);
       const maxTrigger = card.querySelector(`#${cluster.id}-max-trigger`);
+      const govTrigger = card.querySelector(`#${cluster.id}-gov-trigger`);
       const minValLbl = card.querySelector(`#${cluster.id}-min-val`);
       const maxValLbl = card.querySelector(`#${cluster.id}-max-val`);
+      const govValLbl = card.querySelector(`#${cluster.id}-gov-val`);
+
+      if (govTrigger) {
+        govTrigger.onclick = () => {
+          const currentGovVal = govTrigger.getAttribute("data-val") || curGov;
+          openGovSheet({
+            title: `Select CPU Scheduler`,
+            subtitle: `${cluster.name} • ${cluster.clusterLabel}`,
+            availGovs: availGovs,
+            currentGov: currentGovVal,
+            onSelect: (selectedGov) => {
+              govTrigger.setAttribute("data-val", selectedGov);
+              if (govValLbl) govValLbl.innerText = selectedGov;
+            }
+          });
+        };
+      }
 
       if (minTrigger) {
         minTrigger.onclick = () => {
@@ -682,7 +853,7 @@
             hwMax,
             onSelect: (selectedFreq) => {
               minTrigger.setAttribute("data-val", selectedFreq);
-              if (minValLbl) minValLbl.innerText = formatFreq(selectedFreq);
+              if (minValLbl) minValLbl.innerText = formatFreqMHz(selectedFreq);
             }
           });
         };
@@ -700,7 +871,7 @@
             hwMax,
             onSelect: (selectedFreq) => {
               maxTrigger.setAttribute("data-val", selectedFreq);
-              let lbl = formatFreq(selectedFreq);
+              let lbl = formatFreqMHz(selectedFreq);
               if (selectedFreq === cluster.sweetclockMax) lbl += " ★ Sweetclock";
               else if (selectedFreq === hwMax) lbl += " (HW Max)";
               if (maxValLbl) maxValLbl.innerText = lbl;
@@ -718,10 +889,12 @@
     if (!coreData) return;
     const curMin = coreData.minFreq;
     const curMax = coreData.maxFreq;
+    const polData = data.clusters ? data.clusters[cluster.policy] : null;
+    const curGov = (polData && polData.governor) ? polData.governor : coreData.governor;
 
     const activeLbl = card.querySelector(`#${cluster.id}-active-lbl`);
     if (activeLbl) {
-      activeLbl.innerText = `${formatFreqShort(curMin)} - ${formatFreqShort(curMax)}`;
+      activeLbl.innerText = `${formatFreqMHz(curMin)} - ${formatFreqMHz(curMax)} • ${curGov}`;
     }
   }
 

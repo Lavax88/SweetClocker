@@ -152,6 +152,17 @@ html, body {
               color var(--transition-speed) var(--transition-easing);
 }
 
+body.system-font {
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body.system-font,
+body.system-font *,
+body.system-font *::before,
+body.system-font *::after {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 /* App Layout Grid */
 .app-layout {
   display: flex;
@@ -174,10 +185,10 @@ html, body {
 
 /* Top App Bar */
 .top-app-bar {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  position: relative;
+  display: flex;
   align-items: center;
-  justify-content: stretch;
+  justify-content: space-between;
   padding: calc(5px + var(--top-inset)) 24px 11px 24px;
   height: calc(56px + var(--top-inset));
   background-color: var(--md-sys-color-background);
@@ -188,7 +199,9 @@ html, body {
 }
 
 .app-logo-title {
-  grid-column: 2;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -198,16 +211,15 @@ html, body {
 }
 
 #service-status {
-  grid-column: 1;
-  justify-self: start;
+  display: flex;
+  align-items: center;
 }
 
 .top-bar-actions {
-  grid-column: 3;
-  justify-self: end;
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-left: auto;
 }
 
 .lightning-icon {
@@ -218,18 +230,11 @@ html, body {
 }
 
 .app-title {
-  font-family: 'Outfit', var(--font-family);
+  font-family: var(--font-family);
   font-weight: 700;
   font-size: 1.4rem;
   letter-spacing: -0.5px;
   color: var(--md-sys-color-on-background);
-}
-
-.top-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-left: auto; /* Push to the right edge */
 }
 
 .scroll-content {
@@ -273,7 +278,7 @@ html, body {
 
 /* Section Header */
 .section-header {
-  font-family: 'Outfit', var(--font-family);
+  font-family: var(--font-family);
   font-weight: 600;
   font-size: 1.1rem;
   letter-spacing: 0.15px;

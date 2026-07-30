@@ -293,6 +293,38 @@ echo "overlay_600:\$(cmd overlay lookup android android:color/system_accent1_600
     });
   }
 
+  let activeFontMode = 'custom';
+
+  function setFontMode(mode) {
+    activeFontMode = mode;
+    localStorage.setItem('sweetclocker_font_mode', mode);
+    if (mode === 'system') {
+      document.body.classList.add('system-font');
+    } else {
+      document.body.classList.remove('system-font');
+    }
+    updateFontControlUI();
+  }
+
+  function initFontMode() {
+    const savedFont = localStorage.getItem('sweetclocker_font_mode') || 'custom';
+    setFontMode(savedFont);
+  }
+
+  function updateFontControlUI() {
+    const customBtn = document.getElementById("font-outfit-btn");
+    const systemBtn = document.getElementById("font-system-btn");
+    if (customBtn && systemBtn) {
+      if (activeFontMode === 'system') {
+        systemBtn.classList.add('active');
+        customBtn.classList.remove('active');
+      } else {
+        customBtn.classList.add('active');
+        systemBtn.classList.remove('active');
+      }
+    }
+  }
+
   /**
    * Initialize theme settings on launch
    */
@@ -300,6 +332,8 @@ echo "overlay_600:\$(cmd overlay lookup android android:color/system_accent1_600
     const savedMode = localStorage.getItem('sweetclocker_theme_mode') || 'dark';
     setThemeMode(savedMode);
     
+    initFontMode();
+
     const savedColor = localStorage.getItem('sweetclocker_seed_color');
     if (savedColor) {
       applyThemeColor(savedColor);
@@ -376,6 +410,7 @@ echo "overlay_600:\$(cmd overlay lookup android android:color/system_accent1_600
   window.Theme = {
     initTheme,
     setThemeMode,
+    setFontMode,
     applyThemeColor,
     detectMonetColor,
     setManualSeedColor,

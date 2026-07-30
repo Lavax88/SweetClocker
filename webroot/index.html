@@ -39,7 +39,10 @@
       <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
     </symbol>
     <symbol id="icon-cpu" viewBox="0 0 24 24">
-      <path d="M17 9H7v6h10V9zm-8 4h-2v-2h2v2zm8 0h-2v-2h2v2zM9 17H7v-2h2v2zm8 0h-2v-2h2v2zM9 9H7V7h2v2zm8 0h-2V7h2v2zM21 11v2h-2v-2h2zm-16 0v2H3v-2h2zm14-8h-2V1h-2v2h-2V1h-2v2H9V1H7v2H5V1H3v2H1v2h2v2H1v2h2v2H1v2h2v2H1v2h2v2H1v2h2v2h18v-2h-2v-2h2v-2h-2v-2h2v-2h-2v-2h2v-2h-2v-2h2v-2h-2V9h2V7h-2V5h2V3h-2zm-2 16H5V5h14v14z"/>
+      <rect x="5.5" y="5.5" width="13" height="13" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      <rect x="9.25" y="9.25" width="5.5" height="5.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+      <rect x="11" y="11" width="2" height="2" rx="0.4" fill="currentColor"/>
+      <path d="M9 1.8v3.7 M15 1.8v3.7 M9 18.5v3.7 M15 18.5v3.7 M1.8 9h3.7 M1.8 15h3.7 M18.5 9h3.7 M18.5 15h3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
     <symbol id="icon-tune" viewBox="0 0 24 24">
       <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
@@ -164,6 +167,14 @@
             </div>
 
             <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Font Family</label>
+              <div class="segmented-control" style="margin-top: 8px;">
+                <button class="segment active" id="font-outfit-btn" data-font-mode="custom">Outfit (Default)</button>
+                <button class="segment" id="font-system-btn" data-font-mode="system">System Font</button>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 20px;">
               <label>Seed Color (Accent)</label>
               <div class="color-options" style="margin-top: 8px;">
                 <div class="color-dot active" style="background-color: #6750A4;" data-color="#6750A4" title="M3 Default Purple"></div>
@@ -198,22 +209,45 @@
           </div>
         </section>
 
-        <!-- PAGE 4: CLUSTER TUNING -->
+        <!-- PAGE 4: TUNING HUB & FEATURES -->
         <section id="page-tuning" class="page-section">
-          <div class="card card-elevated hero-card" style="padding: 20px;">
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 class="section-header" style="margin: 0;">Cluster Frequency Tuning</h3>
-                <span class="cluster-name" style="font-size: 0.7rem; padding: 3px 8px;">CUSTOM LIMITS</span>
+          
+          <!-- TUNING MAIN HUB (Category Cards Grid) -->
+          <div id="tuning-hub-view" class="tuning-subview active">
+            <div class="tune-grid">
+              <div class="tune-card tune-card-centered" data-tune-feature="performance-profile">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare"><use href="#icon-cpu"></use></svg>
+                </div>
+                <h4 class="tune-card-title">CPU</h4>
               </div>
-              <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
-                Set custom min and max frequencies for each cluster (0-1, 2-4, 5-6, 7). Max values range up to maximum hardware clocks.
-              </p>
             </div>
           </div>
 
-          <div class="tuning-grid" id="tuning-grid">
-            <div class="grid-placeholder">Loading cluster frequency controls...</div>
+          <!-- CLUSTER FREQUENCY TUNING DETAIL VIEW -->
+          <div id="tuning-cpu-clocks-view" class="tuning-subview" style="display: none;">
+            <div class="subview-header">
+              <button class="btn btn-outlined btn-small" id="tune-back-btn">
+                <svg class="btn-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                Back to Tuning
+              </button>
+            </div>
+
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="section-header" style="margin: 0;">CPU Configuration</h3>
+                  <span class="cluster-name" style="font-size: 0.7rem; padding: 3px 8px;">CUSTOM LIMITS</span>
+                </div>
+                <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
+                  Set custom min and max frequencies for each cluster (0-1, 2-4, 5-6, 7). Max values range up to maximum hardware clocks.
+                </p>
+              </div>
+            </div>
+
+            <div class="tuning-grid" id="tuning-grid">
+              <div class="grid-placeholder">Loading cluster frequency controls...</div>
+            </div>
           </div>
 
           <!-- M3 Floating Action Buttons (Bottom-Right Icon-Only FAB Stack) -->
@@ -275,6 +309,25 @@
       </div>
       <div class="m3-sheet-content" id="freq-sheet-options">
         <!-- Frequency Option Items dynamically rendered in app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Material 3 CPU Scheduler (Governor) Selector Bottom Sheet -->
+  <div class="m3-sheet-backdrop" id="gov-sheet-backdrop">
+    <div class="m3-bottom-sheet" id="gov-sheet">
+      <div class="m3-sheet-handle"></div>
+      <div class="m3-sheet-header">
+        <div class="m3-sheet-title-group">
+          <h4 class="m3-sheet-title" id="gov-sheet-title">Select CPU Scheduler</h4>
+          <span class="m3-sheet-subtitle" id="gov-sheet-subtitle">Cluster 0 • LITTLE</span>
+        </div>
+        <button class="icon-btn" id="gov-sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="m3-sheet-content" id="gov-sheet-options">
+        <!-- Governor Option Items dynamically rendered in app.js -->
       </div>
     </div>
   </div>

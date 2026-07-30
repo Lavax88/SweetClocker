@@ -43,32 +43,45 @@
    * @param {string} message 
    */
   function toast(message) {
-    if (typeof window.ksu !== "undefined" && typeof ksu.toast === "function") {
-      try {
-        ksu.toast(message);
-      } catch (e) {
-        console.error("Toast error:", e);
-      }
-    } else {
-      // Browser fallback
-      console.log("[Toast Alert]:", message);
-      const toastEl = document.createElement("div");
-      toastEl.style.position = "fixed";
-      toastEl.style.bottom = "96px"; // Adjusted to sit clear of bottom nav
-      toastEl.style.left = "50%";
-      toastEl.style.transform = "translateX(-50%)";
-      toastEl.style.backgroundColor = "var(--md-sys-color-primary-container)";
-      toastEl.style.color = "var(--md-sys-color-on-primary-container)";
-      toastEl.style.padding = "8px 16px";
-      toastEl.style.borderRadius = "20px";
-      toastEl.style.fontSize = "0.85rem";
-      toastEl.style.fontWeight = "500";
-      toastEl.style.boxShadow = "var(--md-elevation-2)";
-      toastEl.style.zIndex = "9999";
-      toastEl.innerText = message;
-      document.body.appendChild(toastEl);
-      setTimeout(() => toastEl.remove(), 2500);
-    }
+    console.log("[Toast Alert]:", message);
+    const existing = document.getElementById("sweetclocker-toast");
+    if (existing) existing.remove();
+
+    const toastEl = document.createElement("div");
+    toastEl.id = "sweetclocker-toast";
+    toastEl.style.position = "fixed";
+    toastEl.style.bottom = "84px";
+    toastEl.style.left = "50%";
+    toastEl.style.transform = "translateX(-50%) translateY(12px)";
+    toastEl.style.backgroundColor = "var(--md-sys-color-primary-container)";
+    toastEl.style.color = "var(--md-sys-color-on-primary-container)";
+    toastEl.style.padding = "10px 20px";
+    toastEl.style.borderRadius = "9999px";
+    toastEl.style.fontSize = "0.85rem";
+    toastEl.style.fontWeight = "600";
+    toastEl.style.fontFamily = "var(--font-family)";
+    toastEl.style.boxShadow = "var(--md-elevation-3)";
+    toastEl.style.zIndex = "99999";
+    toastEl.style.opacity = "0";
+    toastEl.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+    toastEl.style.pointerEvents = "none";
+    toastEl.style.whiteSpace = "nowrap";
+    toastEl.innerText = message;
+    
+    document.body.appendChild(toastEl);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        toastEl.style.opacity = "1";
+        toastEl.style.transform = "translateX(-50%) translateY(0)";
+      });
+    });
+
+    setTimeout(() => {
+      toastEl.style.opacity = "0";
+      toastEl.style.transform = "translateX(-50%) translateY(8px)";
+      setTimeout(() => toastEl.remove(), 280);
+    }, 2200);
   }
 
   /* Mock Data Engine for Browser/Staging Previews */
@@ -217,8 +230,21 @@
             mockCoresState[7].min = minVal;
           }
         }
+        if (l.includes("_gov=")) {
+          const [key, val] = l.split("=");
+          const govVal = val.trim();
+          if (key.startsWith("policy0")) {
+            mockCoresState[0].gov = govVal; mockCoresState[1].gov = govVal;
+          } else if (key.startsWith("policy2")) {
+            mockCoresState[2].gov = govVal; mockCoresState[3].gov = govVal; mockCoresState[4].gov = govVal;
+          } else if (key.startsWith("policy5")) {
+            mockCoresState[5].gov = govVal; mockCoresState[6].gov = govVal;
+          } else if (key.startsWith("policy7")) {
+            mockCoresState[7].gov = govVal;
+          }
+        }
       });
-      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Applied custom cluster frequency limits`;
+      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Applied custom cluster frequency limits & governor settings`;
       return { errno: 0, stdout: "", stderr: "" };
     }
 
@@ -231,15 +257,17 @@
       mockCoresState[2].min = 600000; mockCoresState[3].min = 600000; mockCoresState[4].min = 600000;
       mockCoresState[5].min = 600000; mockCoresState[6].min = 600000;
       mockCoresState[7].min = 800000;
-      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Reset custom cluster frequencies to predefined sweetclocks`;
+      mockCoresState.forEach(c => c.gov = "schedutil");
+      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Reset custom cluster frequencies & governors to predefined sweetclocks`;
       return { errno: 0, stdout: "", stderr: "" };
     }
 
     if (command.includes("scaling_available_frequencies") || command.includes("cpuinfo_max_freq")) {
-      const out = "0|400000|2000000|400000 600000 800000 1000000 1200000 1286400 1400000 1600000 1800000 2000000\n" +
-                  "2|600000|2800000|600000 900000 1200000 1500000 1800000 1920000 2100000 2400000 2600000 2800000\n" +
-                  "5|600000|2800000|600000 900000 1200000 1500000 1800000 1920000 2100000 2400000 2600000 2800000\n" +
-                  "7|800000|3000000|800000 1100000 1400000 1700000 2000000 2300000 2515200 2700000 2900000 3000000\n";
+      const govs = "schedutil performance powersave userspace ondemand conservative";
+      const out = `0|400000|2000000|${mockCoresState[0].gov}|${govs}|400000 600000 800000 1000000 1200000 1286400 1400000 1600000 1800000 2000000\n` +
+                  `2|600000|2800000|${mockCoresState[2].gov}|${govs}|600000 900000 1200000 1500000 1800000 1920000 2100000 2400000 2600000 2800000\n` +
+                  `5|600000|2800000|${mockCoresState[5].gov}|${govs}|600000 900000 1200000 1500000 1800000 1920000 2100000 2400000 2600000 2800000\n` +
+                  `7|800000|3000000|${mockCoresState[7].gov}|${govs}|800000 1100000 1400000 1700000 2000000 2300000 2515200 2700000 2900000 3000000\n`;
       return { errno: 0, stdout: out, stderr: "" };
     }
 

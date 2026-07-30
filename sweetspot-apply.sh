@@ -161,6 +161,15 @@ apply_and_log() {
     # Unmount standard policy and per-CPU max/min frequency paths before writing to real sysfs node
     unmount_freq_locks "$label" "$path"
 
+    # Write custom governor if configured
+    custom_gov=$(get_custom_gov "$label")
+    if [ -n "$custom_gov" ] && [ -f "$path/scaling_governor" ]; then
+        echo "$custom_gov" > "$path/scaling_governor" 2>/dev/null
+        readback_gov=$(cat "$path/scaling_governor" 2>/dev/null)
+        log_msg "${label}/scaling_governor: set custom governor ${readback_gov:-$custom_gov}"
+        update_state "${label}_gov" "${readback_gov:-$custom_gov}"
+    fi
+
     # Write custom min frequency if configured
     if [ -n "$custom_min" ] && [ -f "$path/scaling_min_freq" ]; then
         echo "$custom_min" > "$path/scaling_min_freq" 2>/dev/null
@@ -277,6 +286,15 @@ get_custom_min() {
     lbl="$1"
     if [ -f "$CUSTOM_FILE" ]; then
         val=$(grep "^${lbl}_min=" "$CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
+        [ -n "$val" ] && echo "$val" && return
+    fi
+    echo ""
+}
+
+get_custom_gov() {
+    lbl="$1"
+    if [ -f "$CUSTOM_FILE" ]; then
+        val=$(grep "^${lbl}_gov=" "$CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
         [ -n "$val" ] && echo "$val" && return
     fi
     echo ""
@@ -430,6 +448,17 @@ elif [ "$MODE" = "--check" ] || [ "$MODE" = "--check-slow" ]; then
             drift_count=$((drift_count + 1))
             log_msg "service.sh: drift detected on ${label}, was reset to ${curr_freq}, re-applying ${target}"
             apply_and_log "$label" "$path" "$target"
+        else
+            custom_gov=$(get_custom_gov "$label")
+            if [ -n "$custom_gov" ] && [ -f "$path/scaling_governor" ]; then
+                curr_gov=$(cat "$path/scaling_governor" 2>/dev/null)
+                if [ "$curr_gov" != "$custom_gov" ]; then
+                    drift_count=$((drift_count + 1))
+                    log_msg "service.sh: governor drift detected on ${label}, was ${curr_gov}, re-applying ${custom_gov}"
+                    echo "$custom_gov" > "$path/scaling_governor" 2>/dev/null
+                    update_state "${label}_gov" "$custom_gov"
+                fi
+            fi
         fi
     done
 

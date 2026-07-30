@@ -63,12 +63,16 @@ for p in 0 2 5 7; do
   boost=""
   hw_min="0"
   hw_max="0"
+  gov=""
+  avail_govs=""
   [ -f "\${pol_dir}/scaling_available_frequencies" ] && read -r avail < "\${pol_dir}/scaling_available_frequencies"
   [ -f "\${pol_dir}/scaling_boost_frequencies" ] && read -r boost < "\${pol_dir}/scaling_boost_frequencies"
   [ -n "\${boost}" ] && avail="\${avail} \${boost}"
   [ -f "\${pol_dir}/cpuinfo_min_freq" ] && read -r hw_min < "\${pol_dir}/cpuinfo_min_freq"
   [ -f "\${pol_dir}/cpuinfo_max_freq" ] && read -r hw_max < "\${pol_dir}/cpuinfo_max_freq"
-  echo "\${p}|\${hw_min}|\${hw_max}|\${avail}"
+  [ -f "\${pol_dir}/scaling_governor" ] && read -r gov < "\${pol_dir}/scaling_governor"
+  [ -f "\${pol_dir}/scaling_available_governors" ] && read -r avail_govs < "\${pol_dir}/scaling_available_governors"
+  echo "\${p}|\${hw_min}|\${hw_max}|\${gov}|\${avail_govs}|\${avail}"
 done
 `;
 
@@ -107,7 +111,18 @@ done
           const policyId = parts[0].trim();
           const hwMin = parseInt(parts[1], 10) || 0;
           let hwMax = parseInt(parts[2], 10) || 0;
-          const availStr = parts[3] || "";
+          let gov = "";
+          let availGovs = [];
+          let availStr = "";
+
+          if (parts.length >= 6) {
+            gov = parts[3].trim();
+            availGovs = parts[4].split(/\s+/).filter(g => g.length > 0);
+            availStr = parts[5] || "";
+          } else {
+            availStr = parts[3] || "";
+          }
+
           const availFreqs = availStr.split(/\s+/).map(f => parseInt(f, 10)).filter(f => !isNaN(f) && f > 0).sort((a, b) => a - b);
           if (availFreqs.length > 0) {
             hwMax = Math.max(hwMax, availFreqs[availFreqs.length - 1]);
@@ -116,6 +131,8 @@ done
             policyId,
             hwMin,
             hwMax,
+            governor: gov || "schedutil",
+            availGovs: availGovs.length > 0 ? availGovs : ["schedutil", "performance", "powersave", "userspace", "ondemand", "conservative"],
             availFreqs
           };
         }
@@ -329,6 +346,7 @@ done
     for (const [pol, limits] of Object.entries(config)) {
       if (limits.min) customText += `${pol}_min=${limits.min}\n`;
       if (limits.max) customText += `${pol}_max=${limits.max}\n`;
+      if (limits.gov) customText += `${pol}_gov=${limits.gov}\n`;
     }
     
     const cmd = `cat << 'EOF' > /data/local/tmp/.sweetclocker_custom\n${customText}EOF\n` +

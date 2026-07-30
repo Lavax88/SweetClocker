@@ -225,7 +225,7 @@ body.light-mode .btn-filled:hover {
 }
 
 .hero-main h2 {
-  font-family: 'Outfit', var(--font-family);
+  font-family: var(--font-family);
   font-size: 1.8rem;
   font-weight: 800;
   letter-spacing: -0.5px;
@@ -312,7 +312,7 @@ body.light-mode .btn-filled:hover {
 }
 
 .core-name {
-  font-family: 'Outfit', var(--font-family);
+  font-family: var(--font-family);
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--md-sys-color-on-background);
@@ -797,6 +797,7 @@ body.light-mode .log-line-info { color: #0969da; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
+  margin-top: 16px;
   width: 100%;
 }
 
@@ -831,7 +832,7 @@ body.light-mode .log-line-info { color: #0969da; }
 }
 
 .tuning-card-title {
-  font-family: 'Outfit', var(--font-family);
+  font-family: var(--font-family);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface);
@@ -1135,7 +1136,7 @@ body.light-mode .m3-fab-primary:hover {
 }
 
 .m3-sheet-title {
-  font-family: 'Outfit', var(--font-family);
+  font-family: var(--font-family);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface);
@@ -1189,7 +1190,7 @@ body.light-mode .m3-fab-primary:hover {
 }
 
 .m3-option-freq {
-  font-family: 'Inter', var(--font-family);
+  font-family: var(--font-family);
   font-size: 0.9rem;
 }
 
@@ -1231,6 +1232,104 @@ body.light-mode .m3-fab-primary:hover {
   border: 5px solid var(--md-sys-color-primary);
   background-color: var(--md-sys-color-surface);
 }
+
+/* 6. TUNING FEATURE HUB GRID CARDS */
+.tune-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  padding: 4px 0 16px 0;
+  justify-content: center;
+}
+
+@media (max-width: 320px) {
+  .tune-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tune-card {
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 22px;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: var(--md-elevation-1);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tune-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--md-elevation-2);
+  border-color: var(--md-sys-color-primary);
+}
+
+.tune-card:active {
+  transform: scale(0.97);
+}
+
+.tune-card-centered {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 20px;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tune-card-icon-bare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-primary);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tune-card:hover .tune-card-icon-bare {
+  transform: scale(1.08);
+}
+
+.tune-card-svg-bare {
+  width: 48px;
+  height: 48px;
+  display: block;
+  margin: 0 auto;
+}
+
+.tune-card-title {
+  font-family: var(--font-family);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.25;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
+.subview-header {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.subview-header .btn {
+  padding: 0 14px;
+}
+
 
 
 
