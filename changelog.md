@@ -1,5 +1,22 @@
 # SweetClocker Changelog
 
+## v1.3.0 (versionCode 122)
+
+### feat(ui): add Author & Credits section, copy log FAB, and default browser link handler (00f7bfd)
+
+
+### fix(gpu): prevent thermal throttling override, lock power levels, and fix reset stuck clock (6cdb2d2)
+
+
+### feat(cpu): set default CPU governor to schedutil with VFS lock on install (4c7854f)
+
+
+### feat(gpu): add GPU frequency tuning, sconfig thermal override, and dashboard governor monitor (3d1fa11)
+
+
+### feat(webui): add tuning categories hub, system font selection, and navigation controls (e77b2c7)
+
+
 ## v1.2.0 (versionCode 121)
 
 ### feat: add custom cluster frequency tuning and Material 3 WebUI controls (bdd97e4)
