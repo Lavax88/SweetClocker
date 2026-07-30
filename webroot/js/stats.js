@@ -1,6 +1,7 @@
 /* stats.js - Core Telemetry and Usage Parser (Classic Script version) */
 (function() {
   let prevCpuTimes = {};
+  let lastCachedStats = null;
 
   // Extremely optimized query using shell builtins (read) to prevent fork overhead
   // Uses alternative sysfs path (/dev/sweetclocker/sysfs) if mounted to read actual unmounted frequency limits
@@ -36,25 +37,60 @@ bypass=0
 [ -f /data/local/tmp/sweetclocker_force ] && bypass=1
 echo "\${is_run}|\${bypass}"
 echo "---"
+gpu_dir="/sys/class/kgsl/kgsl-3d0"
+[ -d "\${sys_path}/class/kgsl/kgsl-3d0" ] && gpu_dir="\${sys_path}/class/kgsl/kgsl-3d0"
+
+gpu_df_dir=""
+for d in "\${sys_path}/class/devfreq/3d00000.qcom,kgsl-3d0" \
+         "\${sys_path}/devices/platform/soc/3d00000.qcom,kgsl-3d0/devfreq/3d00000.qcom,kgsl-3d0" \
+         "\${sys_path}/class/devfreq/gpufreq" \
+         "\${gpu_dir}/devfreq"; do
+  [ -d "\$d" ] || continue
+  case "\$d" in *bw*|*bwmon*) continue ;; esac
+  gpu_df_dir="\$d"
+  break
+done
+
 gpu_busy="0"
 gpu_cur="0"
 gpu_min="0"
 gpu_max="0"
 gpu_model="Adreno GPU"
-[ -f "/sys/class/kgsl/kgsl-3d0/gpu_busy_percent" ] && read -r gpu_busy < "/sys/class/kgsl/kgsl-3d0/gpu_busy_percent"
-if [ "\${gpu_busy}" = "0" ] && [ -f "/sys/class/kgsl/kgsl-3d0/gpubusy" ]; then
-  read -r busy total < "/sys/class/kgsl/kgsl-3d0/gpubusy"
-  if [ -n "\${total}" ] && [ "\${total}" -gt 0 ]; then
-    gpu_busy=\$((busy * 100 / total))
+gpu_gov="msm-adreno-tz"
+gpu_avail_govs=""
+gpu_avail_freqs=""
+
+[ -f "\${gpu_dir}/gpu_busy_percent" ] && read -r gpu_busy < "\${gpu_dir}/gpu_busy_percent"
+if [ "\${gpu_busy}" = "0" ] && [ -f "\${gpu_dir}/gpubusy" ]; then
+  read -r busy total < "\${gpu_dir}/gpubusy"
+  [ -n "\${total}" ] && [ "\${total}" -gt 0 ] && gpu_busy=\$((busy * 100 / total))
+fi
+
+[ -f "\${gpu_dir}/max_gpuclk" ] && read -r gpu_max < "\${gpu_dir}/max_gpuclk"
+[ -f "\${gpu_dir}/gpuclk" ] && read -r gpu_cur < "\${gpu_dir}/gpuclk"
+
+if [ -n "\${gpu_df_dir}" ]; then
+  [ -f "\${gpu_df_dir}/cur_freq" ] && [ "\${gpu_cur}" = "0" ] && read -r gpu_cur < "\${gpu_df_dir}/cur_freq"
+  [ -f "\${gpu_df_dir}/min_freq" ] && read -r gpu_min < "\${gpu_df_dir}/min_freq"
+  [ -f "\${gpu_df_dir}/max_freq" ] && [ "\${gpu_max}" = "0" ] && read -r gpu_max < "\${gpu_df_dir}/max_freq"
+  [ -f "\${gpu_df_dir}/governor" ] && read -r gpu_gov < "\${gpu_df_dir}/governor"
+  [ -f "\${gpu_df_dir}/available_governors" ] && read -r gpu_avail_govs < "\${gpu_df_dir}/available_governors"
+  if [ -f "\${gpu_dir}/gpu_available_frequencies" ]; then
+    read -r gpu_avail_freqs < "\${gpu_dir}/gpu_available_frequencies"
+  elif [ -f "\${gpu_df_dir}/available_frequencies" ]; then
+    read -r gpu_avail_freqs < "\${gpu_df_dir}/available_frequencies"
   fi
 fi
-[ -f "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq" ] && read -r gpu_cur < "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq"
-[ -f "/sys/class/kgsl/kgsl-3d0/devfreq/min_freq" ] && read -r gpu_min < "/sys/class/kgsl/kgsl-3d0/devfreq/min_freq"
-[ -f "/sys/class/kgsl/kgsl-3d0/devfreq/max_freq" ] && read -r gpu_max < "/sys/class/kgsl/kgsl-3d0/devfreq/max_freq"
-[ "\${gpu_cur}" = "0" ] && [ -f "/sys/class/kgsl/kgsl-3d0/gpuclk" ] && read -r gpu_cur < "/sys/class/kgsl/kgsl-3d0/gpuclk"
-[ "\${gpu_max}" = "0" ] && [ -f "/sys/class/kgsl/kgsl-3d0/max_gpuclk" ] && read -r gpu_max < "/sys/class/kgsl/kgsl-3d0/max_gpuclk"
-[ -f "/sys/class/kgsl/kgsl-3d0/gpu_model" ] && read -r gpu_model < "/sys/class/kgsl/kgsl-3d0/gpu_model"
-echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}"
+
+[ -f "\${gpu_dir}/gpu_model" ] && read -r gpu_model < "\${gpu_dir}/gpu_model"
+
+if [ -n "\${gpu_min}" ] && [ -n "\${gpu_max}" ]; then
+  if [ "\${gpu_min}" -gt "\${gpu_max}" ] 2>/dev/null; then
+    gpu_min="264000000"
+  fi
+fi
+
+echo "\${gpu_busy}|\${gpu_cur}|\${gpu_min}|\${gpu_max}|\${gpu_model}|\${gpu_gov}|\${gpu_avail_govs}|\${gpu_avail_freqs}"
 echo "---"
 for p in 0 2 5 7; do
   pol_dir="\${sys_path}/devices/system/cpu/cpufreq/policy\${p}"
@@ -301,18 +337,31 @@ done
       return 0;
     }
     
+    const parsedAvailGovs = rawGpu[6] ? rawGpu[6].split(/\s+/).filter(g => g.length > 0) : [];
+    const rawFreqsList = (rawGpu[7] || "").split(/\s+/).map(f => parseInt(f, 10)).filter(f => !isNaN(f) && f > 0);
+    let parsedAvailFreqs = Array.from(new Set(rawFreqsList.map(f => formatGpuFreq(f)))).sort((a, b) => a - b);
+
+    if (parsedAvailFreqs.length === 0) {
+      parsedAvailFreqs = [264, 355, 443, 540, 650, 738, 855, 937];
+    }
+
     const gpuStats = {
       usage: Math.max(0, Math.min(100, parseInt(rawGpu[0], 10) || 0)),
       curFreq: formatGpuFreq(rawGpu[1]),
-      minFreq: formatGpuFreq(rawGpu[2]),
-      maxFreq: formatGpuFreq(rawGpu[3]),
+      minFreq: formatGpuFreq(rawGpu[2]) || 264,
+      maxFreq: formatGpuFreq(rawGpu[3]) || 937,
       model: rawGpu[4] ? rawGpu[4].trim().replace(/Adreno(\d+)/i, 'Adreno $1') : "Adreno GPU",
+      governor: rawGpu[5] ? rawGpu[5].trim() : "msm-adreno-tz",
+      availGovs: parsedAvailGovs.length > 0 ? parsedAvailGovs : ["msm-adreno-tz", "performance", "powersave", "userspace", "simple_ondemand", "bw_hwmon"],
+      availFreqs: parsedAvailFreqs,
+      hwMin: parsedAvailFreqs[0],
+      hwMax: parsedAvailFreqs[parsedAvailFreqs.length - 1],
       temp: getGpuTemp()
     };
     
     const totalLoad = usageCount > 0 ? Math.round(usageSum / usageCount) : 0;
     
-    return {
+    const result = {
       cores: parsedCores,
       totalLoad,
       serviceRunning,
@@ -320,6 +369,8 @@ done
       gpu: gpuStats,
       clusters: clustersData
     };
+    lastCachedStats = result;
+    return result;
   }
 
   /**
@@ -338,15 +389,96 @@ done
     return true;
   }
 
+  async function getExistingCustomLines(filterPrefix) {
+    const { stdout } = await KsuApi.exec("cat /data/local/tmp/.sweetclocker_custom 2>/dev/null");
+    if (!stdout) return [];
+    return stdout.split('\n').filter(l => l.trim().length > 0 && !l.startsWith(filterPrefix));
+  }
+
+  function getScriptCmd(flag) {
+    return `sp="/data/adb/modules/sweetclocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="/data/adb/modules/SweetClocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="/data/adb/modules_update/sweetclocker/sweetspot-apply.sh"\n` +
+      `sh "$sp" ${flag}`;
+  }
+
+  async function applyCpuConfig(config) {
+    const lines = await getExistingCustomLines("policy");
+    for (const [pol, limits] of Object.entries(config)) {
+      if (limits.min) lines.push(`${pol}_min=${limits.min}`);
+      if (limits.max) lines.push(`${pol}_max=${limits.max}`);
+      if (limits.gov) lines.push(`${pol}_gov=${limits.gov}`);
+    }
+    const customText = lines.join('\n') + (lines.length ? '\n' : '');
+    const cmd = `cat << 'EOF' > /data/local/tmp/.sweetclocker_custom\n${customText}EOF\n` + getScriptCmd("--apply-cpu");
+
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to apply CPU configuration:", stderr);
+      return false;
+    }
+    return true;
+  }
+
+  async function applyGpuConfig(gpuConfig) {
+    const lines = await getExistingCustomLines("gpu_");
+    if (gpuConfig) {
+      if (gpuConfig.min) lines.push(`gpu_min=${gpuConfig.min}`);
+      if (gpuConfig.max) lines.push(`gpu_max=${gpuConfig.max}`);
+      if (gpuConfig.gov) lines.push(`gpu_gov=${gpuConfig.gov}`);
+    }
+    const customText = lines.join('\n') + (lines.length ? '\n' : '');
+    const cmd = `cat << 'EOF' > /data/local/tmp/.sweetclocker_custom\n${customText}EOF\n` + getScriptCmd("--apply-gpu");
+
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to apply GPU configuration:", stderr);
+      return false;
+    }
+    return true;
+  }
+
+  async function resetCpuConfig() {
+    const cmd = getScriptCmd("--reset-cpu");
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to reset CPU configuration:", stderr);
+      return false;
+    }
+    return true;
+  }
+
+  async function resetGpuConfig() {
+    const cmd = getScriptCmd("--reset-gpu");
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to reset GPU configuration:", stderr);
+      return false;
+    }
+    return true;
+  }
+
   /**
-   * Apply custom cluster frequencies to system
+   * Apply custom cluster frequencies to system (legacy/combined)
    */
-  async function applyCustomClusterFreqs(config) {
+  async function applyCustomClusterFreqs(config, gpuConfig = null) {
+    if (gpuConfig && Object.keys(config).length === 0) {
+      return applyGpuConfig(gpuConfig);
+    }
+    if (!gpuConfig && Object.keys(config).length > 0) {
+      return applyCpuConfig(config);
+    }
     let customText = "";
     for (const [pol, limits] of Object.entries(config)) {
       if (limits.min) customText += `${pol}_min=${limits.min}\n`;
       if (limits.max) customText += `${pol}_max=${limits.max}\n`;
       if (limits.gov) customText += `${pol}_gov=${limits.gov}\n`;
+    }
+    
+    if (gpuConfig) {
+      if (gpuConfig.min) customText += `gpu_min=${gpuConfig.min}\n`;
+      if (gpuConfig.max) customText += `gpu_max=${gpuConfig.max}\n`;
+      if (gpuConfig.gov) customText += `gpu_gov=${gpuConfig.gov}\n`;
     }
     
     const cmd = `cat << 'EOF' > /data/local/tmp/.sweetclocker_custom\n${customText}EOF\n` +
@@ -383,7 +515,12 @@ done
   // Expose to window namespace
   window.Stats = {
     getCpuStats,
+    getLastStats: () => lastCachedStats,
     setBypassMode,
+    applyCpuConfig,
+    applyGpuConfig,
+    resetCpuConfig,
+    resetGpuConfig,
     applyCustomClusterFreqs,
     resetToSweetclocks
   };
