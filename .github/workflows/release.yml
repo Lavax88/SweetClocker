@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release Version (e.g. v1.2.0)'
+        description: 'Release Version (e.g. v1.3.0)'
         required: true
-        default: 'v1.2.0'
+        default: ''
+      changelog:
+        description: 'Changelog / Release Notes'
+        required: true
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -19,13 +24,13 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Fetch all history for changelog generation
+        fetch-depth: 0
 
     - name: Update Version & Increment VersionCode
       id: update_metadata
+      env:
+        RELEASE_VER: ${{ github.event.inputs.version }}
       run: |
-        RELEASE_VER="${{ github.event.inputs.version }}"
-        
         # 1. Update version string in module.prop
         sed -i "s/^version=.*/version=${RELEASE_VER}/" module.prop
         
@@ -42,26 +47,16 @@ jobs:
         cat module.prop
         echo "NEW_VC=${NEW_VC}" >> $GITHUB_OUTPUT
 
-    - name: Generate Changelog & Update Files
+    - name: Format Changelog & Update Files
+      env:
+        RELEASE_VER: ${{ github.event.inputs.version }}
+        NEW_VC: ${{ steps.update_metadata.outputs.NEW_VC }}
+        MANUAL_CHANGELOG: ${{ github.event.inputs.changelog }}
       run: |
-        RELEASE_VER="${{ github.event.inputs.version }}"
-        NEW_VC="${{ steps.update_metadata.outputs.NEW_VC }}"
-        
-        # Fetch tags to find previous version
-        git fetch --tags --force
-        previous_tag=$(git describe --tags --abbrev=0 2>/dev/null || git tag --sort=-v:refname | head -n 1 || true)
-        
         # Generate release notes for GitHub Release
         echo "## Changelog" > changelog.txt
         echo "" >> changelog.txt
-        if [ -z "$previous_tag" ]; then
-          echo "No previous release tag found. Logging commits:"
-          git log --pretty=format:"### %s (%h)%n%b%n" HEAD >> changelog.txt
-        else
-          echo "Previous tag: $previous_tag. Logging commits since $previous_tag:"
-          git log --pretty=format:"### %s (%h)%n%b%n" ${previous_tag}..HEAD >> changelog.txt
-        fi
-        
+        echo "$MANUAL_CHANGELOG" >> changelog.txt
         echo "" >> changelog.txt
         echo "---" >> changelog.txt
         echo "### Verification" >> changelog.txt
@@ -70,12 +65,7 @@ jobs:
         # Update changelog.md for root managers (KernelSU / APatch / Magisk / MMRL update.json)
         ENTRY_FILE="/tmp/new_entry.md"
         echo "## ${RELEASE_VER} (versionCode ${NEW_VC})" > "$ENTRY_FILE"
-        echo "" >> "$ENTRY_FILE"
-        if [ -z "$previous_tag" ]; then
-          git log --pretty=format:"### %s (%h)%n%b%n" HEAD >> "$ENTRY_FILE"
-        else
-          git log --pretty=format:"### %s (%h)%n%b%n" ${previous_tag}..HEAD >> "$ENTRY_FILE"
-        fi
+        echo "$MANUAL_CHANGELOG" >> "$ENTRY_FILE"
         echo "" >> "$ENTRY_FILE"
         
         if [ -f "changelog.md" ]; then
@@ -104,23 +94,27 @@ jobs:
         cat update.json
 
     - name: Commit and Push Version & Changelog Update
+      env:
+        RELEASE_VER: ${{ github.event.inputs.version }}
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         
         git add module.prop changelog.md update.json
         if ! git diff --staged --quiet; then
-          git commit -m "chore: release ${{ github.event.inputs.version }} [skip ci]"
+          git commit -m "chore: release ${RELEASE_VER} [skip ci]"
           git push origin HEAD:${{ github.ref }}
         else
           echo "No metadata changes. Skipping commit."
         fi
 
     - name: Build Flashable Zip
+      env:
+        RELEASE_VER: ${{ github.event.inputs.version }}
       run: |
-        git archive --format=zip --output=SweetClocker-${{ github.event.inputs.version }}.zip HEAD
+        git archive --format=zip --output=SweetClocker-${RELEASE_VER}.zip HEAD
         echo "Zip verification:"
-        unzip -l SweetClocker-${{ github.event.inputs.version }}.zip
+        unzip -l SweetClocker-${RELEASE_VER}.zip
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
