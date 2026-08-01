@@ -1,5 +1,8 @@
 # SweetClocker Changelog
 
+## v1.4.0 (versionCode 123)
+**New Features & Enhancements**  *   **Storage I/O Scheduler Management**     *   Added dedicated **I/O Management** tuning subview in WebUI with storage category card.     *   Implemented automatic discovery of physical storage block devices (`/sys/block/*`) and supported I/O schedulers.     *   Added Master **Enable I/O Management** switch and **Apply at Boot** persistence controls with Material 3 switch styling.     *   Integrated Material 3 bottom sheet picker dialogs for selecting per-device I/O schedulers.     *   Initial factory schedulers recorded to `/data/local/tmp/.sweetclocker_io_defaults` on first read and preserved permanently.     *   Added `Default` indicator badges inside dropdown triggers and picker popups.     *   Added one-click reset to revert storage block devices to original system defaults.  *   **Module Lifecycle & Logging**     *   Added state file cleanup in `customize.sh` on module updates or reflashes.     *   Added automatic restoration of default I/O schedulers and file cleanup in `uninstall.sh`.     *   Added timestamped logging for all I/O scheduler applications, drift checks, and reset operations in `/data/local/tmp/sweetclocker.log`.  *   **User Interface & Design**     *   Updated `#icon-io` SVG vector geometry to solid-filled 24x24 architecture matching CPU & GPU icons.     *   Filtered out non-configurable virtual block devices (`loop*`, `zram*`) from UI discovery.
+
 ## v1.3.0 (versionCode 122)
 
 **New Features & Enhancements**

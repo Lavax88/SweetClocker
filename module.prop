@@ -1,7 +1,7 @@
 id=sweetclocker
 name=SweetClocker
-version=v1.3.0
-versionCode=122
+version=v1.4.0
+versionCode=123
 author=Lava
 description=A barebones kernel manager module made with love
 updateJson=https://raw.githubusercontent.com/Lavax88/SweetClocker/main/update.json
