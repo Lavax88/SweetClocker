@@ -19,10 +19,12 @@
 
 - **Precision Sweet-Spot Capping**: Automatically locks CPU clusters at benchmarked efficiency sweet spots right from early boot (`post-fs-data`).
 - **Custom Cluster & GPU Frequency Tuning**: Set custom min/max frequency limits and governors per CPU cluster (CPUs 0-1, 2-4, 5-6, 7) up to **3.21 GHz** on Prime, **3.01 GHz** on Big, as well as full GPU min/max frequency and governor configuration.
+- **I/O Scheduler Management**: Configure storage block device I/O schedulers (`/sys/block/*`) with boot persistence, automatic factory defaults protection, and Material 3 picker dialogs.
 - **One-Tap Sweetclock Reset**: Quickly revert back to predefined efficiency sweet spots with a single tap of the floating action button.
 - **Daemon-Lock VFS Protection**: Applies VFS bind-mount locks on real `/sys` node paths for both CPU and GPU to prevent thermal daemons and PowerHAL from overriding settings, while allowing third-party monitoring apps (CPU-Z, DevCheck) to accurately read modified clocks.
 - **Material 3 Expressive WebUI**: Embedded dashboard featuring Snapdragon design aesthetics, dynamic Monet color sync, category subviews, interactive M3 bottom sheets, and glassmorphic styling.
 - **Real-Time Telemetry & Logs**: Track live per-core CPU frequencies, GPU load/thermals, and system logs with automatic 24-hour log rotation.
+
 
 ---
 
