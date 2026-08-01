@@ -546,11 +546,13 @@
     const hubView = document.getElementById("tuning-hub-view");
     const cpuClocksView = document.getElementById("tuning-cpu-clocks-view");
     const gpuClocksView = document.getElementById("tuning-gpu-clocks-view");
+    const ioView = document.getElementById("tuning-io-view");
     const fabContainer = document.getElementById("tuning-fab-container");
 
     if (viewName === 'cpu-clocks') {
       if (hubView) hubView.style.display = "none";
       if (gpuClocksView) gpuClocksView.style.display = "none";
+      if (ioView) ioView.style.display = "none";
       if (cpuClocksView) cpuClocksView.style.display = "block";
       if (fabContainer) {
         requestAnimationFrame(() => {
@@ -569,6 +571,7 @@
     } else if (viewName === 'gpu-clocks') {
       if (hubView) hubView.style.display = "none";
       if (cpuClocksView) cpuClocksView.style.display = "none";
+      if (ioView) ioView.style.display = "none";
       if (gpuClocksView) gpuClocksView.style.display = "block";
       if (fabContainer) {
         requestAnimationFrame(() => {
@@ -584,17 +587,55 @@
       }
       currentTuningSubView = 'gpu-clocks';
       triggerImmediateUpdate();
+    } else if (viewName === 'io-management') {
+      if (hubView) hubView.style.display = "none";
+      if (cpuClocksView) cpuClocksView.style.display = "none";
+      if (gpuClocksView) gpuClocksView.style.display = "none";
+      if (ioView) ioView.style.display = "block";
+      if (fabContainer) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            fabContainer.classList.add("fab-visible");
+          });
+        });
+      }
+      if (pushHistory && currentTuningSubView !== 'io-management') {
+        try {
+          history.pushState({ subview: 'io-management' }, '');
+        } catch (e) {}
+      }
+      currentTuningSubView = 'io-management';
+      renderIoView();
     } else {
       if (cpuClocksView) cpuClocksView.style.display = "none";
       if (gpuClocksView) gpuClocksView.style.display = "none";
+      if (ioView) ioView.style.display = "none";
       if (hubView) hubView.style.display = "block";
       if (fabContainer) fabContainer.classList.remove("fab-visible");
       currentTuningSubView = 'hub';
     }
   }
 
+
   // Handle system back gesture in Android WebView
   window.addEventListener("popstate", () => {
+    const freqBackdrop = document.getElementById("freq-sheet-backdrop");
+    const govBackdrop = document.getElementById("gov-sheet-backdrop");
+    const gpuWarningBackdrop = document.getElementById("gpu-warning-dialog-backdrop");
+    
+    if (freqBackdrop && freqBackdrop.classList.contains("active")) {
+      freqBackdrop.classList.remove("active");
+      return;
+    }
+    if (govBackdrop && govBackdrop.classList.contains("active")) {
+      govBackdrop.classList.remove("active");
+      return;
+    }
+    if (gpuWarningBackdrop && gpuWarningBackdrop.classList.contains("active")) {
+      hideGpuWarningDialog();
+      return;
+    }
+
     if (currentTuningSubView === 'cpu-clocks' || currentTuningSubView === 'gpu-clocks') {
       showTuningSubView('hub', false);
     }
@@ -666,6 +707,8 @@
           showTuningSubView("gpu-clocks", true);
           showGpuWarningDialog();
           updateGpuControlsLockState();
+        } else if (feature === "io-management") {
+          showTuningSubView("io-management", true);
         }
       });
     });
@@ -689,6 +732,33 @@
           history.back();
         } else {
           showTuningSubView("hub", false);
+        }
+      });
+    }
+
+    const ioBackBtn = document.getElementById("tune-io-back-btn");
+    if (ioBackBtn) {
+      ioBackBtn.addEventListener("click", () => {
+        if (history.state && history.state.subview === 'io-management') {
+          history.back();
+        } else {
+          showTuningSubView("hub", false);
+        }
+      });
+    }
+
+    const ioEnableToggle = document.getElementById("io-enable-toggle");
+    if (ioEnableToggle) {
+      ioEnableToggle.addEventListener("change", async (e) => {
+        const isChecked = e.target.checked;
+        if (isChecked) {
+          await renderIoView(true);
+        } else {
+          if (currentIoData) currentIoData.enabled = false;
+          const grid = document.getElementById("io-tuning-grid");
+          if (grid) {
+            grid.innerHTML = `<div class="grid-placeholder" style="padding: 24px; text-align: center;">I/O Management is disabled.<br><span style="font-size: 0.8rem; opacity: 0.7;">Turn ON the toggle above to inspect and customize block device schedulers.</span></div>`;
+          }
         }
       });
     }
@@ -744,6 +814,31 @@
           } else {
             KsuApi.toast("Failed to apply CPU configuration");
           }
+        } else if (currentTuningSubView === 'io-management') {
+          const ioEnable = document.getElementById("io-enable-toggle");
+          const ioApplyBoot = document.getElementById("io-apply-boot-toggle");
+          const isEnabled = ioEnable ? ioEnable.checked : false;
+          const applyBoot = ioApplyBoot ? ioApplyBoot.checked : false;
+
+          const configMap = {};
+          const ioCards = document.querySelectorAll("#io-tuning-grid .io-card");
+          ioCards.forEach(card => {
+            const dev = card.getAttribute("data-dev");
+            const trigger = card.querySelector(".io-sched-trigger");
+            if (dev && trigger) {
+              configMap[dev] = trigger.getAttribute("data-val");
+            }
+          });
+
+
+          KsuApi.toast("Applying I/O scheduler configuration...");
+          const ok = await Stats.applyIoConfig(configMap, applyBoot, isEnabled);
+          if (ok) {
+            KsuApi.toast("I/O scheduler configuration applied!");
+            renderIoView();
+          } else {
+            KsuApi.toast("Failed to apply I/O configuration");
+          }
         }
       });
     }
@@ -771,12 +866,124 @@
           } else {
             KsuApi.toast("Failed to reset CPU configuration");
           }
+        } else if (currentTuningSubView === 'io-management') {
+          KsuApi.toast("Resetting I/O schedulers to defaults...");
+          const ok = await Stats.resetIoConfig();
+          if (ok) {
+            KsuApi.toast("I/O schedulers reset to default system values!");
+            renderIoView();
+          } else {
+            KsuApi.toast("Failed to reset I/O configuration");
+          }
         }
       });
     }
   }
 
+  let currentIoData = null;
+
+  async function renderIoView(userEnabledOverride = null) {
+    const grid = document.getElementById("io-tuning-grid");
+    const enableToggle = document.getElementById("io-enable-toggle");
+    const applyBootToggle = document.getElementById("io-apply-boot-toggle");
+
+    if (!grid) return;
+
+    const data = await Stats.getIoStats();
+    currentIoData = data;
+
+    if (!data) {
+      grid.innerHTML = `<div class="grid-placeholder">Failed to query storage block devices.</div>`;
+      return;
+    }
+
+    const isEnabled = userEnabledOverride !== null ? userEnabledOverride : (data.enabled || (enableToggle && enableToggle.checked));
+
+    if (enableToggle) {
+      enableToggle.checked = isEnabled;
+    }
+    if (applyBootToggle) {
+      applyBootToggle.checked = data.applyBoot;
+    }
+
+    if (!isEnabled) {
+      grid.innerHTML = `<div class="grid-placeholder" style="padding: 24px; text-align: center;">I/O Management is disabled.<br><span style="font-size: 0.8rem; opacity: 0.7;">Turn ON the switch above to inspect and customize block device schedulers.</span></div>`;
+      return;
+    }
+
+    const validBlocks = (data.blocks || []).filter(b => !b.dev.startsWith("loop") && !b.dev.startsWith("zram"));
+
+    if (validBlocks.length === 0) {
+      grid.innerHTML = `<div class="grid-placeholder">No configurable storage block devices found.</div>`;
+      return;
+    }
+
+    grid.innerHTML = "";
+
+    validBlocks.forEach(blk => {
+      const card = document.createElement("div");
+      card.className = "card tuning-card io-card";
+      card.setAttribute("data-dev", blk.dev);
+
+      const activeSched = blk.customSched || blk.active || blk.defaultSched;
+      const isDefault = activeSched === blk.defaultSched;
+
+      card.innerHTML = `
+        <div class="io-card-header">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span class="io-dev-title">/sys/block/${blk.dev}</span>
+          </div>
+        </div>
+
+        <div class="tuning-controls" style="margin-top: 8px;">
+          <div class="tuning-control-group">
+            <label class="tuning-control-label">I/O Scheduler</label>
+            <div class="m3-picker-trigger io-sched-trigger" id="io-trigger-${blk.dev}" data-val="${activeSched}">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="m3-picker-val" id="io-val-${blk.dev}">${activeSched}</span>
+                <span class="m3-option-badge badge-default" id="io-badge-${blk.dev}" style="${isDefault ? '' : 'display: none;'}">Default</span>
+              </div>
+              <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const trigger = card.querySelector(`#io-trigger-${blk.dev}`);
+        const valLbl = card.querySelector(`#io-val-${blk.dev}`);
+        const badgeEl = card.querySelector(`#io-badge-${blk.dev}`);
+
+        if (trigger) {
+          trigger.onclick = () => {
+            const currentVal = trigger.getAttribute("data-val") || activeSched;
+            openGovSheet({
+              title: `Select I/O Scheduler`,
+              subtitle: `/sys/block/${blk.dev} • Storage Scheduler`,
+              availGovs: blk.avail,
+              currentGov: currentVal,
+              defaultGov: blk.defaultSched,
+              onSelect: (selectedSched) => {
+                trigger.setAttribute("data-val", selectedSched);
+                if (valLbl) valLbl.innerText = selectedSched;
+                if (badgeEl) {
+                  badgeEl.style.display = (selectedSched === blk.defaultSched) ? "inline-block" : "none";
+                }
+              }
+            });
+          };
+        }
+      }, 0);
+
+      grid.appendChild(card);
+    });
+
+  }
+
+
+
   function renderTuningViewWithData(data, forceUpdateTriggers = false) {
+
     if (!data) return;
     const grid = document.getElementById("tuning-grid");
     if (grid) {
@@ -836,8 +1043,8 @@
     const hwMin = gpuData.hwMin || availFreqs[0];
     const hwMax = gpuData.hwMax || availFreqs[availFreqs.length - 1];
 
-    let maxLabel = `${curMax} MHz`;
-    if (curMax === hwMax) maxLabel += " (HW Max)";
+    let minBadge = curMin === 264 ? `<span class="m3-option-badge badge-default">Default</span>` : '';
+    let maxBadge = curMax === hwMax ? `<span class="m3-option-badge badge-hwmax">HW Max</span>` : (curMax === 937 ? `<span class="m3-option-badge badge-default">Default</span>` : '');
 
     card.innerHTML = `
       <div class="tuning-card-header">
@@ -864,7 +1071,10 @@
         <div class="tuning-control-group">
           <label class="tuning-control-label">Min Frequency</label>
           <div class="m3-picker-trigger" id="gpu-min-trigger" data-val="${curMin}">
-            <span class="m3-picker-val" id="gpu-min-val">${curMin} MHz</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="m3-picker-val" id="gpu-min-val">${curMin} MHz</span>
+              ${minBadge}
+            </div>
             <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </div>
         </div>
@@ -872,7 +1082,10 @@
         <div class="tuning-control-group">
           <label class="tuning-control-label">Max Frequency</label>
           <div class="m3-picker-trigger" id="gpu-max-trigger" data-val="${curMax}">
-            <span class="m3-picker-val" id="gpu-max-val">${maxLabel}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="m3-picker-val" id="gpu-max-val">${curMax} MHz</span>
+              ${maxBadge}
+            </div>
             <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </div>
         </div>
@@ -915,7 +1128,11 @@
             isGpu: true,
             onSelect: (selectedFreq) => {
               minTrigger.setAttribute("data-val", selectedFreq);
-              if (minValLbl) minValLbl.innerText = `${selectedFreq} MHz`;
+              const container = minTrigger.querySelector("div");
+              let badge = selectedFreq === 264 ? `<span class="m3-option-badge badge-default">Default</span>` : '';
+              if (container) {
+                container.innerHTML = `<span class="m3-picker-val" id="gpu-min-val">${selectedFreq} MHz</span>${badge}`;
+              }
             }
           });
         };
@@ -933,9 +1150,11 @@
             isGpu: true,
             onSelect: (selectedFreq) => {
               maxTrigger.setAttribute("data-val", selectedFreq);
-              let lbl = `${selectedFreq} MHz`;
-              if (selectedFreq === hwMax) lbl += " (HW Max)";
-              if (maxValLbl) maxValLbl.innerText = lbl;
+              const container = maxTrigger.querySelector("div");
+              let badge = selectedFreq === hwMax ? `<span class="m3-option-badge badge-hwmax">HW Max</span>` : (selectedFreq === 937 ? `<span class="m3-option-badge badge-default">Default</span>` : '');
+              if (container) {
+                container.innerHTML = `<span class="m3-picker-val" id="gpu-max-val">${selectedFreq} MHz</span>${badge}`;
+              }
             }
           });
         };
@@ -955,6 +1174,10 @@
     const closeBtn = document.getElementById("freq-sheet-close");
 
     if (!backdrop || !sheetOptions) return;
+
+    try {
+      history.pushState({ modal: true }, '');
+    } catch (e) {}
 
     sheetTitle.innerText = title;
     sheetSubtitle.innerText = subtitle;
@@ -1009,7 +1232,7 @@
   }
 
   // Material 3 CPU Scheduler (Governor) Selector Sheet Handler
-  function openGovSheet({ title, subtitle, availGovs, currentGov, onSelect }) {
+  function openGovSheet({ title, subtitle, availGovs, currentGov, defaultGov = null, onSelect }) {
     const backdrop = document.getElementById("gov-sheet-backdrop");
     const sheetTitle = document.getElementById("gov-sheet-title");
     const sheetSubtitle = document.getElementById("gov-sheet-subtitle");
@@ -1017,6 +1240,10 @@
     const closeBtn = document.getElementById("gov-sheet-close");
 
     if (!backdrop || !sheetOptions) return;
+
+    try {
+      history.pushState({ modal: true }, '');
+    } catch (e) {}
 
     sheetTitle.innerText = title;
     sheetSubtitle.innerText = subtitle;
@@ -1029,7 +1256,11 @@
       opt.className = `m3-sheet-option ${isSelected ? 'active' : ''}`;
       
       let badgeHtml = "";
-      if (gov === "schedutil") badgeHtml = `<span class="m3-option-badge badge-sweet">Recommended</span>`;
+      if (defaultGov && gov === defaultGov) {
+        badgeHtml = `<span class="m3-option-badge badge-default">Default</span>`;
+      } else if (gov === "schedutil") {
+        badgeHtml = `<span class="m3-option-badge badge-sweet">Recommended</span>`;
+      }
 
       opt.innerHTML = `
         <span class="m3-option-freq" style="font-family: var(--font-family); text-transform: lowercase;">${gov}</span>
@@ -1038,6 +1269,7 @@
           <span class="m3-radio-icon"></span>
         </div>
       `;
+
 
       opt.addEventListener("click", () => {
         backdrop.classList.remove("active");
@@ -1091,9 +1323,9 @@
 
     card._clusterData = { cluster, avail, sweetclockMax: cluster.sweetclockMax, hwMax, curGov, availGovs };
 
-    let maxLabel = formatFreqMHz(curMax);
-    if (curMax === cluster.sweetclockMax) maxLabel += " ★ Sweetclock";
-    else if (curMax === hwMax) maxLabel += " (HW Max)";
+    let maxBadge = "";
+    if (curMax === cluster.sweetclockMax) maxBadge = `<span class="m3-option-badge badge-sweet">★ Sweetclock</span>`;
+    else if (curMax === hwMax) maxBadge = `<span class="m3-option-badge badge-hwmax">HW Max</span>`;
 
     card.innerHTML = `
       <div class="tuning-card-header">
@@ -1128,7 +1360,10 @@
         <div class="tuning-control-group">
           <label class="tuning-control-label">Max Frequency</label>
           <div class="m3-picker-trigger" id="${cluster.id}-max-trigger" data-val="${curMax}">
-            <span class="m3-picker-val" id="${cluster.id}-max-val">${maxLabel}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="m3-picker-val" id="${cluster.id}-max-val">${formatFreqMHz(curMax)}</span>
+              ${maxBadge}
+            </div>
             <svg class="m3-picker-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </div>
         </div>
@@ -1190,10 +1425,11 @@
             hwMax,
             onSelect: (selectedFreq) => {
               maxTrigger.setAttribute("data-val", selectedFreq);
-              let lbl = formatFreqMHz(selectedFreq);
-              if (selectedFreq === cluster.sweetclockMax) lbl += " ★ Sweetclock";
-              else if (selectedFreq === hwMax) lbl += " (HW Max)";
-              if (maxValLbl) maxValLbl.innerText = lbl;
+              const container = maxTrigger.querySelector("div");
+              let badge = selectedFreq === cluster.sweetclockMax ? `<span class="m3-option-badge badge-sweet">★ Sweetclock</span>` : (selectedFreq === hwMax ? `<span class="m3-option-badge badge-hwmax">HW Max</span>` : '');
+              if (container) {
+                container.innerHTML = `<span class="m3-picker-val" id="${cluster.id}-max-val">${formatFreqMHz(selectedFreq)}</span>${badge}`;
+              }
             }
           });
         };
@@ -1223,13 +1459,14 @@
       if (minValLbl) minValLbl.innerText = formatFreqMHz(curMin);
 
       const maxTrig = card.querySelector(`#${cluster.id}-max-trigger`);
-      const maxValLbl = card.querySelector(`#${cluster.id}-max-val`);
-      if (maxTrig) maxTrig.setAttribute("data-val", curMax);
-      if (maxValLbl) {
-        let lbl = formatFreqMHz(curMax);
-        if (curMax === cluster.sweetclockMax) lbl += " ★ Sweetclock";
-        else if (card._clusterData && curMax === card._clusterData.hwMax) lbl += " (HW Max)";
-        maxValLbl.innerText = lbl;
+      if (maxTrig) {
+        maxTrig.setAttribute("data-val", curMax);
+        const container = maxTrig.querySelector("div");
+        const hwMax = card._clusterData ? card._clusterData.hwMax : 0;
+        let badge = curMax === cluster.sweetclockMax ? `<span class="m3-option-badge badge-sweet">★ Sweetclock</span>` : (curMax === hwMax ? `<span class="m3-option-badge badge-hwmax">HW Max</span>` : '');
+        if (container) {
+          container.innerHTML = `<span class="m3-picker-val" id="${cluster.id}-max-val">${formatFreqMHz(curMax)}</span>${badge}`;
+        }
       }
 
       const govTrig = card.querySelector(`#${cluster.id}-gov-trigger`);
@@ -1252,17 +1489,24 @@
 
     if (forceUpdateTriggers) {
       const minTrig = card.querySelector("#gpu-min-trigger");
-      const minValLbl = card.querySelector("#gpu-min-val");
-      if (minTrig) minTrig.setAttribute("data-val", curMin);
-      if (minValLbl) minValLbl.innerText = `${curMin} MHz`;
+      if (minTrig) {
+        minTrig.setAttribute("data-val", curMin);
+        const container = minTrig.querySelector("div");
+        let badge = curMin === 264 ? `<span class="m3-option-badge badge-default">Default</span>` : '';
+        if (container) {
+          container.innerHTML = `<span class="m3-picker-val" id="gpu-min-val">${curMin} MHz</span>${badge}`;
+        }
+      }
 
       const maxTrig = card.querySelector("#gpu-max-trigger");
-      const maxValLbl = card.querySelector("#gpu-max-val");
-      if (maxTrig) maxTrig.setAttribute("data-val", curMax);
-      if (maxValLbl) {
-        let lbl = `${curMax} MHz`;
-        if (card._gpuData && curMax === card._gpuData.hwMax) lbl += " (HW Max)";
-        maxValLbl.innerText = lbl;
+      if (maxTrig) {
+        maxTrig.setAttribute("data-val", curMax);
+        const container = maxTrig.querySelector("div");
+        const hwMax = (gpuData.availFreqs && gpuData.availFreqs.length > 0) ? gpuData.availFreqs[gpuData.availFreqs.length - 1] : 937;
+        let badge = curMax === hwMax ? `<span class="m3-option-badge badge-hwmax">HW Max</span>` : (curMax === 937 ? `<span class="m3-option-badge badge-default">Default</span>` : '');
+        if (container) {
+          container.innerHTML = `<span class="m3-picker-val" id="gpu-max-val">${curMax} MHz</span>${badge}`;
+        }
       }
 
       const govTrig = card.querySelector("#gpu-gov-trigger");

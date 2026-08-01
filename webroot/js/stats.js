@@ -512,6 +512,153 @@ done
     return true;
   }
 
+  async function getIoStats() {
+    const cmd = `
+sys_path="/sys"
+[ -d "/dev/sweetclocker/sysfs/block" ] && sys_path="/dev/sweetclocker/sysfs"
+
+def_file="/data/local/tmp/.sweetclocker_io_defaults"
+cust_file="/data/local/tmp/.sweetclocker_io_custom"
+
+if [ ! -f "$def_file" ]; then
+  touch "$def_file" 2>/dev/null
+  for d in "\${sys_path}/block"/*; do
+    [ -d "$d" ] || continue
+    dev="\${d##*/}"
+    case "$dev" in loop*|zram*) continue ;; esac
+    [ -f "$d/queue/scheduler" ] || continue
+    read -r sched < "$d/queue/scheduler"
+    act=""
+    for w in $sched; do
+      case "$w" in \\[*\\]) act="\${w#\\[}"; act="\${act%\\]}"; break ;; esac
+    done
+    [ -z "$act" ] && act=$(echo "$sched" | awk '{print $1}')
+    [ -n "$act" ] && echo "\${dev}=\${act}" >> "$def_file"
+  done
+fi
+
+cat "$def_file" 2>/dev/null
+echo "---IO_CUSTOM---"
+cat "$cust_file" 2>/dev/null
+echo "---IO_BLOCKS---"
+for d in "\${sys_path}/block"/*; do
+  [ -d "$d" ] || continue
+  dev="\${d##*/}"
+  case "$dev" in loop*|zram*) continue ;; esac
+  [ -f "$d/queue/scheduler" ] || continue
+  read -r sched < "$d/queue/scheduler"
+  echo "\${dev}|\${sched}"
+done
+`;
+
+    const { errno, stdout, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0 && !stdout) {
+      console.error("Failed to get I/O stats:", stderr);
+      return null;
+    }
+
+    const parts = stdout.split(/---IO_CUSTOM---|---IO_BLOCKS---/);
+    const defaultsText = parts[0] || "";
+    const customText = parts[1] || "";
+    const blocksText = parts[2] || "";
+
+    const defaultsMap = {};
+    defaultsText.trim().split("\n").forEach(line => {
+      if (line.includes("=")) {
+        const [k, v] = line.split("=");
+        defaultsMap[k.trim()] = v.trim();
+      }
+    });
+
+    const customMap = {};
+    let enabled = false;
+    let applyBoot = false;
+
+    customText.trim().split("\n").forEach(line => {
+      if (line.includes("=")) {
+        const [k, v] = line.split("=");
+        const key = k.trim();
+        const val = v.trim();
+        if (key === "io_enabled") enabled = val === "1";
+        else if (key === "io_apply_boot") applyBoot = val === "1";
+        else customMap[key] = val;
+      }
+    });
+
+    const blocks = [];
+    blocksText.trim().split("\n").forEach(line => {
+      if (!line.includes("|")) return;
+      const [dev, rawSched] = line.split("|");
+      if (!dev || !rawSched) return;
+      if (dev.startsWith("loop") || dev.startsWith("zram")) return;
+
+      const words = rawSched.trim().split(/\s+/);
+      let active = "";
+      const avail = [];
+      words.forEach(w => {
+        if (w.startsWith("[") && w.endsWith("]")) {
+          active = w.slice(1, -1);
+          avail.push(active);
+        } else if (w) {
+          avail.push(w);
+        }
+      });
+      if (!active && avail.length > 0) active = avail[0];
+
+      const defaultSched = defaultsMap[dev] || active;
+
+      blocks.push({
+        dev,
+        active,
+        avail,
+        defaultSched,
+        customSched: customMap[dev] || null
+      });
+    });
+
+    return {
+      enabled,
+      applyBoot,
+      defaultsMap,
+      customMap,
+      blocks
+    };
+  }
+
+  async function applyIoConfig(configMap, applyBoot, enabled) {
+    let customText = `io_enabled=${enabled ? 1 : 0}\nio_apply_boot=${applyBoot ? 1 : 0}\n`;
+    for (const [dev, sched] of Object.entries(configMap)) {
+      customText += `${dev}=${sched}\n`;
+    }
+
+    const cmd = `cat << 'EOF' > /data/local/tmp/.sweetclocker_io_custom\n${customText}EOF\n` +
+      `sp="/data/adb/modules/sweetclocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="/data/adb/modules/SweetClocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="$(find /data/adb/modules* -name sweetspot-apply.sh 2>/dev/null | head -n 1)"\n` +
+      `[ -f "$sp" ] && sh "$sp" --apply-io`;
+
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to apply I/O config:", stderr);
+      return false;
+    }
+    return true;
+  }
+
+  async function resetIoConfig() {
+    const cmd = `sp="/data/adb/modules/sweetclocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="/data/adb/modules/SweetClocker/sweetspot-apply.sh"\n` +
+      `[ -f "$sp" ] || sp="$(find /data/adb/modules* -name sweetspot-apply.sh 2>/dev/null | head -n 1)"\n` +
+      `[ -f "$sp" ] && sh "$sp" --reset-io`;
+
+    const { errno, stderr } = await KsuApi.exec(cmd);
+    if (errno !== 0) {
+      console.error("Failed to reset I/O config:", stderr);
+      return false;
+    }
+    return true;
+  }
+
   // Expose to window namespace
   window.Stats = {
     getCpuStats,
@@ -522,6 +669,10 @@ done
     resetCpuConfig,
     resetGpuConfig,
     applyCustomClusterFreqs,
-    resetToSweetclocks
+    resetToSweetclocks,
+    getIoStats,
+    applyIoConfig,
+    resetIoConfig
   };
 })();
+

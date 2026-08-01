@@ -32,8 +32,21 @@ fi
 # 4. Clean up all temporary directory mounts and files under /dev/
 rm -rf /dev/sweetclocker 2>/dev/null
 
-# 5. Clean up temporary state and bypass toggle files in data
+# 5. Clean up temporary state and custom overrides in data
+if [ -f "/data/local/tmp/.sweetclocker_io_defaults" ]; then
+    log_uninstall "Reverting I/O schedulers to initial system defaults..."
+    while IFS='=' read -r dev default_sched; do
+        [ -z "$dev" ] || [ -z "$default_sched" ] && continue
+        if [ -f "/sys/block/$dev/queue/scheduler" ]; then
+            echo "$default_sched" > "/sys/block/$dev/queue/scheduler" 2>/dev/null
+            log_uninstall "Reverted I/O scheduler on ${dev} to default ('${default_sched}')"
+        fi
+    done < "/data/local/tmp/.sweetclocker_io_defaults"
+fi
 rm -f /data/local/tmp/.sweetclocker_state 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_custom 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_io_defaults 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_io_custom 2>/dev/null
 
 # 6. Delete bypass lock overrides
 rm -f /data/local/tmp/sweetclocker_force 2>/dev/null

@@ -219,7 +219,7 @@
       };
     }
 
-    if (command.includes(".sweetclocker_custom")) {
+    if (command.includes(".sweetclocker_custom") && !command.includes(".sweetclocker_io_custom")) {
       const lines = command.split("\n");
       lines.forEach(l => {
         if (l.includes("_max=")) {
@@ -268,6 +268,25 @@
       mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Applied custom cluster frequency limits & governor settings`;
       return { errno: 0, stdout: "", stderr: "" };
     }
+
+    if (command.includes("---IO_CUSTOM---")) {
+      const defStr = "sda=mq-deadline\nsdb=mq-deadline\nmmcblk0=mq-deadline";
+      const custStr = "io_enabled=1\nio_apply_boot=1\nsda=mq-deadline\nsdb=mq-deadline\nmmcblk0=mq-deadline";
+      const blocksStr = "sda|none [mq-deadline] kyber bfq\nsdb|none [mq-deadline] kyber bfq\nmmcblk0|none [mq-deadline] kyber bfq";
+      const stdout = `${defStr}\n---IO_CUSTOM---\n${custStr}\n---IO_BLOCKS---\n${blocksStr}\n`;
+      return { errno: 0, stdout, stderr: "" };
+    }
+
+    if (command.includes(".sweetclocker_io_custom")) {
+      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Applied custom I/O scheduler configuration`;
+      return { errno: 0, stdout: "", stderr: "" };
+    }
+
+    if (command.includes("--reset-io")) {
+      mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0,19)}] sweetspot-apply.sh: Reset I/O schedulers back to default system values`;
+      return { errno: 0, stdout: "", stderr: "" };
+    }
+
 
     if (command.includes("--reset-sweetclock")) {
       mockCoresState[0].max = 1286400; mockCoresState[1].max = 1286400;

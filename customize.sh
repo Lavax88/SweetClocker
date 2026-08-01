@@ -6,6 +6,8 @@ ui_print "- Cleaning up old logs, state files, and mounts..."
 rm -f "/data/local/tmp/sweetclocker.log" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_state" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_custom" 2>/dev/null
+rm -f "/data/local/tmp/.sweetclocker_io_defaults" 2>/dev/null
+rm -f "/data/local/tmp/.sweetclocker_io_custom" 2>/dev/null
 
 # Unmount any existing policy mount locks if active before removing files
 for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do

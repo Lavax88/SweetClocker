@@ -852,6 +852,131 @@ for d in $policies; do
     fi
 done
 
+IO_DEFAULTS_FILE="/data/local/tmp/.sweetclocker_io_defaults"
+IO_CUSTOM_FILE="/data/local/tmp/.sweetclocker_io_custom"
+
+init_io_defaults() {
+    if [ ! -f "$IO_DEFAULTS_FILE" ]; then
+        touch "$IO_DEFAULTS_FILE" 2>/dev/null
+        chmod 600 "$IO_DEFAULTS_FILE" 2>/dev/null
+        sys_block_dir="${SYSFS_PATH}/block"
+        [ ! -d "$sys_block_dir" ] && sys_block_dir="/sys/block"
+        if [ -d "$sys_block_dir" ]; then
+            for blk_dir in "$sys_block_dir"/*; do
+                [ -d "$blk_dir" ] || continue
+                dev_name="${blk_dir##*/}"
+                case "$dev_name" in loop*|zram*) continue ;; esac
+                sched_file="${blk_dir}/queue/scheduler"
+
+                if [ -f "$sched_file" ]; then
+                    raw_sched=$(cat "$sched_file" 2>/dev/null)
+                    active_sched=""
+                    for word in $raw_sched; do
+                        case "$word" in
+                            \[*\])
+                                active_sched="${word#\[}"
+                                active_sched="${active_sched%\]}"
+                                break
+                                ;;
+                        esac
+                    done
+                    [ -z "$active_sched" ] && active_sched=$(echo "$raw_sched" | awk '{print $1}')
+                    if [ -n "$active_sched" ]; then
+                        echo "${dev_name}=${active_sched}" >> "$IO_DEFAULTS_FILE"
+                        log_msg "io/defaults: recorded initial default scheduler '${active_sched}' for block device '${dev_name}'"
+                    fi
+                fi
+            done
+        fi
+    fi
+}
+
+apply_io_config() {
+    init_io_defaults
+    if [ -f "$IO_CUSTOM_FILE" ]; then
+        enabled=$(grep "^io_enabled=" "$IO_CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
+        if [ "$enabled" = "1" ]; then
+            sys_block_dir="${SYSFS_PATH}/block"
+            [ ! -d "$sys_block_dir" ] && sys_block_dir="/sys/block"
+            while IFS='=' read -r key val; do
+                [ -z "$key" ] || [ "$key" = "io_enabled" ] || [ "$key" = "io_apply_boot" ] && continue
+                dev="$key"
+                target_sched="$val"
+                sched_file="${sys_block_dir}/${dev}/queue/scheduler"
+                [ ! -f "$sched_file" ] && sched_file="/sys/block/${dev}/queue/scheduler"
+                if [ -f "$sched_file" ]; then
+                    echo "$target_sched" > "$sched_file" 2>/dev/null
+                    raw_readback=$(cat "$sched_file" 2>/dev/null)
+                    readback_sched=""
+                    for word in $raw_readback; do
+                        case "$word" in
+                            \[*\])
+                                readback_sched="${word#\[}"
+                                readback_sched="${readback_sched%\]}"
+                                break
+                                ;;
+                        esac
+                    done
+                    log_msg "io/scheduler: set scheduler '${readback_sched:-$target_sched}' for block device '${dev}'"
+                fi
+            done < "$IO_CUSTOM_FILE"
+        fi
+    fi
+}
+
+reset_io_config() {
+    init_io_defaults
+    if [ -f "$IO_DEFAULTS_FILE" ]; then
+        sys_block_dir="${SYSFS_PATH}/block"
+        [ ! -d "$sys_block_dir" ] && sys_block_dir="/sys/block"
+        while IFS='=' read -r dev default_sched; do
+            [ -z "$dev" ] || [ -z "$default_sched" ] && continue
+            sched_file="${sys_block_dir}/${dev}/queue/scheduler"
+            [ ! -f "$sched_file" ] && sched_file="/sys/block/${dev}/queue/scheduler"
+            if [ -f "$sched_file" ]; then
+                echo "$default_sched" > "$sched_file" 2>/dev/null
+                log_msg "io/reset: reverted block device '${dev}' to default scheduler '${default_sched}'"
+            fi
+        done < "$IO_DEFAULTS_FILE"
+    fi
+    rm -f "$IO_CUSTOM_FILE" 2>/dev/null
+}
+
+check_io_drift() {
+    if [ -f "$IO_CUSTOM_FILE" ]; then
+        enabled=$(grep "^io_enabled=" "$IO_CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
+        apply_boot=$(grep "^io_apply_boot=" "$IO_CUSTOM_FILE" 2>/dev/null | cut -d= -f2)
+        if [ "$enabled" = "1" ] && [ "$apply_boot" = "1" ]; then
+            sys_block_dir="${SYSFS_PATH}/block"
+            [ ! -d "$sys_block_dir" ] && sys_block_dir="/sys/block"
+            while IFS='=' read -r key val; do
+                [ -z "$key" ] || [ "$key" = "io_enabled" ] || [ "$key" = "io_apply_boot" ] && continue
+                dev="$key"
+                target_sched="$val"
+                sched_file="${sys_block_dir}/${dev}/queue/scheduler"
+                [ ! -f "$sched_file" ] && sched_file="/sys/block/${dev}/queue/scheduler"
+                if [ -f "$sched_file" ]; then
+                    raw_sched=$(cat "$sched_file" 2>/dev/null)
+                    curr_sched=""
+                    for word in $raw_sched; do
+                        case "$word" in
+                            \[*\])
+                                curr_sched="${word#\[}"
+                                curr_sched="${curr_sched%\]}"
+                                break
+                                ;;
+                        esac
+                    done
+                    if [ -n "$curr_sched" ] && [ "$curr_sched" != "$target_sched" ]; then
+                        log_msg "service.sh: I/O scheduler drift detected on ${dev} (was '${curr_sched}', expected '${target_sched}'), re-applying"
+                        echo "$target_sched" > "$sched_file" 2>/dev/null
+                    fi
+                fi
+            done < "$IO_CUSTOM_FILE"
+        fi
+    fi
+}
+
 if [ "$found_LITTLE" != "1" ] || [ "$found_BIG" != "1" ] || [ "$found_PRIME" != "1" ]; then
     layout_mismatch=1
     if [ "$MODE" = "--init" ]; then
@@ -882,10 +1007,16 @@ if [ "$MODE" = "--init" ] || [ "$MODE" = "--apply-cpu" ]; then
     done
     if [ "$MODE" = "--init" ]; then
         apply_gpu_config
+        apply_io_config
     fi
 elif [ "$MODE" = "--apply-gpu" ]; then
     apply_gpu_config
+elif [ "$MODE" = "--apply-io" ]; then
+    apply_io_config
+elif [ "$MODE" = "--reset-io" ]; then
+    reset_io_config
 elif [ "$MODE" = "--check" ] || [ "$MODE" = "--check-slow" ]; then
+    check_io_drift
     drift_count=0
     for item in $POLICY_TARGETS $CPU_TARGETS; do
         label=$(echo "$item" | cut -d: -f1)

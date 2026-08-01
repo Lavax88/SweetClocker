@@ -85,7 +85,29 @@
     <symbol id="icon-tune" viewBox="0 0 24 24">
       <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
     </symbol>
+    <symbol id="icon-io" viewBox="0 0 24 24">
+      <!-- Outer casing body -->
+      <rect x="2" y="2" width="20" height="20" rx="3.5" fill="currentColor"/>
+      <!-- Inner window cutout -->
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <!-- 4 Corner Screws -->
+      <circle cx="6.75" cy="6.75" r="0.9" fill="currentColor"/>
+      <circle cx="17.25" cy="6.75" r="0.9" fill="currentColor"/>
+      <circle cx="6.75" cy="17.25" r="0.9" fill="currentColor"/>
+      <circle cx="17.25" cy="17.25" r="0.9" fill="currentColor"/>
+      <!-- Platter Outer Ring -->
+      <circle cx="12" cy="12" r="5.5" fill="currentColor"/>
+      <!-- Platter Inner Cutout -->
+      <circle cx="12" cy="12" r="3.6" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <!-- Head Arm -->
+      <path d="M12 12 L8.2 15.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- Center Spindle Notch -->
+      <circle cx="12" cy="10.4" r="0.9" fill="currentColor"/>
+    </symbol>
   </svg>
+
+
+
 
   <!-- App Container -->
   <div class="app-layout">
@@ -327,8 +349,19 @@
                 </div>
                 <svg class="tune-card-chevron" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
               </div>
+              <div class="tune-card tune-card-row" data-tune-feature="io-management">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare"><use href="#icon-io"></use></svg>
+                </div>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">I/O Management</h4>
+                  <span class="tune-card-sub">Block device I/O schedulers</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
             </div>
           </div>
+
 
           <!-- CLUSTER FREQUENCY TUNING DETAIL VIEW -->
           <div id="tuning-cpu-clocks-view" class="tuning-subview" style="display: none;">
@@ -386,6 +419,51 @@
               <div class="grid-placeholder">Loading GPU configuration controls...</div>
             </div>
           </div>
+
+          <!-- I/O MANAGEMENT TUNING DETAIL VIEW -->
+          <div id="tuning-io-view" class="tuning-subview" style="display: none;">
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <h3 class="section-header" style="margin: 0;">I/O Management</h3>
+                    <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 0 0; line-height: 1.35;">
+                      Configure storage block device I/O schedulers
+                    </p>
+                  </div>
+                  <span class="cluster-name" style="font-size: 0.7rem; padding: 3px 8px;">STORAGE</span>
+                </div>
+
+                <div class="io-switch-row">
+                  <div class="io-switch-info">
+                    <span class="io-switch-title">Enable I/O Management</span>
+                    <span class="io-switch-desc">Enable block device discovery & scheduler controls</span>
+                  </div>
+                  <label class="m3-switch">
+                    <input type="checkbox" id="io-enable-toggle">
+                    <span class="m3-switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="io-switch-row" id="io-apply-boot-row">
+                  <div class="io-switch-info">
+                    <span class="io-switch-title">Apply at Boot</span>
+                    <span class="io-switch-desc">Re-apply custom I/O schedulers on system boot</span>
+                  </div>
+                  <label class="m3-switch">
+                    <input type="checkbox" id="io-apply-boot-toggle">
+                    <span class="m3-switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="tuning-grid" id="io-tuning-grid">
+              <div class="grid-placeholder">Enable I/O Management to inspect block devices...</div>
+            </div>
+          </div>
+
+
 
           <!-- M3 Floating Action Buttons (Bottom-Right Icon-Only FAB Stack) -->
           <div class="tuning-fab-container" id="tuning-fab-container">
