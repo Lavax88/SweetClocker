@@ -124,7 +124,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.event.inputs.version }}
-        name: Release ${{ github.event.inputs.version }}
+        name: SweetClocker - ${{ github.event.inputs.version }}
         body_path: changelog.txt
         draft: false
         prerelease: false
