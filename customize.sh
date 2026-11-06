@@ -23,6 +23,7 @@ set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
 set_perm "$MODPATH/sweetspot-apply.sh" 0 0 0755
+set_perm "$MODPATH/telemetry.sh" 0 0 0755
 
 ui_print "- Sweetspot frequency caps applied across all clusters."
 ui_print "- Governor set to schedutil, performance daemons locked out."
