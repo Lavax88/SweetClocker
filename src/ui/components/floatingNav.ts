@@ -98,6 +98,7 @@ export function initFloatingNav(
         'transform 0.42s cubic-bezier(0.34, 1.45, 0.64, 1), width 0.42s cubic-bezier(0.34, 1.45, 0.64, 1)';
     }
 
+    highlighter!.style.transformOrigin = 'center center';
     highlighter!.style.width = `${slot.width}px`;
     highlighter!.style.transform = `translate3d(${slot.left}px, 0, 0) scaleX(1) scaleY(1) skewX(0deg)`;
   }
@@ -208,40 +209,44 @@ export function initFloatingNav(
     // Theoretical center of finger
     const rawLeft = touchX - baseWidth / 2;
 
-    // 2. Strict Boundary Clamping and Wall Squish
+    // 2. Boundary-Anchored Elastic Stretch (Stays 100% inside boundary while stretching)
     let overscroll = 0; // Negative for left boundary, positive for right boundary
     let targetLeft = rawLeft;
-    let targetWidth = baseWidth;
-    let extraScaleY = 1;
-    let stretch = baseStretch;
+    let finalScaleX = baseStretch;
+    let finalScaleY = squash;
+    let finalSkew = skew;
+    let transformOrigin = 'center center';
 
     if (rawLeft < minLeft) {
       overscroll = rawLeft - minLeft; // Negative
-      // Hard clamp highlight safely inside the capsule
+      // Anchor left edge strictly at minLeft (6px) inside the boundary
       targetLeft = minLeft;
-      // Cushion squish against left wall
-      const squish = Math.min(22, Math.abs(overscroll) * 0.25);
-      targetWidth = Math.max(48, baseWidth - squish);
-      extraScaleY = 1 + Math.min(0.12, Math.abs(overscroll) * 0.003);
-      // Dampen horizontal stretch so it never extends left of minLeft
-      stretch = 1;
+      transformOrigin = 'left center';
+
+      // Elastic stretch extending inward into the bar proportional to overscroll pull
+      const stretchX = 1 + Math.min(0.38, Math.abs(overscroll) / 110);
+      finalScaleX = stretchX;
+      finalScaleY = 1 / Math.sqrt(stretchX);
+      finalSkew = 0;
     } else if (rawLeft > maxLeft) {
       overscroll = rawLeft - maxLeft; // Positive
-      // Cushion squish against right wall
-      const squish = Math.min(22, Math.abs(overscroll) * 0.25);
-      targetWidth = Math.max(48, baseWidth - squish);
-      // Hard clamp right edge safely inside the capsule
-      targetLeft = Math.max(minLeft, navRect.width - targetWidth - 6);
-      extraScaleY = 1 + Math.min(0.12, Math.abs(overscroll) * 0.003);
-      // Dampen horizontal stretch so it never extends right of maxLeft
-      stretch = 1;
+      // Anchor right edge strictly at navRect.width - 6px inside the boundary
+      targetLeft = maxLeft;
+      transformOrigin = 'right center';
+
+      // Elastic stretch extending inward into the bar proportional to overscroll pull
+      const stretchX = 1 + Math.min(0.38, Math.abs(overscroll) / 110);
+      finalScaleX = stretchX;
+      finalScaleY = 1 / Math.sqrt(stretchX);
+      finalSkew = 0;
     } else {
-      // While within bounds, ensure stretch expansion does not poke past ends
-      const halfExpansion = (targetWidth * (stretch - 1)) / 2;
+      // While within bounds, scale from center and keep visual edges strictly inside [6px, navWidth - 6px]
+      transformOrigin = 'center center';
+      const halfExpansion = (baseWidth * (baseStretch - 1)) / 2;
       if (targetLeft - halfExpansion < minLeft) {
         targetLeft = minLeft + halfExpansion;
-      } else if (targetLeft + targetWidth + halfExpansion > navRect.width - 6) {
-        targetLeft = navRect.width - 6 - targetWidth - halfExpansion;
+      } else if (targetLeft + baseWidth + halfExpansion > navRect.width - 6) {
+        targetLeft = navRect.width - 6 - baseWidth - halfExpansion;
       }
     }
 
@@ -249,9 +254,9 @@ export function initFloatingNav(
     if (overscroll !== 0) {
       const sign = Math.sign(overscroll);
       const absOver = Math.abs(overscroll);
-      const containerDisp = sign * Math.min(24, Math.pow(absOver, 0.7) * 1.4);
-      const containerStretch = 1 + Math.min(0.06, Math.abs(containerDisp) / 400);
-      const containerSquash = 1 - Math.min(0.03, Math.abs(containerDisp) / 800);
+      const containerDisp = sign * Math.min(28, Math.pow(absOver, 0.72) * 1.5);
+      const containerStretch = 1 + Math.min(0.08, Math.abs(containerDisp) / 320);
+      const containerSquash = 1 - Math.min(0.04, Math.abs(containerDisp) / 640);
 
       bottomNav!.style.transition = 'none';
       bottomNav!.style.transform = `translateX(calc(-50% + ${containerDisp}px)) scaleX(${containerStretch}) scaleY(${containerSquash})`;
@@ -261,12 +266,10 @@ export function initFloatingNav(
     }
 
     // 4. Apply hardware-accelerated transform to highlighter
-    const finalScaleX = stretch;
-    const finalScaleY = squash * extraScaleY;
-
     highlighter!.style.transition = 'none';
-    highlighter!.style.width = `${targetWidth}px`;
-    highlighter!.style.transform = `translate3d(${targetLeft}px, 0, 0) scaleX(${finalScaleX}) scaleY(${finalScaleY}) skewX(${skew}deg)`;
+    highlighter!.style.transformOrigin = transformOrigin;
+    highlighter!.style.width = `${baseWidth}px`;
+    highlighter!.style.transform = `translate3d(${targetLeft}px, 0, 0) scaleX(${finalScaleX}) scaleY(${finalScaleY}) skewX(${finalSkew}deg)`;
   }
 
   function handlePointerUp(e: PointerEvent) {
