@@ -50,6 +50,34 @@ Discovered and benchmarked by **[iRedDragonICY](https://github.com/iRedDragonICY
 
 ---
 
+## Building from Source
+
+The WebUI is written in strict TypeScript and bundled with Vite (no UI framework).
+
+### Prerequisites
+- Node.js 20+ / 22 LTS
+- `npm` and `zip`
+
+### Build Commands
+```bash
+# Install dependencies
+npm ci
+
+# Run local development server with mock telemetry
+npm run dev
+
+# Run strict TypeScript typecheck
+npm run typecheck
+
+# Build WebUI production bundle to webroot/
+npm run build
+
+# Package flashable module zip (SweetClocker-<version>.zip)
+./build.sh
+```
+
+---
+
 ## Credits
 
 - **[iRedDragonICY](https://github.com/iRedDragonICY)** — For efficiency benchmarking, voltage curve testing, and identifying target hardware OPP sweet spots across Snapdragon 8s Gen 4 clusters.

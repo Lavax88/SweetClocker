@@ -112,13 +112,34 @@ jobs:
           echo "No metadata changes. Skipping commit."
         fi
 
-    - name: Build Flashable Zip
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Build WebUI and Package Module
       env:
         RELEASE_VER: ${{ github.event.inputs.version }}
       run: |
-        git archive --format=zip --output=SweetClocker-${RELEASE_VER}.zip HEAD
+        npm ci
+        npm run typecheck
+        npm run build
+
+        # Package flashable module zip without node_modules, src, or git files
+        zip -r -9 "SweetClocker-${RELEASE_VER}.zip" \
+          module.prop \
+          service.sh \
+          post-fs-data.sh \
+          customize.sh \
+          uninstall.sh \
+          sweetspot-apply.sh \
+          telemetry.sh \
+          webroot \
+          changelog.md \
+          update.json
+
         echo "Zip verification:"
-        unzip -l SweetClocker-${RELEASE_VER}.zip
+        unzip -l "SweetClocker-${RELEASE_VER}.zip"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1

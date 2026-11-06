@@ -1,3 +1,9 @@
+# Node & Build artifacts
+node_modules/
+.vite/
+dist/
+webroot/
+
 # Runtime log and temporary state files
 logs/
 *.log
