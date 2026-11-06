@@ -1,4 +1,4 @@
-import type { ThemeMode, EffectiveThemeMode, FontMode, ThemeSettings } from './types';
+import type { ThemeMode, EffectiveThemeMode, FontMode, NavBarStyle, ThemeSettings } from './types';
 import { applyThemeTokens } from './tokens';
 import { exec } from '../bridge/ksu';
 
@@ -7,6 +7,7 @@ const DEFAULT_SEED = '#6750A4';
 
 let activeThemeMode: ThemeMode = 'auto';
 let activeFontMode: FontMode = 'outfit';
+let activeNavBarStyle: NavBarStyle = 'default';
 let activeSeedColor: string = DEFAULT_SEED;
 let isMonetActive = false;
 let isReduceEffects = false;
@@ -43,7 +44,8 @@ function persistSettings(): void {
       font: activeFontMode,
       seedColor: activeSeedColor,
       isMonet: isMonetActive,
-      reduceEffects: isReduceEffects
+      reduceEffects: isReduceEffects,
+      navStyle: activeNavBarStyle
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   } catch (err) {
@@ -219,6 +221,44 @@ export function setFontMode(font: FontMode): void {
   persistSettings();
 }
 
+export function setNavBarStyle(style: NavBarStyle): void {
+  activeNavBarStyle = style;
+  const root = document.documentElement;
+  const nav = document.querySelector<HTMLElement>('.bottom-nav');
+
+  if (nav) {
+    nav.classList.add('nav-switching');
+    setTimeout(() => {
+      nav.classList.remove('nav-switching');
+    }, 450);
+  }
+
+  if (style === 'floating') {
+    root.classList.add('nav-floating');
+  } else {
+    root.classList.remove('nav-floating');
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('nav-style-changed', { detail: style }));
+  }
+
+  const segments = document.querySelectorAll('[data-nav-style]');
+  segments.forEach((seg) => {
+    if (seg.getAttribute('data-nav-style') === style) {
+      seg.classList.add('active');
+    } else {
+      seg.classList.remove('active');
+    }
+  });
+
+  persistSettings();
+}
+
+export function getNavBarStyle(): NavBarStyle {
+  return activeNavBarStyle;
+}
+
 export function setReduceEffects(reduce: boolean): void {
   isReduceEffects = reduce;
   const root = document.documentElement;
@@ -307,6 +347,10 @@ export async function initTheme(): Promise<void> {
   // Set font mode
   const font = stored.font ?? 'outfit';
   setFontMode(font);
+
+  // Set navigation bar style (default to 'default')
+  const navStyle = stored.navStyle ?? 'default';
+  setNavBarStyle(navStyle);
 
   // Set seed / monet
   if (stored.seedColor && !stored.isMonet) {

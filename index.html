@@ -215,6 +215,14 @@
             </div>
 
             <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Navigation Bar</label>
+              <div class="segmented-control" style="margin-top: 8px;">
+                <button class="segment active" id="nav-style-default-btn" data-nav-style="default">Default</button>
+                <button class="segment" id="nav-style-floating-btn" data-nav-style="floating">Floating</button>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 20px;">
               <div class="io-switch-row" style="padding: 0; border: none;">
                 <div class="io-switch-info">
                   <span class="io-switch-title">Reduce Visual Effects</span>
@@ -461,6 +469,7 @@
 
       <!-- Bottom Navigation Bar -->
       <nav class="bottom-nav">
+        <div class="nav-highlighter" id="nav-highlighter" aria-hidden="true"></div>
         <button class="nav-tab active" data-target="page-dashboard">
           <div class="icon-wrapper">
             <svg aria-hidden="true"><use href="#icon-dashboard"></use></svg>

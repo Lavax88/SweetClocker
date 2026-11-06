@@ -1,11 +1,12 @@
 import {
   setThemeMode,
   setFontMode,
+  setNavBarStyle,
   setReduceEffects,
   setManualSeedColor,
   resetToMonet
 } from '../../theme/theme';
-import type { ThemeMode, FontMode } from '../../theme/types';
+import type { ThemeMode, FontMode, NavBarStyle } from '../../theme/types';
 import { setBypassMode } from '../../telemetry/sampler';
 import { toast } from '../../bridge/ksu';
 
@@ -31,6 +32,18 @@ export function initPreferencesScreen(): void {
       if (mode) {
         setFontMode(mode);
         toast(`Font family set to ${mode === 'system' ? 'System Font' : 'Outfit (Default)'}`);
+      }
+    });
+  });
+
+  // Navigation Bar Style buttons
+  const navSegments = document.querySelectorAll<HTMLElement>('[data-nav-style]');
+  navSegments.forEach((seg) => {
+    seg.addEventListener('click', () => {
+      const style = seg.getAttribute('data-nav-style') as NavBarStyle;
+      if (style) {
+        setNavBarStyle(style);
+        toast(`Navigation bar set to ${style === 'floating' ? 'Floating' : 'Default'}`);
       }
     });
   });
