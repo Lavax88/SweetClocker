@@ -1,0 +1,184 @@
+/* tokens.css - Hallmark Semantic Tokens & Material 3 Design System */
+
+:root {
+  /* Dynamic Palette Seeds (calculated in JS or user-selected) */
+  --theme-h: 262; /* default purple seed */
+  --theme-s: 50%;
+
+  /* Predefined Accent Seed Values */
+  --seed-purple: #6750A4;
+  --seed-teal: #006A6A;
+  --seed-orange: #8b5000;
+  --seed-green: #386a20;
+  --seed-blue: #005FAF;
+  --seed-pink: #A60067;
+  --seed-brown: #795548;
+  
+  /* KernelSU/APatch Window Insets */
+  --top-inset: var(--window-inset-top, 0px);
+  --bottom-inset: var(--window-inset-bottom, 0px);
+  
+  /* Typography Tokens */
+  --font-family: 'Outfit', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', Consolas, 'Roboto Mono', monospace;
+  
+  /* Material 3 Tonal Palette Mappings (Dark Mode Default) */
+  --md-sys-color-primary: var(--theme-color-primary, hsl(var(--theme-h), var(--theme-s), 80%));
+  --md-sys-color-on-primary: var(--theme-color-on-primary, hsl(var(--theme-h), var(--theme-s), 20%));
+  --md-sys-color-primary-container: var(--theme-color-primary-container, hsl(var(--theme-h), var(--theme-s), 30%));
+  --md-sys-color-on-primary-container: var(--theme-color-on-primary-container, hsl(var(--theme-h), var(--theme-s), 90%));
+  
+  --md-sys-color-secondary: var(--theme-color-secondary, hsl(var(--theme-h), 15%, 80%));
+  --md-sys-color-on-secondary: var(--theme-color-on-secondary, hsl(var(--theme-h), 15%, 20%));
+  --md-sys-color-secondary-container: var(--theme-color-secondary-container, hsl(var(--theme-h), 15%, 30%));
+  --md-sys-color-on-secondary-container: var(--theme-color-on-secondary-container, hsl(var(--theme-h), 15%, 90%));
+
+  --md-sys-color-tertiary: var(--theme-color-tertiary, hsl(calc(var(--theme-h) + 60), 30%, 80%));
+  --md-sys-color-on-tertiary: var(--theme-color-on-tertiary, hsl(calc(var(--theme-h) + 60), 30%, 20%));
+  --md-sys-color-tertiary-container: var(--theme-color-tertiary-container, hsl(calc(var(--theme-h) + 60), 30%, 30%));
+  --md-sys-color-on-tertiary-container: var(--theme-color-on-tertiary-container, hsl(calc(var(--theme-h) + 60), 30%, 90%));
+  
+  --md-sys-color-background: var(--theme-color-background, hsl(var(--theme-h), 12%, 10%));
+  --md-sys-color-on-background: var(--theme-color-on-background, hsl(var(--theme-h), 10%, 90%));
+  
+  --md-sys-color-surface: var(--theme-color-surface, hsl(var(--theme-h), 10%, 13%));
+  --md-sys-color-on-surface: var(--theme-color-on-surface, hsl(var(--theme-h), 8%, 90%));
+  --md-sys-color-surface-variant: var(--theme-color-surface-variant, hsl(var(--theme-h), 10%, 20%));
+  --md-sys-color-on-surface-variant: var(--theme-color-on-surface-variant, hsl(var(--theme-h), 8%, 80%));
+  
+  --md-sys-color-outline: var(--theme-color-outline, hsl(var(--theme-h), 8%, 45%));
+  --md-sys-color-outline-variant: var(--theme-color-outline-variant, hsl(var(--theme-h), 8%, 30%));
+  
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+  
+  --md-sys-color-success: #83d6a6;
+  --md-sys-color-on-success: #003822;
+  --md-sys-color-success-container: #005234;
+  --md-sys-color-on-success-container: #83d6a6;
+  
+  --md-sys-color-warning: #ffb951;
+  --md-sys-color-on-warning: #452b00;
+  --md-sys-color-warning-container: #633f00;
+
+  /* Dialog Warning Accents */
+  --warning-banner-amber: #ffb100;
+  --warning-banner-bg: rgba(255, 179, 0, 0.12);
+  --warning-banner-border: rgba(255, 179, 0, 0.35);
+  --warning-banner-border-top: rgba(255, 179, 0, 0.2);
+
+  /* Glassmorphism Settings */
+  --glass-bg: rgba(26, 21, 35, 0.45);
+  --glass-blur: 16px;
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* Modal & Sheet Backdrops */
+  --m3-sheet-backdrop-color: rgba(0, 0, 0, 0.55);
+  --m3-dialog-backdrop-color: rgba(0, 0, 0, 0.6);
+  --m3-dialog-backdrop-opaque: rgba(0, 0, 0, 0.78);
+  
+  /* Elevational Shadows M3 */
+  --md-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  --md-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  --md-elevation-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
+  
+  /* Corner Radii M3 */
+  --md-corner-none: 0px;
+  --md-corner-extra-small: 4px;
+  --md-corner-small: 8px;
+  --md-corner-medium: 12px;
+  --md-corner-large: 16px;
+  --md-corner-extra-large: 28px;
+  --md-corner-full: 9999px;
+  
+  /* Standard Transition Tokens */
+  --transition-speed: 0.2s;
+  --transition-easing: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Switch & Option Component Tokens */
+  --switch-track-off: rgba(255, 255, 255, 0.15);
+  --switch-border-off: rgba(255, 255, 255, 0.25);
+  --switch-thumb-off: rgba(255, 255, 255, 0.7);
+  --switch-track-on: #90CAF9;
+  --switch-thumb-on: #00325b;
+  --chip-hover-bg: rgba(255, 255, 255, 0.12);
+  --chip-subtle-border: rgba(255, 255, 255, 0.08);
+
+  /* Temperature Threshold Palette */
+  --temp-cold-bg: rgba(0, 108, 70, 0.12);
+  --temp-warm-bg: rgba(255, 185, 81, 0.12);
+  --temp-hot-bg: rgba(147, 0, 10, 0.15);
+  --temp-hot-glow: rgba(255, 180, 171, 0.4);
+
+  /* Virtual Log Viewer Theme (Dark Default) */
+  --log-viewer-bg: #0b0811;
+  --log-viewer-text: #d1c7e0;
+  --log-line-err: #ffb4ab;
+  --log-line-warn: #ffb951;
+  --log-line-succ: #83d6a6;
+  --log-line-info: #a5d6ff;
+}
+
+/* Light Theme Overrides */
+html.theme-light, body.theme-light, body.light-mode {
+  --md-sys-color-primary: hsl(var(--theme-h), var(--theme-s), 40%);
+  --md-sys-color-on-primary: hsl(var(--theme-h), var(--theme-s), 100%);
+  --md-sys-color-primary-container: hsl(var(--theme-h), var(--theme-s), 90%);
+  --md-sys-color-on-primary-container: hsl(var(--theme-h), var(--theme-s), 10%);
+  
+  --md-sys-color-secondary: hsl(var(--theme-h), 12%, 40%);
+  --md-sys-color-on-secondary: hsl(var(--theme-h), 12%, 100%);
+  --md-sys-color-secondary-container: hsl(var(--theme-h), 12%, 90%);
+  --md-sys-color-on-secondary-container: hsl(var(--theme-h), 12%, 10%);
+
+  --md-sys-color-tertiary: hsl(calc(var(--theme-h) + 60), 20%, 40%);
+  --md-sys-color-on-tertiary: hsl(calc(var(--theme-h) + 60), 20%, 100%);
+  --md-sys-color-tertiary-container: hsl(calc(var(--theme-h) + 60), 20%, 90%);
+  --md-sys-color-on-tertiary-container: hsl(calc(var(--theme-h) + 60), 20%, 10);
+  
+  --md-sys-color-background: hsl(var(--theme-h), 12%, 96%);
+  --md-sys-color-on-background: hsl(var(--theme-h), 10%, 10%);
+  
+  --md-sys-color-surface: hsl(var(--theme-h), 10%, 93%);
+  --md-sys-color-on-surface: hsl(var(--theme-h), 8%, 10%);
+  --md-sys-color-surface-variant: hsl(var(--theme-h), 10%, 88%);
+  --md-sys-color-on-surface-variant: hsl(var(--theme-h), 8%, 30%);
+  
+  --md-sys-color-outline: hsl(var(--theme-h), 8%, 50%);
+  --md-sys-color-outline-variant: hsl(var(--theme-h), 8%, 80%);
+  
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+  
+  --md-sys-color-success: #006c46;
+  --md-sys-color-on-success: #ffffff;
+  --md-sys-color-success-container: #83d6a6;
+  --md-sys-color-on-success-container: #003822;
+  
+  --md-sys-color-warning: #7e5700;
+  --md-sys-color-on-warning: #ffffff;
+  --md-sys-color-warning-container: #ffb951;
+
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(0, 0, 0, 0.04);
+
+  --log-viewer-bg: #f7f5fa;
+  --log-viewer-text: #3b304f;
+  --log-line-err: #ba1a1a;
+  --log-line-warn: #7e5700;
+  --log-line-succ: #006c46;
+  --log-line-info: #0969da;
+}
+
+/* AMOLED True Black Theme Overrides */
+html.theme-amoled, body.theme-amoled {
+  --md-sys-color-background: #000000;
+  --md-sys-color-surface: #0a0a0a;
+  --md-sys-color-surface-variant: #141414;
+  --glass-bg: rgba(0, 0, 0, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="SweetClocker WebUI - KernelSU/APatch tuning module for Snapdragon 8s Gen 4">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" id="meta-theme-color" content="#0b0811">
+  <title>SweetClocker Dashboard</title>
+  
+  <!-- External Manager Insets & Core Stylesheet -->
+  <link rel="stylesheet" href="https://mui.kernelsu.org/internal/insets.css">
+  <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body class="m3-theme dark-mode">
+
+  <!-- SVG Symbols for Material 3 Icons -->
+  <svg style="display: none;" aria-hidden="true">
+    <symbol id="icon-dashboard" viewBox="0 0 24 24">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </symbol>
+    <symbol id="icon-logs" viewBox="0 0 24 24">
+      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2zm-4 8H7v-2h6v2z"/>
+    </symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </symbol>
+    <symbol id="icon-lightning" viewBox="0 0 24 24">
+      <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+    </symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24">
+      <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+    </symbol>
+    <symbol id="icon-cpu" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="3.5" fill="currentColor"/>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <rect x="8" y="8" width="8" height="8" fill="currentColor"/>
+      <rect x="6.25" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="11.25" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="16.25" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="6.25" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="11.25" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="16.25" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="6.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="11.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="16.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="6.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="11.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="16.25" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-gpu" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="3.5" fill="currentColor"/>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <path d="M13 6l-4 7h3l-1.5 5.5 5-7.5h-3z" fill="currentColor"/>
+      <rect x="8" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="14.5" y="0" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="8" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="14.5" y="21.5" width="1.5" height="2.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="8" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="0" y="14.5" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="8" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+      <rect x="21.5" y="14.5" width="2.5" height="1.5" rx="0.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-tune" viewBox="0 0 24 24">
+      <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+    </symbol>
+    <symbol id="icon-io" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="3.5" fill="currentColor"/>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <circle cx="6.75" cy="6.75" r="0.9" fill="currentColor"/>
+      <circle cx="17.25" cy="6.75" r="0.9" fill="currentColor"/>
+      <circle cx="6.75" cy="17.25" r="0.9" fill="currentColor"/>
+      <circle cx="17.25" cy="17.25" r="0.9" fill="currentColor"/>
+      <circle cx="12" cy="12" r="5.5" fill="currentColor"/>
+      <circle cx="12" cy="12" r="3.6" fill="var(--md-sys-color-surface, #1a1c1e)"/>
+      <path d="M12 12 L8.2 15.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="12" cy="10.4" r="0.9" fill="currentColor"/>
+    </symbol>
+  </svg>
+
+  <!-- App Container -->
+  <div class="app-layout">
+    
+    <!-- Main Content Area -->
+    <main class="content-container">
+      
+      <!-- Top App Bar -->
+      <header class="top-app-bar">
+        <div class="status-badge" id="service-status">
+          <span class="status-indicator warning"></span>
+          <span class="status-text">Loading…</span>
+        </div>
+
+        <div class="app-logo-title">
+          <svg class="lightning-icon" aria-hidden="true"><use href="#icon-lightning"></use></svg>
+          <span class="app-title">SweetClocker</span>
+        </div>
+
+        <div class="top-bar-actions">
+          <button class="btn btn-filled" id="refresh-btn">
+            <svg class="btn-icon" aria-hidden="true"><use href="#icon-refresh"></use></svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <div class="scroll-content">
+        
+        <!-- PAGE 1: DASHBOARD -->
+        <section id="page-dashboard" class="page-section active">
+          <!-- Cores Grid -->
+          <h3 class="section-header">CPU Frequency & Thermals</h3>
+          <div class="cores-grid" id="cores-grid">
+            <div class="grid-placeholder">Loading CPU configurations…</div>
+          </div>
+
+          <!-- GPU Stats Card -->
+          <h3 class="section-header" style="margin-top: 8px;">GPU Frequency & Thermals</h3>
+          <div class="gpu-card-container">
+            <div class="gpu-card">
+              <div class="gpu-card-header">
+                <div class="gpu-title-group">
+                  <svg class="gpu-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="#icon-gpu"></use>
+                  </svg>
+                  <div class="gpu-title-text">
+                    <span class="gpu-name" id="gpu-card-name">Adreno GPU</span>
+                    <span class="gpu-sub-compact" id="gpu-card-gov">--</span>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="gpu-temp-badge" id="gpu-temp-badge">--°C</span>
+                </div>
+              </div>
+              
+              <div class="gpu-usage-section">
+                <div class="gpu-usage-meta">
+                  <span class="gpu-usage-value" id="gpu-usage-value">0%</span>
+                  <span class="gpu-usage-label">GPU Load</span>
+                </div>
+                <div class="gpu-progress-bar-container">
+                  <div class="gpu-progress-bar" id="gpu-progress-bar" style="transform: scaleX(0);"></div>
+                </div>
+              </div>
+              
+              <div class="gpu-freq-meta-row">
+                <div class="gpu-freq-col" style="align-items: flex-start; text-align: left;">
+                  <span class="gpu-freq-limits" id="gpu-freq-min">-- MHz</span>
+                  <span class="gpu-freq-label">Min clock</span>
+                </div>
+                <div class="gpu-freq-col" style="align-items: center; text-align: center;">
+                  <span class="gpu-freq-now" id="gpu-freq-now">-- MHz</span>
+                  <span class="gpu-freq-label">Current clock</span>
+                </div>
+                <div class="gpu-freq-col" style="align-items: flex-end; text-align: right;">
+                  <span class="gpu-freq-limits" id="gpu-freq-max">-- MHz</span>
+                  <span class="gpu-freq-label">Max clock</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- PAGE 2: LOGS -->
+        <section id="page-logs" class="page-section">
+          <div class="card card-outlined logs-container-card">
+            <div class="logs-header">
+              <div class="search-bar">
+                <input type="text" id="log-search" placeholder="Filter logs…">
+              </div>
+              <div class="logs-actions">
+                <button class="btn btn-outlined btn-small" id="clear-log-btn">Clear Log File</button>
+                <span class="log-info" id="log-size-info">Size: 0 B</span>
+              </div>
+            </div>
+            <div class="log-viewer" id="log-viewer">
+              <pre class="log-pre" id="log-pre">Reading /data/local/tmp/sweetclocker.log…</pre>
+            </div>
+          </div>
+
+          <!-- Floating Action Button for Logs Section -->
+          <div class="logs-fab-container" id="logs-fab-container">
+            <button class="m3-fab m3-fab-primary fab-icon-only" id="copy-log-btn" title="Copy Log to Clipboard">
+              <svg class="m3-fab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- PAGE 3: PREFERENCES -->
+        <section id="page-preferences" class="page-section">
+          <div class="card card-elevated">
+            <h3 class="section-header" style="margin-bottom: 16px; margin-top: 0px;">Theme Configuration</h3>
+            
+            <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Theme Mode</label>
+              <div class="segmented-control" style="margin-top: 8px;">
+                <button class="segment active" data-theme-mode="auto">Auto</button>
+                <button class="segment" data-theme-mode="dark">Dark</button>
+                <button class="segment" data-theme-mode="light">Light</button>
+                <button class="segment" data-theme-mode="amoled">AMOLED</button>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Font Family</label>
+              <div class="segmented-control" style="margin-top: 8px;">
+                <button class="segment active" id="font-outfit-btn" data-font-mode="outfit">Outfit (Default)</button>
+                <button class="segment" id="font-system-btn" data-font-mode="system">System Font</button>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 20px;">
+              <div class="io-switch-row" style="padding: 0; border: none;">
+                <div class="io-switch-info">
+                  <span class="io-switch-title">Reduce Visual Effects</span>
+                  <span class="io-switch-desc">Disable GPU blur and transparency for smoother performance</span>
+                </div>
+                <label class="m3-switch">
+                  <input type="checkbox" id="reduce-effects-toggle">
+                  <span class="m3-switch-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 20px;">
+              <label>Seed Color (Accent)</label>
+              <div class="color-options" style="margin-top: 8px;">
+                <div class="color-dot" style="background-color: var(--seed-purple);" data-color="#6750A4" title="M3 Default Purple"></div>
+                <div class="color-dot" style="background-color: var(--seed-teal);" data-color="#006A6A" title="Teal"></div>
+                <div class="color-dot" style="background-color: var(--seed-orange);" data-color="#8b5000" title="Orange"></div>
+                <div class="color-dot" style="background-color: var(--seed-green);" data-color="#386a20" title="Green"></div>
+                <div class="color-dot" style="background-color: var(--seed-blue);" data-color="#005FAF" title="Blue"></div>
+                <div class="color-dot" style="background-color: var(--seed-pink);" data-color="#A60067" title="Pink"></div>
+                <div class="color-dot" id="custom-color-indicator" style="background-color: var(--seed-brown);" title="Custom Color">
+                  <input type="color" id="custom-color-picker" value="#795548">
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-group" style="margin-bottom: 24px;">
+              <label>Monet Sync Status</label>
+              <div class="monet-status-row" style="margin-top: 8px;">
+                <span class="status-indicator success" id="monet-indicator"></span>
+                <span id="monet-sync-text">System Monet Active</span>
+              </div>
+              <button class="btn btn-outlined btn-small" id="reset-monet-btn" style="margin-top: 12px; height: 36px; padding: 0 16px;">Reset to Monet Sync</button>
+            </div>
+
+            <div class="setting-group" style="border-top: 1px dashed var(--md-sys-color-outline-variant); padding-top: 20px;">
+              <label>Force Bypass Override</label>
+              <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; margin-bottom: 12px; line-height: 1.4;">Bypass SoC hardware verification check and enforce clock limits anyway.</p>
+              <div class="segmented-control">
+                <button class="segment active" id="bypass-off-btn" data-bypass-val="false">Disabled</button>
+                <button class="segment" id="bypass-on-btn" data-bypass-val="true">Enabled</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Author & Credits Card (Flat rows, no nested cards - Gate 4) -->
+          <div class="card card-elevated">
+            <h3 class="section-header" style="margin-bottom: 16px; margin-top: 0px;">Author & Credits</h3>
+            
+            <div class="credits-grid">
+              <!-- Author Item -->
+              <div class="credit-item">
+                <div class="credit-avatar-wrap">
+                  <img src="https://github.com/Lavax88.png" alt="Lavax88" class="credit-avatar" fetchpriority="high">
+                </div>
+                <div class="credit-details">
+                  <h4 class="credit-name">Lava</h4>
+                  <span class="credit-role">Author</span>
+                </div>
+                <div class="credit-actions">
+                  <a href="https://t.me/FreakyLava" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-tg-btn" title="Telegram Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.128.832.942z"/></svg>
+                  </a>
+                  <a href="https://github.com/Lavax88" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-github-btn" title="View GitHub Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Sweetclock Values Finder Item -->
+              <div class="credit-item">
+                <div class="credit-avatar-wrap">
+                  <img src="https://github.com/iRedDragonICY.png" alt="iRedDragonICY" class="credit-avatar" fetchpriority="high">
+                </div>
+                <div class="credit-details">
+                  <h4 class="credit-name">iRedDragonICY</h4>
+                  <span class="credit-role">Sweetclock Values Discovery</span>
+                </div>
+                <div class="credit-actions">
+                  <a href="https://t.me/ireddragonicy" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-tg-btn" title="Telegram Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.128.832.942z"/></svg>
+                  </a>
+                  <a href="https://github.com/iRedDragonICY" target="_blank" rel="noopener noreferrer" class="credit-action-btn credit-github-btn" title="View GitHub Profile">
+                    <svg class="credit-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PAGE 4: TUNING HUB & FEATURES -->
+        <section id="page-tuning" class="page-section">
+          
+          <!-- TUNING MAIN HUB (Category Cards Grid) -->
+          <div id="tuning-hub-view" class="tuning-subview active">
+            <div class="tune-grid">
+              <div class="tune-card tune-card-row" data-tune-feature="performance-profile">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare" aria-hidden="true"><use href="#icon-cpu"></use></svg>
+                </div>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">CPU Configuration</h4>
+                  <span class="tune-card-sub">Cluster frequency limits & governors</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
+              <div class="tune-card tune-card-row" data-tune-feature="gpu-clocks">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare" aria-hidden="true"><use href="#icon-gpu"></use></svg>
+                </div>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">GPU Configuration</h4>
+                  <span class="tune-card-sub">GPU min & max frequency limits & governor</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
+              <div class="tune-card tune-card-row" data-tune-feature="io-management">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare" aria-hidden="true"><use href="#icon-io"></use></svg>
+                </div>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">I/O Management</h4>
+                  <span class="tune-card-sub">Block device I/O schedulers</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- CLUSTER FREQUENCY TUNING DETAIL VIEW -->
+          <div id="tuning-cpu-clocks-view" class="tuning-subview" style="display: none;">
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="section-header" style="margin: 0;">CPU Configuration</h3>
+                  <span class="cluster-name" style="font-size: 0.7rem; padding: 2px 8px;">Hardware limits</span>
+                </div>
+                <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
+                  Set custom min/max frequencies and governor for each cluster. Frequency and governor changes are locked against performance daemons.
+                </p>
+              </div>
+            </div>
+
+            <div class="tuning-grid" id="tuning-grid">
+              <div class="grid-placeholder">Loading cluster frequency controls…</div>
+            </div>
+          </div>
+
+          <!-- GPU FREQUENCY & GOVERNOR TUNING DETAIL VIEW -->
+          <div id="tuning-gpu-clocks-view" class="tuning-subview" style="display: none;">
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="section-header" style="margin: 0;">GPU Configuration</h3>
+                  <span class="cluster-name" style="font-size: 0.7rem; padding: 2px 8px;">Hardware limits</span>
+                </div>
+                <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
+                  Configure minimum and maximum frequency limits and governor for the GPU.
+                </p>
+              </div>
+            </div>
+
+            <!-- GPU THERMAL LIMIT WARNING BANNER -->
+            <div class="card card-warning-banner" id="gpu-thermal-warning-card">
+              <div class="warning-banner-header">
+                <svg class="warning-banner-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+                <div class="warning-banner-text">
+                  <h4 class="warning-banner-title">Thermal Limit Warning (49°C)</h4>
+                  <p class="warning-banner-sub">
+                    Applying custom GPU clocks activates the MiThermal profile (<code class="code-pill">sconfig 6</code>) to increase the thermal cap to 49°C. This allows higher surface temperatures under high GPU load.
+                  </p>
+                </div>
+              </div>
+              <label class="warning-banner-checkbox-label">
+                <input type="checkbox" id="gpu-acknowledge-checkbox" class="warning-banner-checkbox">
+                <span class="checkbox-text">I know what I am doing</span>
+              </label>
+            </div>
+
+            <div class="tuning-grid" id="gpu-tuning-grid">
+              <div class="grid-placeholder">Loading GPU configuration controls…</div>
+            </div>
+          </div>
+
+          <!-- I/O MANAGEMENT TUNING DETAIL VIEW -->
+          <div id="tuning-io-view" class="tuning-subview" style="display: none;">
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <h3 class="section-header" style="margin: 0;">I/O Management</h3>
+                    <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 0 0; line-height: 1.35;">
+                      Configure storage block device I/O schedulers
+                    </p>
+                  </div>
+                  <span class="cluster-name" style="font-size: 0.7rem; padding: 2px 8px;">Storage devices</span>
+                </div>
+
+                <div class="io-switch-row">
+                  <div class="io-switch-info">
+                    <span class="io-switch-title">Enable I/O Management</span>
+                    <span class="io-switch-desc">Enable block device discovery & scheduler controls</span>
+                  </div>
+                  <label class="m3-switch">
+                    <input type="checkbox" id="io-enable-toggle">
+                    <span class="m3-switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="io-switch-row" id="io-apply-boot-row">
+                  <div class="io-switch-info">
+                    <span class="io-switch-title">Apply at Boot</span>
+                    <span class="io-switch-desc">Re-apply custom I/O schedulers on system boot</span>
+                  </div>
+                  <label class="m3-switch">
+                    <input type="checkbox" id="io-apply-boot-toggle">
+                    <span class="m3-switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="tuning-grid" id="io-tuning-grid">
+              <div class="grid-placeholder">Enable I/O Management to inspect block devices…</div>
+            </div>
+          </div>
+
+          <!-- M3 Floating Action Buttons -->
+          <div class="tuning-fab-container" id="tuning-fab-container">
+            <button class="m3-fab m3-fab-secondary fab-icon-only" id="reset-sweetclock-btn" title="Reset to Predefined Sweetclocks">
+              <svg class="m3-fab-icon" aria-hidden="true"><use href="#icon-refresh"></use></svg>
+            </button>
+            <button class="m3-fab m3-fab-primary fab-icon-only" id="apply-tuning-btn" title="Apply Custom Clocks">
+              <svg class="m3-fab-icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+            </button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Bottom Navigation Bar -->
+      <nav class="bottom-nav">
+        <button class="nav-tab active" data-target="page-dashboard">
+          <div class="icon-wrapper">
+            <svg aria-hidden="true"><use href="#icon-dashboard"></use></svg>
+          </div>
+          <span class="tab-label">Home</span>
+        </button>
+        <button class="nav-tab" data-target="page-tuning">
+          <div class="icon-wrapper">
+            <svg aria-hidden="true"><use href="#icon-tune"></use></svg>
+          </div>
+          <span class="tab-label">Tuning</span>
+        </button>
+        <button class="nav-tab" data-target="page-logs">
+          <div class="icon-wrapper">
+            <svg aria-hidden="true"><use href="#icon-logs"></use></svg>
+          </div>
+          <span class="tab-label">Logs</span>
+        </button>
+        <button class="nav-tab" data-target="page-preferences">
+          <div class="icon-wrapper">
+            <svg aria-hidden="true"><use href="#icon-settings"></use></svg>
+          </div>
+          <span class="tab-label">Preferences</span>
+        </button>
+      </nav>
+      
+    </main>
+  </div>
+
+  <!-- Material 3 Frequency Selector Bottom Sheet -->
+  <div class="m3-sheet-backdrop" id="freq-sheet-backdrop">
+    <div class="m3-bottom-sheet" id="freq-sheet">
+      <div class="m3-sheet-handle"></div>
+      <div class="m3-sheet-header">
+        <div class="m3-sheet-title-group">
+          <h4 class="m3-sheet-title" id="freq-sheet-title">Select Frequency</h4>
+          <span class="m3-sheet-subtitle" id="freq-sheet-subtitle">Cluster 0 (Little)</span>
+        </div>
+        <button class="icon-btn" id="freq-sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="m3-sheet-content" id="freq-sheet-options"></div>
+    </div>
+  </div>
+
+  <!-- Material 3 Governor Selector Bottom Sheet -->
+  <div class="m3-sheet-backdrop" id="gov-sheet-backdrop">
+    <div class="m3-bottom-sheet" id="gov-sheet">
+      <div class="m3-sheet-handle"></div>
+      <div class="m3-sheet-header">
+        <div class="m3-sheet-title-group">
+          <h4 class="m3-sheet-title" id="gov-sheet-title">Select Governor</h4>
+          <span class="m3-sheet-subtitle" id="gov-sheet-subtitle">Cluster 0 (Little)</span>
+        </div>
+        <button class="icon-btn" id="gov-sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="m3-sheet-content" id="gov-sheet-options"></div>
+    </div>
+  </div>
+
+  <!-- GPU Thermal Warning Dialog Modal -->
+  <div class="m3-dialog-backdrop" id="gpu-warning-dialog-backdrop" style="display: none;">
+    <div class="m3-dialog" id="gpu-warning-dialog">
+      <div class="m3-dialog-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+      </div>
+      <h3 class="m3-dialog-title">GPU Thermal Limit Notice</h3>
+      <p class="m3-dialog-text">
+        Custom GPU frequencies (>937 MHz) set the MiThermal profile (<code class="code-pill">sconfig 6</code>) to increase the thermal cap to 49°C.
+      </p>
+      <p class="m3-dialog-subtext">
+        To access GPU tuning controls, check the <strong>“I know what I am doing”</strong> box inside the GPU section.
+      </p>
+      <div class="m3-dialog-actions" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <label class="warning-banner-checkbox-label" style="padding-top: 0; border-top: none;">
+          <input type="checkbox" id="gpu-dont-show-again-checkbox" class="warning-banner-checkbox">
+          <span class="checkbox-text" style="font-size: 0.8rem;">Don’t show again</span>
+        </label>
+        <button class="btn btn-filled" id="gpu-warning-dialog-dismiss">I Understand</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vite Application Bootstrap -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

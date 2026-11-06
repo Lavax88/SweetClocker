@@ -1,0 +1,65 @@
+/* effects.css - Glassmorphism, backdrop-filter tuning, and Reduce Effects overrides */
+
+/* Static surface glassmorphism with @supports guard */
+@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
+  .m3-sheet-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .m3-dialog-backdrop {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Optimize continuously updating Hero Card (no expensive real-time blur) */
+.hero-card {
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Reduce Effects Mode (Accessibility & Performance) */
+html.reduce-effects,
+body.reduce-effects,
+.reduce-effects {
+  --glass-blur: 0px !important;
+}
+
+.reduce-effects *,
+.reduce-effects *::before,
+.reduce-effects *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.reduce-effects .hero-card {
+  background-color: var(--md-sys-color-surface-variant) !important;
+  color: var(--md-sys-color-on-surface-variant) !important;
+  box-shadow: none !important;
+}
+
+.reduce-effects .card-elevated {
+  box-shadow: var(--md-elevation-1) !important;
+}
+
+.reduce-effects .m3-sheet-backdrop,
+.reduce-effects .m3-dialog-backdrop {
+  background-color: var(--m3-dialog-backdrop-opaque) !important;
+}
+
+.reduce-effects .bottom-nav-capsule {
+  background: var(--md-sys-color-surface-variant) !important;
+  border-color: var(--md-sys-color-outline-variant) !important;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

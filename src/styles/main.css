@@ -1,0 +1,346 @@
+/* Hallmark · checked: 2026-10-25 · genre: modern-minimal (inferred) · surface: absolute
+ * floor: 0 FAIL · fixed: 111 (4, 10a, 19, 26a, 33, 34, 39a, 48, 62, 67)
+ * built: the project · redesign: polish · v2.0.0 */
+/* Hallmark · waive 7b · surface: absolute · AMOLED true black mode for mobile OLED display efficiency */
+
+@import url('https://mui.kernelsu.org/internal/insets.css');
+@import './tokens.css';
+
+/* Local Offline WOFF2 Fonts */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('../assets/fonts/outfit-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Base Resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background-color: var(--md-sys-color-background);
+  color-scheme: dark light;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  font-family: var(--font-family);
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  overflow-x: clip;
+  overflow-y: hidden;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-speed) var(--transition-easing),
+              color var(--transition-speed) var(--transition-easing);
+}
+
+/* Hallmark Interactive States (Gates 15, 26a, 26b) */
+:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  transition: none; /* Instant focus indicator */
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.segment:focus-visible,
+.nav-tab:focus-visible,
+.credit-action-btn:focus-visible,
+.color-dot:focus-visible,
+.io-option-chip:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+button:active,
+.btn:active,
+.segment:active,
+.io-option-chip:active,
+.m3-fab:active,
+.credit-action-btn:active {
+  transform: scale(0.97);
+}
+
+button:disabled,
+.btn:disabled,
+input:disabled,
+select:disabled,
+.segment:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+body.system-font {
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body.system-font,
+body.system-font *,
+body.system-font *::before,
+body.system-font *::after {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* App Layout Grid */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow-x: clip;
+}
+
+/* Content Area */
+.content-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Top App Bar */
+.top-app-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(4px + var(--top-inset)) 24px 12px 24px;
+  height: calc(56px + var(--top-inset));
+  background-color: var(--md-sys-color-background);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+  z-index: 10;
+  transition: background-color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.app-logo-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--md-sys-color-primary);
+  white-space: nowrap;
+}
+
+#service-status {
+  display: flex;
+  align-items: center;
+}
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.lightning-icon {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+}
+
+.app-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--md-sys-color-primary);
+}
+
+/* Scroll Content */
+.scroll-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: clip;
+  padding: 12px 16px calc(64px + var(--bottom-inset) + 12px) 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Page Section */
+.page-section {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn var(--transition-speed) var(--transition-easing);
+}
+
+#page-preferences {
+  gap: 12px;
+}
+
+.page-section.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-section {
+    animation: none !important;
+  }
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: calc(64px + var(--bottom-inset));
+  padding-bottom: var(--bottom-inset);
+  background-color: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  z-index: 100;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  padding: 8px 12px;
+  flex: 1;
+  max-width: 96px;
+  transition: color var(--transition-speed);
+}
+
+.nav-tab.active {
+  color: var(--md-sys-color-primary);
+}
+
+.nav-tab .icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 28px;
+  border-radius: var(--md-corner-large);
+  transition: background-color var(--transition-speed);
+}
+
+.nav-tab.active .icon-wrapper {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.nav-tab svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.tab-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Section Header Typography */
+.section-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 12px;
+  text-wrap: balance;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 600px) {
+  .top-app-bar {
+    padding: calc(4px + var(--top-inset)) 16px 12px 16px;
+    height: calc(56px + var(--top-inset));
+  }
+  
+  .app-logo-title {
+    gap: 8px;
+  }
+  
+  .app-title {
+    font-size: 1.25rem;
+  }
+  
+  .lightning-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .scroll-content {
+    padding: 12px 12px calc(64px + var(--bottom-inset) + 12px) 12px;
+  }
+  
+  .cores-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .top-bar-actions .btn {
+    padding: 0 12px;
+    height: 36px;
+    font-size: 0.8rem;
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .top-bar-actions .btn {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+  .top-bar-actions .btn .btn-icon {
+    margin: 0;
+  }
+  .app-logo-title {
+    gap: 4px;
+  }
+  .app-title {
+    font-size: 1.15rem;
+  }
+}
