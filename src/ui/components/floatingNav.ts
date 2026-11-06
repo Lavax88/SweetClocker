@@ -2,11 +2,11 @@ import { store, type AppTab } from '../../state/store';
 import { setSuppressTabClick } from '../app';
 
 const TAB_METRICS: Record<string, number> = {
-  'page-dashboard': 100,
-  'page-tuning': 108,
-  'page-logs': 94,
-  'page-preferences': 136,
-  'page-settings': 136
+  'page-dashboard': 106,
+  'page-tuning': 114,
+  'page-logs': 102,
+  'page-preferences': 144,
+  'page-settings': 144
 };
 
 const TAB_ORDER: AppTab[] = [

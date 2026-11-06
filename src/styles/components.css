@@ -187,7 +187,7 @@ html.nav-floating .bottom-nav .nav-highlighter,
 body.nav-floating .bottom-nav .nav-highlighter {
   display: block;
   position: absolute;
-  top: 6px;
+  top: 5px;
   left: 0;
   height: 48px;
   border-radius: var(--md-corner-full);
@@ -310,6 +310,7 @@ html.nav-floating .bottom-nav .nav-tab:not(.active),
 body.nav-floating .bottom-nav .nav-tab:not(.active) {
   padding: 0 10px;
   justify-content: center;
+  align-items: center;
   background: transparent !important;
   background-color: transparent !important;
   color: var(--md-sys-color-on-surface-variant);
@@ -337,6 +338,7 @@ body.nav-floating .bottom-nav .nav-tab.active {
   color: var(--md-sys-color-on-primary-container);
   box-shadow: none !important;
   justify-content: center;
+  align-items: center;
 }
 
 html.nav-floating .bottom-nav .nav-tab.active:active,
@@ -369,24 +371,25 @@ body.nav-floating .bottom-nav .nav-tab svg {
 }
 
 /* Per-tab max-width tokens for exact, smooth, zero-stutter expansion in 380px container */
-html.nav-floating .bottom-nav .nav-tab[data-target="page-dashboard"] .tab-label { --tab-max-w: 42px; }
-html.nav-floating .bottom-nav .nav-tab[data-target="page-tuning"] .tab-label { --tab-max-w: 50px; }
-html.nav-floating .bottom-nav .nav-tab[data-target="page-logs"] .tab-label { --tab-max-w: 36px; }
-html.nav-floating .bottom-nav .nav-tab[data-target="page-preferences"] .tab-label { --tab-max-w: 78px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-dashboard"] .tab-label { --tab-max-w: 48px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-tuning"] .tab-label { --tab-max-w: 56px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-logs"] .tab-label { --tab-max-w: 44px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-preferences"] .tab-label { --tab-max-w: 86px; }
 
 /* Label in floating mode: hidden on inactive, smoothly revealed on active */
 html.nav-floating .bottom-nav .nav-tab:not(.active) .tab-label,
 body.nav-floating .bottom-nav .nav-tab:not(.active) .tab-label {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   max-width: 0;
   opacity: 0;
   margin-left: 0;
-  padding: 0;
+  padding: 2px 0 3px 0;
   overflow: hidden;
   white-space: nowrap;
   pointer-events: none;
   font-size: 0.8125rem;
-  line-height: 1;
+  line-height: 1.35;
   letter-spacing: 0.1px;
   transform: translateX(-4px);
   transition: max-width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -397,16 +400,18 @@ body.nav-floating .bottom-nav .nav-tab:not(.active) .tab-label {
 
 html.nav-floating .bottom-nav .nav-tab.active .tab-label,
 body.nav-floating .bottom-nav .nav-tab.active .tab-label {
-  display: inline-block;
-  max-width: var(--tab-max-w, 78px);
+  display: inline-flex;
+  align-items: center;
+  max-width: var(--tab-max-w, 86px);
   opacity: 1;
   margin-left: 6px;
+  padding: 2px 0 3px 0;
   overflow: hidden;
   white-space: nowrap;
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--md-sys-color-on-primary-container);
-  line-height: 1;
+  line-height: 1.35;
   letter-spacing: 0.1px;
   transform: translateX(0);
   transition: max-width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
