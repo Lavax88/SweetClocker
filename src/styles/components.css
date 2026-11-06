@@ -93,11 +93,15 @@
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 100%;
   height: calc(64px + var(--bottom-inset));
   background-color: var(--md-sys-color-surface);
-  border-top: 1px solid var(--md-sys-color-outline-variant);
+  border: 1px solid transparent;
+  border-top-color: var(--md-sys-color-outline-variant);
+  border-radius: 0;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -105,10 +109,103 @@
   padding: 0 16px var(--bottom-inset) 16px;
   z-index: 100;
   box-shadow: var(--md-elevation-2);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
+  contain: layout style;
+  transition: bottom 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+              width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+              max-width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+              height 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+              padding 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-radius 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.35s ease,
+              background-color 0.35s ease,
+              box-shadow 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bottom-nav.nav-switching {
+  will-change: transform, width, max-width, height, bottom, border-radius;
+}
+
+.bottom-nav.nav-switching .nav-tab {
+  animation: navTabSwitchFade 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes navTabSwitchFade {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 0.15;
+    transform: scale(0.95);
+  }
+  70% {
+    opacity: 0.15;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Material 3 Expressive Floating Navigation Bar (SukiSU Pill Style) */
+html.nav-floating .bottom-nav,
+body.nav-floating .bottom-nav {
+  bottom: calc(16px + var(--bottom-inset));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 36px);
+  max-width: 380px;
+  height: 60px;
+  padding: 0 6px;
+  border-radius: var(--md-corner-full);
+  border: 1px solid var(--nav-floating-border);
+  box-shadow: var(--nav-floating-shadow);
+  background-color: var(--nav-floating-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  justify-content: space-between;
+  gap: 0;
+  touch-action: none;
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+}
+
+/* Floating Navigation Bar Sliding Jelly Highlighter */
+.nav-highlighter {
+  display: none;
+}
+
+html.nav-floating .bottom-nav .nav-highlighter,
+body.nav-floating .bottom-nav .nav-highlighter {
+  display: block;
+  position: absolute;
+  top: 6px;
+  left: 0;
+  height: 48px;
+  border-radius: var(--md-corner-full);
+  background-color: var(--md-sys-color-primary-container);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  z-index: 1;
+  transform-origin: center center;
+  will-change: transform, width;
+  transition: transform 0.42s cubic-bezier(0.34, 1.45, 0.64, 1),
+              width 0.42s cubic-bezier(0.34, 1.45, 0.64, 1),
+              background-color 0.35s ease,
+              box-shadow 0.35s ease;
+}
+
+html.nav-floating .bottom-nav.nav-dragging .nav-highlighter,
+body.nav-floating .bottom-nav.nav-dragging .nav-highlighter {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
 }
 
 .nav-tab {
@@ -124,10 +221,16 @@
   font-size: 0.725rem;
   font-weight: 500;
   gap: 4px;
-  width: 25%;
+  flex: 1;
+  max-width: 96px;
   height: 100%;
   outline: none;
-  transition: color var(--transition-speed);
+  transition: color 0.35s ease,
+              background-color 0.35s ease,
+              padding 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              flex 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-radius 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   user-select: none;
@@ -149,8 +252,9 @@
   justify-content: center;
   width: 56px;
   height: 28px;
-  border-radius: var(--md-corner-large);
-  transition: background-color var(--transition-speed), transform 0.1s var(--transition-easing);
+  border-radius: var(--md-corner-full);
+  transition: background-color 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
   color: inherit;
 }
 
@@ -171,6 +275,144 @@
 
 .tab-label {
   letter-spacing: 0.1px;
+  line-height: 1;
+  font-size: 0.725rem;
+}
+
+/* ==========================================================
+   FLOATING NAV BAR - HORIZONTAL PILL SELECTED TAB STYLE
+   (Matches SukiSU / KernelSU M3 Expressive Pill Design)
+   ========================================================== */
+html.nav-floating .bottom-nav .nav-tab,
+body.nav-floating .bottom-nav .nav-tab {
+  flex-direction: row;
+  height: 48px;
+  max-width: none;
+  border-radius: var(--md-corner-full);
+  gap: 0;
+  flex: 0 0 auto;
+  width: auto;
+  box-sizing: border-box;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  z-index: 2;
+  position: relative;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              padding 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.15s ease;
+}
+
+/* Inactive Floating Tab: round icon button (48px circle: 28px icon + 10px padding each side) */
+html.nav-floating .bottom-nav .nav-tab:not(.active),
+body.nav-floating .bottom-nav .nav-tab:not(.active) {
+  padding: 0 10px;
+  justify-content: center;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--md-sys-color-on-surface-variant);
+  box-shadow: none !important;
+}
+
+html.nav-floating .bottom-nav .nav-tab:not(.active):hover,
+body.nav-floating .bottom-nav .nav-tab:not(.active):hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--md-sys-color-on-surface);
+}
+
+html.nav-floating .bottom-nav .nav-tab:not(.active):active,
+body.nav-floating .bottom-nav .nav-tab:not(.active):active {
+  transform: scale(0.92);
+}
+
+/* Active Floating Tab: expanded horizontal pill with [icon] [label] */
+html.nav-floating .bottom-nav .nav-tab.active,
+body.nav-floating .bottom-nav .nav-tab.active {
+  padding: 0 14px 0 10px;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--md-sys-color-on-primary-container);
+  box-shadow: none !important;
+  justify-content: center;
+}
+
+html.nav-floating .bottom-nav .nav-tab.active:active,
+body.nav-floating .bottom-nav .nav-tab.active:active {
+  transform: scale(0.96);
+}
+
+/* Icon wrapper in floating mode - larger prominent icons (28px) */
+html.nav-floating .bottom-nav .icon-wrapper,
+body.nav-floating .bottom-nav .icon-wrapper {
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: inherit !important;
+  transform: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+html.nav-floating .bottom-nav .nav-tab svg,
+body.nav-floating .bottom-nav .nav-tab svg {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* Per-tab max-width tokens for exact, smooth, zero-stutter expansion in 380px container */
+html.nav-floating .bottom-nav .nav-tab[data-target="page-dashboard"] .tab-label { --tab-max-w: 42px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-tuning"] .tab-label { --tab-max-w: 50px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-logs"] .tab-label { --tab-max-w: 36px; }
+html.nav-floating .bottom-nav .nav-tab[data-target="page-preferences"] .tab-label { --tab-max-w: 78px; }
+
+/* Label in floating mode: hidden on inactive, smoothly revealed on active */
+html.nav-floating .bottom-nav .nav-tab:not(.active) .tab-label,
+body.nav-floating .bottom-nav .nav-tab:not(.active) .tab-label {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 0.8125rem;
+  line-height: 1;
+  letter-spacing: 0.1px;
+  transform: translateX(-4px);
+  transition: max-width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              margin-left 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html.nav-floating .bottom-nav .nav-tab.active .tab-label,
+body.nav-floating .bottom-nav .nav-tab.active .tab-label {
+  display: inline-block;
+  max-width: var(--tab-max-w, 78px);
+  opacity: 1;
+  margin-left: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-primary-container);
+  line-height: 1;
+  letter-spacing: 0.1px;
+  transform: translateX(0);
+  transition: max-width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              margin-left 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s,
+              transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* 2. CARDS */
@@ -602,6 +844,13 @@
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+  transition: height var(--transition-speed) var(--transition-easing);
+}
+
+html.nav-floating .logs-container-card,
+body.nav-floating .logs-container-card {
+  height: calc(100vh - var(--top-inset) - var(--bottom-inset) - 188px);
+  height: calc(100dvh - var(--top-inset) - var(--bottom-inset) - 188px);
 }
 
 .logs-header {
@@ -1198,7 +1447,15 @@
   transform: translateY(0) scale(1);
   pointer-events: auto;
   transition: opacity 0.4s cubic-bezier(0.05, 0.7, 0.1, 1),
-              transform 0.4s cubic-bezier(0.05, 0.7, 0.1, 1);
+              transform 0.4s cubic-bezier(0.05, 0.7, 0.1, 1),
+              bottom var(--transition-speed) var(--transition-easing);
+}
+
+html.nav-floating .tuning-fab-container,
+body.nav-floating .tuning-fab-container,
+html.nav-floating .logs-fab-container,
+body.nav-floating .logs-fab-container {
+  bottom: calc(88px + var(--bottom-inset));
 }
 
 /* Progressive enhancement: hide FABs when JS is loaded until fab-visible is applied */
