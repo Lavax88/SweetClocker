@@ -1,0 +1,370 @@
+import { store, type AppTab } from '../../state/store';
+import { setSuppressTabClick } from '../app';
+
+const TAB_METRICS: Record<string, number> = {
+  'page-dashboard': 100,
+  'page-tuning': 108,
+  'page-logs': 94,
+  'page-preferences': 136,
+  'page-settings': 136
+};
+
+const TAB_ORDER: AppTab[] = [
+  'page-dashboard',
+  'page-tuning',
+  'page-logs',
+  'page-preferences'
+];
+
+export interface FloatingNavController {
+  updatePosition: (immediate?: boolean) => void;
+  destroy: () => void;
+}
+
+export function initFloatingNav(
+  onSelectTab: (tab: AppTab) => void
+): FloatingNavController {
+  const bottomNav = document.querySelector<HTMLElement>('.bottom-nav');
+  const highlighter = document.getElementById('nav-highlighter');
+
+  if (!bottomNav || !highlighter) {
+    return {
+      updatePosition: () => {},
+      destroy: () => {}
+    };
+  }
+
+  let isPointerDown = false;
+  let isDragging = false;
+  let pointerTarget: HTMLElement | null = null;
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastTime = 0;
+  let velocity = 0;
+  let currentPreviewTab: AppTab | null = null;
+  let isFloatingActive = document.documentElement.classList.contains('nav-floating');
+
+  function calculateTabSlots(activeTab: AppTab) {
+    const navRect = bottomNav!.getBoundingClientRect();
+    const navWidth = navRect.width;
+    const activeWidth = TAB_METRICS[activeTab] || 100;
+    const totalTabsWidth = activeWidth + 3 * 48;
+    const innerWidth = Math.max(0, navWidth - 12); // 6px padding on each side
+    const availableSpace = Math.max(0, innerWidth - totalTabsWidth);
+    const space = availableSpace / 3;
+
+    const slots = {} as Record<AppTab, { left: number; width: number; center: number }>;
+
+    let currentX = 6;
+    for (let i = 0; i < TAB_ORDER.length; i++) {
+      const tab = TAB_ORDER[i];
+      if (!tab) continue;
+      const isThisActive = tab === activeTab;
+      const width = isThisActive ? (TAB_METRICS[tab] || 48) : 48;
+
+      let left: number;
+      if (i === 0) {
+        left = 6;
+      } else if (i === TAB_ORDER.length - 1) {
+        left = Math.max(6, navWidth - 6 - width);
+      } else {
+        left = currentX;
+      }
+
+      slots[tab] = {
+        left,
+        width,
+        center: left + width / 2
+      };
+
+      currentX = left + width + space;
+    }
+
+    return { navWidth, slots };
+  }
+
+  function snapToActiveTab(immediate = false) {
+    if (!isFloatingActive || isDragging) return;
+
+    const activeTab = (store.get('activeTab') as AppTab) || 'page-dashboard';
+    const { slots } = calculateTabSlots(activeTab);
+    const slot = slots[activeTab] || slots['page-dashboard'];
+
+    if (immediate) {
+      highlighter!.style.transition = 'none';
+    } else {
+      highlighter!.style.transition =
+        'transform 0.42s cubic-bezier(0.34, 1.45, 0.64, 1), width 0.42s cubic-bezier(0.34, 1.45, 0.64, 1)';
+    }
+
+    highlighter!.style.width = `${slot.width}px`;
+    highlighter!.style.transform = `translate3d(${slot.left}px, 0, 0) scaleX(1) scaleY(1) skewX(0deg)`;
+  }
+
+  function getClosestTab(touchX: number, activeTabForGeometry: AppTab): AppTab {
+    const { slots } = calculateTabSlots(activeTabForGeometry);
+    let closestTab: AppTab = 'page-dashboard';
+    let minDistance = Infinity;
+
+    for (const tab of TAB_ORDER) {
+      if (!tab || !slots[tab]) continue;
+      const dist = Math.abs(touchX - slots[tab].center);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestTab = tab;
+      }
+    }
+
+    return closestTab;
+  }
+
+  function setPreviewActiveTab(tab: AppTab) {
+    const navTabs = bottomNav!.querySelectorAll<HTMLElement>('.nav-tab');
+    navTabs.forEach((t) => {
+      const target = t.getAttribute('data-target') as AppTab | null;
+      t.classList.toggle('active', target === tab);
+    });
+  }
+
+  // Pointer / Touch Drag handlers
+  function handlePointerDown(e: PointerEvent) {
+    // Only track primary touch/pointer button
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (!document.documentElement.classList.contains('nav-floating')) return;
+
+    isPointerDown = true;
+    isDragging = false;
+    pointerTarget = e.target as HTMLElement;
+    startX = e.clientX;
+    startY = e.clientY;
+    lastX = e.clientX;
+    lastTime = performance.now();
+    velocity = 0;
+    currentPreviewTab = (store.get('activeTab') as AppTab) || 'page-dashboard';
+
+    try {
+      if (pointerTarget && pointerTarget.setPointerCapture) {
+        pointerTarget.setPointerCapture(e.pointerId);
+      }
+    } catch (_) {}
+  }
+
+  function handlePointerMove(e: PointerEvent) {
+    if (!isPointerDown) return;
+    if (!document.documentElement.classList.contains('nav-floating')) return;
+
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    // Distinguish intentional drag from simple tap (6px threshold)
+    if (!isDragging) {
+      if (Math.abs(deltaX) > 6 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        isDragging = true;
+        bottomNav!.classList.add('nav-dragging');
+      } else {
+        return;
+      }
+    }
+
+    // Dragging is active: prevent scrolling or gesture conflicts
+    e.preventDefault();
+
+    const now = performance.now();
+    const dt = Math.max(1, now - lastTime);
+    const instantVelocity = (e.clientX - lastX) / dt;
+    velocity = velocity * 0.65 + instantVelocity * 0.35;
+    lastX = e.clientX;
+    lastTime = now;
+
+    const navRect = bottomNav!.getBoundingClientRect();
+    const touchX = e.clientX - navRect.left;
+
+    // Elastic jelly stretch & squash based on drag velocity
+    const speed = Math.abs(velocity);
+    const baseStretch = Math.min(1.22, 1 + speed * 0.1);
+    const squash = 1 / Math.sqrt(baseStretch);
+    const skew = Math.max(-5, Math.min(5, -velocity * 1.2));
+
+    // Determine closest tab under current touch position
+    const closest = getClosestTab(touchX, currentPreviewTab || 'page-dashboard');
+    if (closest !== currentPreviewTab) {
+      currentPreviewTab = closest;
+      setPreviewActiveTab(closest);
+
+      // Tactile haptic feedback when crossing into another tab
+      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
+        try {
+          window.navigator.vibrate(8);
+        } catch (_) {}
+      }
+    }
+
+    // 1. Base highlighter metrics
+    const baseWidth = TAB_METRICS[currentPreviewTab] || 100;
+    const minLeft = 6;
+    const maxLeft = Math.max(minLeft, navRect.width - baseWidth - 6);
+
+    // Theoretical center of finger
+    const rawLeft = touchX - baseWidth / 2;
+
+    // 2. Strict Boundary Clamping and Wall Squish
+    let overscroll = 0; // Negative for left boundary, positive for right boundary
+    let targetLeft = rawLeft;
+    let targetWidth = baseWidth;
+    let extraScaleY = 1;
+    let stretch = baseStretch;
+
+    if (rawLeft < minLeft) {
+      overscroll = rawLeft - minLeft; // Negative
+      // Hard clamp highlight safely inside the capsule
+      targetLeft = minLeft;
+      // Cushion squish against left wall
+      const squish = Math.min(22, Math.abs(overscroll) * 0.25);
+      targetWidth = Math.max(48, baseWidth - squish);
+      extraScaleY = 1 + Math.min(0.12, Math.abs(overscroll) * 0.003);
+      // Dampen horizontal stretch so it never extends left of minLeft
+      stretch = 1;
+    } else if (rawLeft > maxLeft) {
+      overscroll = rawLeft - maxLeft; // Positive
+      // Cushion squish against right wall
+      const squish = Math.min(22, Math.abs(overscroll) * 0.25);
+      targetWidth = Math.max(48, baseWidth - squish);
+      // Hard clamp right edge safely inside the capsule
+      targetLeft = Math.max(minLeft, navRect.width - targetWidth - 6);
+      extraScaleY = 1 + Math.min(0.12, Math.abs(overscroll) * 0.003);
+      // Dampen horizontal stretch so it never extends right of maxLeft
+      stretch = 1;
+    } else {
+      // While within bounds, ensure stretch expansion does not poke past ends
+      const halfExpansion = (targetWidth * (stretch - 1)) / 2;
+      if (targetLeft - halfExpansion < minLeft) {
+        targetLeft = minLeft + halfExpansion;
+      } else if (targetLeft + targetWidth + halfExpansion > navRect.width - 6) {
+        targetLeft = navRect.width - 6 - targetWidth - halfExpansion;
+      }
+    }
+
+    // 3. Elastic background capsule jelly stretch at the ends
+    if (overscroll !== 0) {
+      const sign = Math.sign(overscroll);
+      const absOver = Math.abs(overscroll);
+      const containerDisp = sign * Math.min(24, Math.pow(absOver, 0.7) * 1.4);
+      const containerStretch = 1 + Math.min(0.06, Math.abs(containerDisp) / 400);
+      const containerSquash = 1 - Math.min(0.03, Math.abs(containerDisp) / 800);
+
+      bottomNav!.style.transition = 'none';
+      bottomNav!.style.transform = `translateX(calc(-50% + ${containerDisp}px)) scaleX(${containerStretch}) scaleY(${containerSquash})`;
+    } else {
+      bottomNav!.style.transition = 'none';
+      bottomNav!.style.transform = 'translateX(-50%) scale(1)';
+    }
+
+    // 4. Apply hardware-accelerated transform to highlighter
+    const finalScaleX = stretch;
+    const finalScaleY = squash * extraScaleY;
+
+    highlighter!.style.transition = 'none';
+    highlighter!.style.width = `${targetWidth}px`;
+    highlighter!.style.transform = `translate3d(${targetLeft}px, 0, 0) scaleX(${finalScaleX}) scaleY(${finalScaleY}) skewX(${skew}deg)`;
+  }
+
+  function handlePointerUp(e: PointerEvent) {
+    if (!isPointerDown) return;
+    isPointerDown = false;
+
+    try {
+      if (pointerTarget && pointerTarget.releasePointerCapture) {
+        pointerTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch (_) {}
+
+    // Spring rebound for background capsule
+    bottomNav!.style.transition = 'transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    bottomNav!.style.transform = 'translateX(-50%) scale(1)';
+    setTimeout(() => {
+      if (!isDragging && bottomNav) {
+        bottomNav.style.transition = '';
+      }
+    }, 440);
+
+    if (isDragging) {
+      setSuppressTabClick(true);
+      setTimeout(() => setSuppressTabClick(false), 140);
+
+      isDragging = false;
+      bottomNav!.classList.remove('nav-dragging');
+
+      const navRect = bottomNav!.getBoundingClientRect();
+      const touchX = e.clientX - navRect.left;
+      const targetTab = getClosestTab(touchX, currentPreviewTab || 'page-dashboard');
+
+      // Spring snap to the target tab
+      onSelectTab(targetTab);
+
+      // Trigger jelly settle haptic
+      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
+        try {
+          window.navigator.vibrate(14);
+        } catch (_) {}
+      }
+
+      snapToActiveTab(false);
+    } else {
+      // It was a tap - ensure highlighter is aligned
+      snapToActiveTab(false);
+    }
+  }
+
+  function handlePointerCancel(_e: PointerEvent) {
+    if (!isPointerDown) return;
+    isPointerDown = false;
+    isDragging = false;
+    bottomNav!.classList.remove('nav-dragging');
+
+    // Spring rebound for background capsule
+    bottomNav!.style.transition = 'transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    bottomNav!.style.transform = 'translateX(-50%) scale(1)';
+    setTimeout(() => {
+      if (!isDragging && bottomNav) {
+        bottomNav.style.transition = '';
+      }
+    }, 440);
+
+    snapToActiveTab(false);
+  }
+
+  // Attach event listeners to bottomNav
+  bottomNav.addEventListener('pointerdown', handlePointerDown);
+  window.addEventListener('pointermove', handlePointerMove, { passive: false });
+  window.addEventListener('pointerup', handlePointerUp);
+  window.addEventListener('pointercancel', handlePointerCancel);
+
+  // Resize / Orientation change listeners
+  const handleResize = () => snapToActiveTab(true);
+  window.addEventListener('resize', handleResize);
+
+  const handleNavStyleChange = (e: Event) => {
+    const customEvt = e as CustomEvent<string>;
+    isFloatingActive = customEvt.detail === 'floating';
+    if (isFloatingActive) {
+      setTimeout(() => snapToActiveTab(true), 50);
+    }
+  };
+  window.addEventListener('nav-style-changed', handleNavStyleChange);
+
+  // Initial positioning
+  setTimeout(() => snapToActiveTab(true), 80);
+
+  return {
+    updatePosition: (immediate = false) => snapToActiveTab(immediate),
+    destroy: () => {
+      bottomNav.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('nav-style-changed', handleNavStyleChange);
+    }
+  };
+}

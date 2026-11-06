@@ -11,6 +11,7 @@ import {
 import { initLogsScreen, updateLogsView } from './screens/logs';
 import { initPreferencesScreen } from './screens/preferences';
 import { initGpuWarningDialog, hideGpuWarningDialog } from './components/dialog';
+import { initFloatingNav, type FloatingNavController } from './components/floatingNav';
 
 export async function initApp(): Promise<void> {
   // 1. Initialize Theme & Modes
@@ -110,55 +111,81 @@ async function triggerImmediateUpdate(): Promise<void> {
   }
 }
 
-function setupNavigation(): void {
+let floatingNavController: FloatingNavController | null = null;
+
+export function selectTab(target: AppTab): void {
+  const currentTab = store.get('activeTab');
+  if (target === currentTab) {
+    if (target === 'page-tuning' && store.get('currentTuningSubView') !== 'hub') {
+      showTuningSubView('hub', false);
+    }
+    return;
+  }
+
+  // Clear any subview history state
+  if (history.state?.subview) {
+    try {
+      history.replaceState(null, '');
+    } catch (e) {}
+  }
+
+  // 1. Immediately update visual classes
   const navTabs = document.querySelectorAll<HTMLElement>('.nav-tab');
   const pages = document.querySelectorAll<HTMLElement>('.page-section');
   const fabContainer = document.getElementById('tuning-fab-container');
   const logsFab = document.getElementById('logs-fab-container');
 
-  navTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const target = tab.getAttribute('data-target') as AppTab | null;
-      if (!target) return;
+  navTabs.forEach((t) => {
+    const isTarget = t.getAttribute('data-target') === target;
+    t.classList.toggle('active', isTarget);
+  });
 
-      const currentTab = store.get('activeTab');
-      if (target === currentTab) {
-        if (target === 'page-tuning' && store.get('currentTuningSubView') !== 'hub') {
-          showTuningSubView('hub', false);
-        }
+  pages.forEach((p) => p.classList.remove('active'));
+  const targetPage = document.getElementById(target);
+  if (targetPage) targetPage.classList.add('active');
+
+  if (target === 'page-tuning') {
+    showTuningSubView('hub', false);
+    logsFab?.classList.remove('fab-visible');
+  } else if (target === 'page-logs') {
+    fabContainer?.classList.remove('fab-visible');
+    logsFab?.classList.add('fab-visible');
+  } else {
+    fabContainer?.classList.remove('fab-visible');
+    logsFab?.classList.remove('fab-visible');
+  }
+
+  store.set('activeTab', target);
+
+  // 2. Adjust polling discipline
+  startActiveTabPolling(target);
+
+  // 3. Update floating highlighter position smoothly
+  floatingNavController?.updatePosition(false);
+}
+
+let suppressTabClick = false;
+
+export function setSuppressTabClick(suppress: boolean): void {
+  suppressTabClick = suppress;
+}
+
+function setupNavigation(): void {
+  const navTabs = document.querySelectorAll<HTMLElement>('.nav-tab');
+
+  navTabs.forEach((tab) => {
+    tab.addEventListener('click', (e) => {
+      if (suppressTabClick) {
+        e.preventDefault();
+        e.stopPropagation();
         return;
       }
-
-      // Clear any subview history state
-      if (history.state?.subview) {
-        try {
-          history.replaceState(null, '');
-        } catch (e) {}
-      }
-
-      // 1. Immediately update visual classes
-      navTabs.forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      pages.forEach((p) => p.classList.remove('active'));
-      const targetPage = document.getElementById(target);
-      if (targetPage) targetPage.classList.add('active');
-
-      if (target === 'page-tuning') {
-        showTuningSubView('hub', false);
-        logsFab?.classList.remove('fab-visible');
-      } else if (target === 'page-logs') {
-        fabContainer?.classList.remove('fab-visible');
-        logsFab?.classList.add('fab-visible');
-      } else {
-        fabContainer?.classList.remove('fab-visible');
-        logsFab?.classList.remove('fab-visible');
-      }
-
-      store.set('activeTab', target);
-
-      // 2. Adjust polling discipline
-      startActiveTabPolling(target);
+      const target = tab.getAttribute('data-target') as AppTab | null;
+      if (target) selectTab(target);
     });
+  });
+
+  floatingNavController = initFloatingNav((target) => {
+    selectTab(target);
   });
 }
