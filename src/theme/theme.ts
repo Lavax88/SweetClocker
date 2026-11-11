@@ -7,7 +7,7 @@ const DEFAULT_SEED = '#6750A4';
 
 let activeThemeMode: ThemeMode = 'auto';
 let activeFontMode: FontMode = 'outfit';
-let activeNavBarStyle: NavBarStyle = 'default';
+let activeNavBarStyle: NavBarStyle = 'floating';
 let activeSeedColor: string = DEFAULT_SEED;
 let isMonetActive = false;
 let isReduceEffects = false;
@@ -348,8 +348,8 @@ export async function initTheme(): Promise<void> {
   const font = stored.font ?? 'outfit';
   setFontMode(font);
 
-  // Set navigation bar style (default to 'default')
-  const navStyle = stored.navStyle ?? 'default';
+  // Set navigation bar style (default to 'floating')
+  const navStyle = stored.navStyle ?? 'floating';
   setNavBarStyle(navStyle);
 
   // Set seed / monet
