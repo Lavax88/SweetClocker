@@ -5,8 +5,9 @@ dist/
 webroot/
 
 # Runtime log and temporary state files
-logs/
+/logs/
 *.log
 *.tmp
 .sweetclocker_state
 *.zip
+.hallmark/
