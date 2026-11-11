@@ -8,6 +8,8 @@ rm -f "/data/local/tmp/.sweetclocker_state" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_custom" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_io_defaults" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_io_custom" 2>/dev/null
+rm -f "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null
+rm -f "/data/local/tmp/.sweetclocker_net_custom" 2>/dev/null
 
 # Unmount any existing policy mount locks if active before removing files
 for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do

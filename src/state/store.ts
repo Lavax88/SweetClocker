@@ -1,7 +1,7 @@
 import type { TelemetrySnapshot } from '../telemetry/types';
 
 export type AppTab = 'page-dashboard' | 'page-tuning' | 'page-logs' | 'page-preferences';
-export type TuningSubView = 'hub' | 'cpu-clocks' | 'gpu-clocks' | 'io-management';
+export type TuningSubView = 'hub' | 'cpu-clocks' | 'gpu-clocks' | 'io-management' | 'net-management';
 
 export interface AppState {
   activeTab: AppTab;

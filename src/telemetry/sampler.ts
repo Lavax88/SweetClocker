@@ -1,6 +1,7 @@
 import type {
   TelemetrySnapshot,
   IoStats,
+  NetStats,
   CpuConfigLimits,
   GpuConfigLimits
 } from './types';
@@ -119,6 +120,34 @@ export async function applyIoConfig(
 export async function resetIoConfig(): Promise<boolean> {
   try {
     await hardwareEngine.applyPreset('defaults');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getNetStats(): Promise<NetStats | null> {
+  return hardwareEngine.fetchNetStats();
+}
+
+export async function applyNetConfig(
+  algo: string,
+  applyBoot: boolean,
+  enabled: boolean
+): Promise<boolean> {
+  try {
+    await hardwareEngine.reconcile({
+      net: { algo, applyBoot, enabled }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function resetNetConfig(): Promise<boolean> {
+  try {
+    await hardwareEngine.resetNet();
     return true;
   } catch {
     return false;

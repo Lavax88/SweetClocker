@@ -854,6 +854,8 @@ done
 
 IO_DEFAULTS_FILE="/data/local/tmp/.sweetclocker_io_defaults"
 IO_CUSTOM_FILE="/data/local/tmp/.sweetclocker_io_custom"
+NET_DEFAULTS_FILE="/data/local/tmp/.sweetclocker_net_defaults"
+NET_CUSTOM_FILE="/data/local/tmp/.sweetclocker_net_custom"
 
 init_io_defaults() {
     if [ ! -f "$IO_DEFAULTS_FILE" ]; then
@@ -977,6 +979,67 @@ check_io_drift() {
     fi
 }
 
+init_net_defaults() {
+    if [ ! -f "$NET_DEFAULTS_FILE" ]; then
+        touch "$NET_DEFAULTS_FILE" 2>/dev/null
+        chmod 600 "$NET_DEFAULTS_FILE" 2>/dev/null
+        if [ -f "/proc/sys/net/ipv4/tcp_congestion_control" ]; then
+            active_cc=$(cat /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null | tr -d ' \r\n')
+            if [ -n "$active_cc" ]; then
+                echo "tcp_congestion_control=${active_cc}" >> "$NET_DEFAULTS_FILE"
+                log_msg "net/defaults: recorded initial default TCP congestion control '${active_cc}'"
+            fi
+        fi
+    fi
+}
+
+apply_net_config() {
+    init_net_defaults
+    if [ -f "$NET_CUSTOM_FILE" ]; then
+        enabled=$(grep "^net_enabled=" "$NET_CUSTOM_FILE" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+        if [ "$enabled" = "1" ]; then
+            target_cc=$(grep "^tcp_congestion_control=" "$NET_CUSTOM_FILE" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+            if [ -n "$target_cc" ] && [ -f "/proc/sys/net/ipv4/tcp_congestion_control" ]; then
+                echo "$target_cc" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
+                sysctl -w net.ipv4.tcp_congestion_control="$target_cc" >/dev/null 2>&1
+                readback_cc=$(cat /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null | tr -d ' \r\n')
+                log_msg "net/congestion: set TCP congestion control to '${readback_cc:-$target_cc}'"
+            fi
+        fi
+    fi
+}
+
+reset_net_config() {
+    init_net_defaults
+    if [ -f "$NET_DEFAULTS_FILE" ]; then
+        default_cc=$(grep "^tcp_congestion_control=" "$NET_DEFAULTS_FILE" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+        if [ -n "$default_cc" ] && [ -f "/proc/sys/net/ipv4/tcp_congestion_control" ]; then
+            echo "$default_cc" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
+            sysctl -w net.ipv4.tcp_congestion_control="$default_cc" >/dev/null 2>&1
+            log_msg "net/reset: reverted TCP congestion control to default ('${default_cc}')"
+        fi
+    fi
+    rm -f "$NET_CUSTOM_FILE" 2>/dev/null
+}
+
+check_net_drift() {
+    if [ -f "$NET_CUSTOM_FILE" ]; then
+        enabled=$(grep "^net_enabled=" "$NET_CUSTOM_FILE" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+        apply_boot=$(grep "^net_apply_boot=" "$NET_CUSTOM_FILE" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+        if [ "$enabled" = "1" ] && [ "$apply_boot" = "1" ]; then
+            target_cc=$(grep "^tcp_congestion_control=" "$NET_CUSTOM_FILE" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+            if [ -n "$target_cc" ] && [ -f "/proc/sys/net/ipv4/tcp_congestion_control" ]; then
+                curr_cc=$(cat /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null | tr -d ' \r\n')
+                if [ -n "$curr_cc" ] && [ "$curr_cc" != "$target_cc" ]; then
+                    log_msg "service.sh: TCP congestion control drift detected (was '${curr_cc}', expected '${target_cc}'), re-applying"
+                    echo "$target_cc" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
+                    sysctl -w net.ipv4.tcp_congestion_control="$target_cc" >/dev/null 2>&1
+                fi
+            fi
+        fi
+    fi
+}
+
 if [ "$found_LITTLE" != "1" ] || [ "$found_BIG" != "1" ] || [ "$found_PRIME" != "1" ]; then
     layout_mismatch=1
     if [ "$MODE" = "--init" ]; then
@@ -1008,6 +1071,7 @@ if [ "$MODE" = "--init" ] || [ "$MODE" = "--apply-cpu" ]; then
     if [ "$MODE" = "--init" ]; then
         apply_gpu_config
         apply_io_config
+        apply_net_config
     fi
 elif [ "$MODE" = "--apply-gpu" ]; then
     apply_gpu_config
@@ -1015,8 +1079,13 @@ elif [ "$MODE" = "--apply-io" ]; then
     apply_io_config
 elif [ "$MODE" = "--reset-io" ]; then
     reset_io_config
+elif [ "$MODE" = "--apply-net" ]; then
+    apply_net_config
+elif [ "$MODE" = "--reset-net" ]; then
+    reset_net_config
 elif [ "$MODE" = "--check" ] || [ "$MODE" = "--check-slow" ]; then
     check_io_drift
+    check_net_drift
     drift_count=0
     for item in $POLICY_TARGETS $CPU_TARGETS; do
         label=$(echo "$item" | cut -d: -f1)

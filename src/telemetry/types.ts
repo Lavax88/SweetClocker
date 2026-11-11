@@ -59,6 +59,15 @@ export interface IoStats {
   blocks: IoBlockDevice[];
 }
 
+export interface NetStats {
+  enabled: boolean;
+  applyBoot: boolean;
+  currentAlgo: string;
+  defaultAlgo: string;
+  availAlgos: string[];
+  customAlgo: string | null;
+}
+
 export interface CpuConfigLimits {
   min?: number;
   max?: number;

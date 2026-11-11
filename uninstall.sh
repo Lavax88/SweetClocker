@@ -43,10 +43,21 @@ if [ -f "/data/local/tmp/.sweetclocker_io_defaults" ]; then
         fi
     done < "/data/local/tmp/.sweetclocker_io_defaults"
 fi
+if [ -f "/data/local/tmp/.sweetclocker_net_defaults" ]; then
+    log_uninstall "Reverting TCP congestion control to initial system defaults..."
+    default_algo=$(grep "^tcp_congestion_control=" "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null | cut -d= -f2 | tr -d '\r')
+    if [ -n "$default_algo" ] && [ -f "/proc/sys/net/ipv4/tcp_congestion_control" ]; then
+        echo "$default_algo" > "/proc/sys/net/ipv4/tcp_congestion_control" 2>/dev/null
+        sysctl -w net.ipv4.tcp_congestion_control="$default_algo" >/dev/null 2>&1
+        log_uninstall "Reverted TCP congestion control to default ('${default_algo}')"
+    fi
+fi
 rm -f /data/local/tmp/.sweetclocker_state 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_custom 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_io_defaults 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_io_custom 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_net_defaults 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_net_custom 2>/dev/null
 
 # 6. Delete bypass lock overrides
 rm -f /data/local/tmp/sweetclocker_force 2>/dev/null

@@ -4,6 +4,7 @@ import type {
   ClusterPolicyData,
   GpuStats,
   IoStats,
+  NetStats,
   IoBlockDevice,
   CpuConfigLimits,
   GpuConfigLimits
@@ -11,7 +12,7 @@ import type {
 import { parseTelemetryOutput } from './parse';
 import { exec } from '../bridge/ksu';
 
-export type SubsystemKey = 'cpu' | 'gpu' | 'io';
+export type SubsystemKey = 'cpu' | 'gpu' | 'io' | 'net';
 
 export interface CpuTelemetry {
   cores: CoreStats[];
@@ -23,12 +24,14 @@ export interface SubsystemMap {
   cpu: CpuTelemetry;
   gpu: GpuStats;
   io: IoStats | null;
+  net: NetStats | null;
 }
 
 export interface HardwareIntent {
   cpu?: Record<string, CpuConfigLimits>;
   gpu?: GpuConfigLimits;
   io?: { config: Record<string, string>; applyBoot: boolean; enabled: boolean };
+  net?: { algo: string; applyBoot: boolean; enabled: boolean };
   bypass?: boolean;
 }
 
@@ -59,6 +62,7 @@ class HardwareEngineImpl {
   private pollTimeout: ReturnType<typeof setTimeout> | null = null;
   private lastSnapshot: TelemetrySnapshot | null = null;
   private cachedIoStats: IoStats | null = null;
+  private cachedNetStats: NetStats | null = null;
   private busyCount = 0;
 
   // Observers by channel
@@ -66,7 +70,8 @@ class HardwareEngineImpl {
     ['all', new Set()],
     ['cpu', new Set()],
     ['gpu', new Set()],
-    ['io', new Set()]
+    ['io', new Set()],
+    ['net', new Set()]
   ]);
 
   // FIFO Mutex queue to serialize shell operations and avoid race conditions
@@ -242,6 +247,8 @@ class HardwareEngineImpl {
         listener(snapshot.gpu);
       } else if (target === 'io') {
         listener(this.cachedIoStats);
+      } else if (target === 'net') {
+        listener(this.cachedNetStats);
       }
     } catch (err) {
       console.error(`Error in observer for channel '${target}':`, err);
@@ -254,6 +261,10 @@ class HardwareEngineImpl {
     if (target === 'io') {
       const io = await this.fetchIoStatsInternal();
       return io as any;
+    }
+    if (target === 'net') {
+      const net = await this.fetchNetStatsInternal();
+      return net as any;
     }
 
     if (!this.lastSnapshot) {
@@ -331,7 +342,16 @@ class HardwareEngineImpl {
         await exec(cmd);
       }
 
-      // 5. Post-condition verification: sample fresh state and notify
+      // 5. Network TCP congestion control configuration
+      if (intent.net) {
+        const customText = `net_enabled=${intent.net.enabled ? 1 : 0}\nnet_apply_boot=${intent.net.applyBoot ? 1 : 0}\ntcp_congestion_control=${intent.net.algo}\n`;
+        const cmd =
+          `cat << 'EOF' > /data/local/tmp/.sweetclocker_net_custom\n${customText}EOF\n` +
+          getScriptCmd('--apply-net');
+        await exec(cmd);
+      }
+
+      // 6. Post-condition verification: sample fresh state and notify
       const freshSnapshot = await this.sampleOnceInternal();
       if (freshSnapshot) {
         this.dispatchSnapshot(freshSnapshot);
@@ -352,6 +372,7 @@ class HardwareEngineImpl {
         await exec(getScriptCmd('--reset-cpu'));
         await exec(getScriptCmd('--reset-gpu'));
         await exec(getScriptCmd('--reset-io'));
+        await exec(getScriptCmd('--reset-net'));
       }
 
       const freshSnapshot = await this.sampleOnceInternal();
@@ -366,6 +387,19 @@ class HardwareEngineImpl {
   public async fetchIoStats(): Promise<IoStats | null> {
     return this.enqueue(async () => {
       return this.fetchIoStatsInternal();
+    });
+  }
+
+  public async fetchNetStats(): Promise<NetStats | null> {
+    return this.enqueue(async () => {
+      return this.fetchNetStatsInternal();
+    });
+  }
+
+  public async resetNet(): Promise<void> {
+    return this.enqueue(async () => {
+      await exec(getScriptCmd('--reset-net'));
+      await this.fetchNetStatsInternal();
     });
   }
 
@@ -485,6 +519,124 @@ done
     const ioListeners = this.observers.get('io');
     if (ioListeners && ioListeners.size > 0) {
       for (const l of ioListeners) {
+        try {
+          l(stats);
+        } catch (_) {}
+      }
+    }
+
+    return stats;
+  }
+
+  private async fetchNetStatsInternal(): Promise<NetStats | null> {
+    const cmd = `
+def_file="/data/local/tmp/.sweetclocker_net_defaults"
+cust_file="/data/local/tmp/.sweetclocker_net_custom"
+cc_node="/proc/sys/net/ipv4/tcp_congestion_control"
+avail_node="/proc/sys/net/ipv4/tcp_available_congestion_control"
+
+if [ ! -f "$def_file" ] && [ -f "$cc_node" ]; then
+  touch "$def_file" 2>/dev/null
+  read -r act < "$cc_node"
+  [ -n "$act" ] && echo "tcp_congestion_control=\${act}" >> "$def_file"
+fi
+
+cat "$def_file" 2>/dev/null
+echo "---NET_CUSTOM---"
+cat "$cust_file" 2>/dev/null
+echo "---NET_NODES---"
+if [ -f "$cc_node" ]; then
+  read -r cur < "$cc_node"
+  echo "current:\${cur}"
+fi
+if [ -f "$avail_node" ]; then
+  read -r avail < "$avail_node"
+  echo "available:\${avail}"
+fi
+`;
+
+    const { errno, stdout, stderr } = await exec(cmd);
+    if (errno !== 0 && !stdout) {
+      console.error('Failed to get Network stats:', stderr);
+      return null;
+    }
+
+    const parts = stdout.split(/---NET_CUSTOM---|---NET_NODES---/);
+    const defaultsText = parts[0] ?? '';
+    const customText = parts[1] ?? '';
+    const nodesText = parts[2] ?? '';
+
+    let defaultAlgo = '';
+    for (const line of defaultsText.trim().split('\n')) {
+      if (line.includes('=')) {
+        const [k, v] = line.split('=');
+        if (k?.trim() === 'tcp_congestion_control' && v) {
+          defaultAlgo = v.trim();
+        }
+      }
+    }
+
+    let enabled = false;
+    let applyBoot = false;
+    let customAlgo: string | null = null;
+
+    for (const line of customText.trim().split('\n')) {
+      if (line.includes('=')) {
+        const [k, v] = line.split('=');
+        const key = k?.trim() ?? '';
+        const val = v?.trim() ?? '';
+        if (key === 'net_enabled') enabled = val === '1';
+        else if (key === 'net_apply_boot') applyBoot = val === '1';
+        else if (key === 'tcp_congestion_control') customAlgo = val || null;
+      }
+    }
+
+    let currentAlgo = '';
+    const availAlgos: string[] = [];
+
+    for (const line of nodesText.trim().split('\n')) {
+      if (line.startsWith('current:')) {
+        currentAlgo = line.slice('current:'.length).trim();
+      } else if (line.startsWith('available:')) {
+        const rawAvail = line.slice('available:'.length).trim();
+        for (const algo of rawAvail.split(/\s+/)) {
+          const trimmed = algo.trim();
+          if (trimmed && !availAlgos.includes(trimmed)) {
+            availAlgos.push(trimmed);
+          }
+        }
+      }
+    }
+
+    if (!currentAlgo) {
+      currentAlgo = customAlgo || defaultAlgo || 'cubic';
+    }
+    if (!defaultAlgo) {
+      defaultAlgo = currentAlgo;
+    }
+    if (!availAlgos.includes(currentAlgo)) {
+      availAlgos.unshift(currentAlgo);
+    }
+    if (defaultAlgo && !availAlgos.includes(defaultAlgo)) {
+      availAlgos.push(defaultAlgo);
+    }
+    if (availAlgos.length === 0) {
+      availAlgos.push('cubic', 'reno');
+    }
+
+    const stats: NetStats = {
+      enabled,
+      applyBoot,
+      currentAlgo,
+      defaultAlgo,
+      availAlgos,
+      customAlgo
+    };
+
+    this.cachedNetStats = stats;
+    const netListeners = this.observers.get('net');
+    if (netListeners && netListeners.size > 0) {
+      for (const l of netListeners) {
         try {
           l(stats);
         } catch (_) {}

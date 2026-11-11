@@ -54,6 +54,14 @@ const mockGpuState = {
   availFreqs: '305000000 401000000 480000000 550000000 640000000 750000000 900000000 1000000000'
 };
 
+const mockNetState = {
+  enabled: true,
+  applyBoot: true,
+  currentAlgo: 'bbr',
+  defaultAlgo: 'cubic',
+  availAlgos: ['bbr', 'cubic', 'reno', 'bic', 'westwood']
+};
+
 let mockBypass = false;
 let mockLog = `[2026-07-20 00:02:18] post-fs-data.sh: boot start, log truncated
 [2026-07-20 00:02:18] discovered policy0 -> cpus [0,1] -> target 1286400 kHz (LITTLE, matches expected)
@@ -180,6 +188,45 @@ export function mockExec(command: string): Promise<ExecResult> {
         const custStr = 'io_enabled=1\nio_apply_boot=1\nsda=mq-deadline\nsdb=mq-deadline\nmmcblk0=mq-deadline';
         const blocksStr = 'sda|none [mq-deadline] kyber bfq\nsdb|none [mq-deadline] kyber bfq\nmmcblk0|none [mq-deadline] kyber bfq';
         resolve({ errno: 0, stdout: `${defStr}\n---IO_CUSTOM---\n${custStr}\n---IO_BLOCKS---\n${blocksStr}\n`, stderr: '' });
+        return;
+      }
+
+      if (
+        command.includes('---NET_CUSTOM---') ||
+        command.includes('tcp_congestion_control') ||
+        command.includes('tcp_available_congestion_control')
+      ) {
+        const defStr = `tcp_congestion_control=${mockNetState.defaultAlgo}`;
+        const custStr = `net_enabled=${mockNetState.enabled ? 1 : 0}\nnet_apply_boot=${mockNetState.applyBoot ? 1 : 0}\ntcp_congestion_control=${mockNetState.currentAlgo}`;
+        const nodesStr = `current:${mockNetState.currentAlgo}\navailable:${mockNetState.availAlgos.join(' ')}`;
+        resolve({
+          errno: 0,
+          stdout: `${defStr}\n---NET_CUSTOM---\n${custStr}\n---NET_NODES---\n${nodesStr}\n`,
+          stderr: ''
+        });
+        return;
+      }
+
+      if (command.includes('.sweetclocker_net_custom')) {
+        const match = command.match(/tcp_congestion_control=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          mockNetState.currentAlgo = match[1];
+        }
+        mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0, 19)}] sweetspot-apply.sh: Set TCP congestion control to '${mockNetState.currentAlgo}'`;
+        resolve({ errno: 0, stdout: '', stderr: '' });
+        return;
+      }
+
+      if (command.includes('--apply-net')) {
+        mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0, 19)}] sweetspot-apply.sh: Applied TCP congestion control '${mockNetState.currentAlgo}'`;
+        resolve({ errno: 0, stdout: '', stderr: '' });
+        return;
+      }
+
+      if (command.includes('--reset-net')) {
+        mockNetState.currentAlgo = mockNetState.defaultAlgo;
+        mockLog += `\n[${new Date().toISOString().replace('T', ' ').slice(0, 19)}] sweetspot-apply.sh: Reverted TCP congestion control to default ('${mockNetState.defaultAlgo}')`;
+        resolve({ errno: 0, stdout: '', stderr: '' });
         return;
       }
 
