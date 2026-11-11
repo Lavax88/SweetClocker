@@ -221,17 +221,9 @@ export function setFontMode(font: FontMode): void {
   persistSettings();
 }
 
-export function setNavBarStyle(style: NavBarStyle): void {
+export function setNavBarStyle(style: NavBarStyle, animate = true): void {
   activeNavBarStyle = style;
   const root = document.documentElement;
-  const nav = document.querySelector<HTMLElement>('.bottom-nav');
-
-  if (nav) {
-    nav.classList.add('nav-switching');
-    setTimeout(() => {
-      nav.classList.remove('nav-switching');
-    }, 450);
-  }
 
   if (style === 'floating') {
     root.classList.add('nav-floating');
@@ -240,7 +232,11 @@ export function setNavBarStyle(style: NavBarStyle): void {
   }
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('nav-style-changed', { detail: style }));
+    window.dispatchEvent(
+      new CustomEvent('nav-style-changed', {
+        detail: { style, animate }
+      })
+    );
   }
 
   const segments = document.querySelectorAll('[data-nav-style]');
@@ -348,9 +344,9 @@ export async function initTheme(): Promise<void> {
   const font = stored.font ?? 'outfit';
   setFontMode(font);
 
-  // Set navigation bar style (default to 'floating')
+  // Set navigation bar style (default to 'floating', no startup switch animation)
   const navStyle = stored.navStyle ?? 'floating';
-  setNavBarStyle(navStyle);
+  setNavBarStyle(navStyle, false);
 
   // Set seed / monet
   if (stored.seedColor && !stored.isMonet) {

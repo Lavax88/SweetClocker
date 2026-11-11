@@ -1,13 +1,4 @@
 import { store, type AppTab } from '../../state/store';
-import { setSuppressTabClick } from '../app';
-
-const TAB_METRICS: Record<string, number> = {
-  'page-dashboard': 106,
-  'page-tuning': 114,
-  'page-logs': 102,
-  'page-preferences': 144,
-  'page-settings': 144
-};
 
 const TAB_ORDER: AppTab[] = [
   'page-dashboard',
@@ -15,6 +6,34 @@ const TAB_ORDER: AppTab[] = [
   'page-logs',
   'page-preferences'
 ];
+
+function getTabMetrics(bottomNav: HTMLElement | null, tab: AppTab): number {
+  if (bottomNav) {
+    const el = bottomNav.querySelector<HTMLElement>(`.nav-tab[data-target="${tab}"]`);
+    if (el && el.classList.contains('active')) {
+      const w = el.getBoundingClientRect().width;
+      if (w > 50) return Math.round(w);
+    }
+  }
+  switch (tab) {
+    case 'page-preferences': return 144;
+    case 'page-tuning': return 114;
+    case 'page-dashboard': return 106;
+    case 'page-logs': return 102;
+    default: return 100;
+  }
+}
+
+function computeOverscrollSquash(overscroll: number) {
+  const compression = Math.min(0.26, Math.abs(overscroll) / 160);
+  const scaleX = Math.max(0.74, 1 - compression);
+  const scaleY = 1 / Math.sqrt(scaleX);
+  return {
+    finalScaleX: scaleX,
+    finalScaleY: scaleY,
+    finalSkew: 0
+  };
+}
 
 export interface FloatingNavController {
   updatePosition: (immediate?: boolean) => void;
@@ -45,10 +64,21 @@ export function initFloatingNav(
   let currentPreviewTab: AppTab | null = null;
   let isFloatingActive = document.documentElement.classList.contains('nav-floating');
 
+  function resetCapsuleSpring() {
+    if (!bottomNav) return;
+    bottomNav.style.transition = 'transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    bottomNav.style.transform = 'translateX(-50%) scale(1)';
+    setTimeout(() => {
+      if (!isDragging && bottomNav) {
+        bottomNav.style.transition = '';
+      }
+    }, 440);
+  }
+
   function calculateTabSlots(activeTab: AppTab) {
     const navRect = bottomNav!.getBoundingClientRect();
     const navWidth = navRect.width;
-    const activeWidth = TAB_METRICS[activeTab] || 100;
+    const activeWidth = getTabMetrics(bottomNav, activeTab);
     const totalTabsWidth = activeWidth + 3 * 48;
     const innerWidth = Math.max(0, navWidth - 12); // 6px padding on each side
     const availableSpace = Math.max(0, innerWidth - totalTabsWidth);
@@ -61,7 +91,7 @@ export function initFloatingNav(
       const tab = TAB_ORDER[i];
       if (!tab) continue;
       const isThisActive = tab === activeTab;
-      const width = isThisActive ? (TAB_METRICS[tab] || 48) : 48;
+      const width = isThisActive ? getTabMetrics(bottomNav, tab) : 48;
 
       let left: number;
       if (i === 0) {
@@ -130,7 +160,6 @@ export function initFloatingNav(
 
   // Pointer / Touch Drag handlers
   function handlePointerDown(e: PointerEvent) {
-    // Only track primary touch/pointer button
     if (e.button !== 0 && e.pointerType === 'mouse') return;
     if (!document.documentElement.classList.contains('nav-floating')) return;
 
@@ -168,7 +197,6 @@ export function initFloatingNav(
       }
     }
 
-    // Dragging is active: prevent scrolling or gesture conflicts
     e.preventDefault();
 
     const now = performance.now();
@@ -192,25 +220,18 @@ export function initFloatingNav(
     if (closest !== currentPreviewTab) {
       currentPreviewTab = closest;
       setPreviewActiveTab(closest);
-
-      // Tactile haptic feedback when crossing into another tab
-      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
-        try {
-          window.navigator.vibrate(8);
-        } catch (_) {}
-      }
     }
 
     // 1. Base highlighter metrics
-    const baseWidth = TAB_METRICS[currentPreviewTab] || 100;
+    const baseWidth = getTabMetrics(bottomNav, currentPreviewTab || 'page-dashboard');
     const minLeft = 6;
     const maxLeft = Math.max(minLeft, navRect.width - baseWidth - 6);
 
     // Theoretical center of finger
     const rawLeft = touchX - baseWidth / 2;
 
-    // 2. Boundary-Anchored Elastic Stretch (Stays 100% inside boundary while stretching)
-    let overscroll = 0; // Negative for left boundary, positive for right boundary
+    // 2. Boundary-Anchored Elastic Squash & Containment
+    let overscroll = 0;
     let targetLeft = rawLeft;
     let finalScaleX = baseStretch;
     let finalScaleY = squash;
@@ -219,28 +240,21 @@ export function initFloatingNav(
 
     if (rawLeft < minLeft) {
       overscroll = rawLeft - minLeft; // Negative
-      // Anchor left edge strictly at minLeft (6px) inside the boundary
       targetLeft = minLeft;
       transformOrigin = 'left center';
-
-      // Elastic stretch extending inward into the bar proportional to overscroll pull
-      const stretchX = 1 + Math.min(0.38, Math.abs(overscroll) / 110);
-      finalScaleX = stretchX;
-      finalScaleY = 1 / Math.sqrt(stretchX);
-      finalSkew = 0;
+      const squashRes = computeOverscrollSquash(overscroll);
+      finalScaleX = squashRes.finalScaleX;
+      finalScaleY = squashRes.finalScaleY;
+      finalSkew = squashRes.finalSkew;
     } else if (rawLeft > maxLeft) {
       overscroll = rawLeft - maxLeft; // Positive
-      // Anchor right edge strictly at navRect.width - 6px inside the boundary
       targetLeft = maxLeft;
       transformOrigin = 'right center';
-
-      // Elastic stretch extending inward into the bar proportional to overscroll pull
-      const stretchX = 1 + Math.min(0.38, Math.abs(overscroll) / 110);
-      finalScaleX = stretchX;
-      finalScaleY = 1 / Math.sqrt(stretchX);
-      finalSkew = 0;
+      const squashRes = computeOverscrollSquash(overscroll);
+      finalScaleX = squashRes.finalScaleX;
+      finalScaleY = squashRes.finalScaleY;
+      finalSkew = squashRes.finalSkew;
     } else {
-      // While within bounds, scale from center and keep visual edges strictly inside [6px, navWidth - 6px]
       transformOrigin = 'center center';
       const halfExpansion = (baseWidth * (baseStretch - 1)) / 2;
       if (targetLeft - halfExpansion < minLeft) {
@@ -282,18 +296,18 @@ export function initFloatingNav(
       }
     } catch (_) {}
 
-    // Spring rebound for background capsule
-    bottomNav!.style.transition = 'transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    bottomNav!.style.transform = 'translateX(-50%) scale(1)';
-    setTimeout(() => {
-      if (!isDragging && bottomNav) {
-        bottomNav.style.transition = '';
-      }
-    }, 440);
+    resetCapsuleSpring();
 
     if (isDragging) {
-      setSuppressTabClick(true);
-      setTimeout(() => setSuppressTabClick(false), 140);
+      // Intercept and swallow the synthetic click event that follows pointer release
+      bottomNav!.addEventListener(
+        'click',
+        (clickEvt) => {
+          clickEvt.preventDefault();
+          clickEvt.stopPropagation();
+        },
+        { capture: true, once: true }
+      );
 
       isDragging = false;
       bottomNav!.classList.remove('nav-dragging');
@@ -302,19 +316,9 @@ export function initFloatingNav(
       const touchX = e.clientX - navRect.left;
       const targetTab = getClosestTab(touchX, currentPreviewTab || 'page-dashboard');
 
-      // Spring snap to the target tab
       onSelectTab(targetTab);
-
-      // Trigger jelly settle haptic
-      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
-        try {
-          window.navigator.vibrate(14);
-        } catch (_) {}
-      }
-
       snapToActiveTab(false);
     } else {
-      // It was a tap - ensure highlighter is aligned
       snapToActiveTab(false);
     }
   }
@@ -325,15 +329,7 @@ export function initFloatingNav(
     isDragging = false;
     bottomNav!.classList.remove('nav-dragging');
 
-    // Spring rebound for background capsule
-    bottomNav!.style.transition = 'transform 0.44s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    bottomNav!.style.transform = 'translateX(-50%) scale(1)';
-    setTimeout(() => {
-      if (!isDragging && bottomNav) {
-        bottomNav.style.transition = '';
-      }
-    }, 440);
-
+    resetCapsuleSpring();
     snapToActiveTab(false);
   }
 
@@ -348,8 +344,18 @@ export function initFloatingNav(
   window.addEventListener('resize', handleResize);
 
   const handleNavStyleChange = (e: Event) => {
-    const customEvt = e as CustomEvent<string>;
-    isFloatingActive = customEvt.detail === 'floating';
+    const customEvt = e as CustomEvent<{ style: string; animate: boolean } | string>;
+    const detail = customEvt.detail;
+    const style = typeof detail === 'string' ? detail : detail?.style;
+    const animate = typeof detail === 'object' && detail?.animate;
+
+    isFloatingActive = style === 'floating';
+
+    if (animate && bottomNav) {
+      bottomNav.classList.add('nav-switching');
+      setTimeout(() => bottomNav?.classList.remove('nav-switching'), 450);
+    }
+
     if (isFloatingActive) {
       setTimeout(() => snapToActiveTab(true), 50);
     }

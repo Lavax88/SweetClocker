@@ -11,6 +11,14 @@
   <!-- External Manager Insets & Core Stylesheet -->
   <link rel="stylesheet" href="https://mui.kernelsu.org/internal/insets.css">
   <link rel="stylesheet" href="./src/styles/main.css">
+  <script>
+    try {
+      const s = localStorage.getItem('sweetclocker_theme_settings_v2');
+      if (s && JSON.parse(s).navStyle === 'default') {
+        document.documentElement.classList.remove('nav-floating');
+      }
+    } catch (_) {}
+  </script>
 </head>
 <body class="m3-theme dark-mode">
 
@@ -196,9 +204,9 @@
           <div class="card card-elevated">
             <h3 class="section-header" style="margin-bottom: 16px; margin-top: 0px;">Theme Configuration</h3>
             
-            <div class="setting-group" style="margin-bottom: 20px;">
+            <div class="setting-group">
               <label>Theme Mode</label>
-              <div class="segmented-control" style="margin-top: 8px;">
+              <div class="segmented-control">
                 <button class="segment active" data-theme-mode="auto">Auto</button>
                 <button class="segment" data-theme-mode="dark">Dark</button>
                 <button class="segment" data-theme-mode="light">Light</button>
@@ -206,23 +214,23 @@
               </div>
             </div>
 
-            <div class="setting-group" style="margin-bottom: 20px;">
+            <div class="setting-group">
               <label>Font Family</label>
-              <div class="segmented-control" style="margin-top: 8px;">
+              <div class="segmented-control">
                 <button class="segment active" id="font-outfit-btn" data-font-mode="outfit">Outfit (Default)</button>
                 <button class="segment" id="font-system-btn" data-font-mode="system">System Font</button>
               </div>
             </div>
 
-            <div class="setting-group" style="margin-bottom: 20px;">
+            <div class="setting-group">
               <label>Navigation Bar</label>
-              <div class="segmented-control" style="margin-top: 8px;">
+              <div class="segmented-control">
                 <button class="segment" id="nav-style-default-btn" data-nav-style="default">Default</button>
                 <button class="segment active" id="nav-style-floating-btn" data-nav-style="floating">Floating</button>
               </div>
             </div>
 
-            <div class="setting-group" style="margin-bottom: 20px;">
+            <div class="setting-group">
               <div class="io-switch-row" style="padding: 0; border: none;">
                 <div class="io-switch-info">
                   <span class="io-switch-title">Reduce Visual Effects</span>
@@ -235,9 +243,9 @@
               </div>
             </div>
 
-            <div class="setting-group" style="margin-bottom: 20px;">
+            <div class="setting-group">
               <label>Seed Color (Accent)</label>
-              <div class="color-options" style="margin-top: 8px;">
+              <div class="color-options">
                 <div class="color-dot" style="background-color: var(--seed-purple);" data-color="#6750A4" title="M3 Default Purple"></div>
                 <div class="color-dot" style="background-color: var(--seed-teal);" data-color="#006A6A" title="Teal"></div>
                 <div class="color-dot" style="background-color: var(--seed-orange);" data-color="#8b5000" title="Orange"></div>

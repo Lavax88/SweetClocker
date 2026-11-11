@@ -164,22 +164,11 @@ export function selectTab(target: AppTab): void {
   floatingNavController?.updatePosition(false);
 }
 
-let suppressTabClick = false;
-
-export function setSuppressTabClick(suppress: boolean): void {
-  suppressTabClick = suppress;
-}
-
 function setupNavigation(): void {
   const navTabs = document.querySelectorAll<HTMLElement>('.nav-tab');
 
   navTabs.forEach((tab) => {
-    tab.addEventListener('click', (e) => {
-      if (suppressTabClick) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
+    tab.addEventListener('click', () => {
       const target = tab.getAttribute('data-target') as AppTab | null;
       if (target) selectTab(target);
     });
