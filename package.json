@@ -2,6 +2,7 @@
   "name": "sweetclocker-webui",
   "private": true,
   "version": "1.4.0",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "vite",
