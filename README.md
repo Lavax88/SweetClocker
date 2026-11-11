@@ -25,7 +25,6 @@
 - **Material 3 Expressive WebUI**: Embedded dashboard featuring Snapdragon design aesthetics, dynamic Monet color sync, category subviews, interactive M3 bottom sheets, and glassmorphic styling.
 - **Real-Time Telemetry & Logs**: Track live per-core CPU frequencies, GPU load/thermals, and system logs with automatic 24-hour log rotation.
 
-
 ---
 
 ## Benchmark Sweet Spots
@@ -56,7 +55,7 @@ The WebUI is written in strict TypeScript and bundled with Vite (no UI framework
 
 ### Prerequisites
 - Node.js 20+ / 22 LTS
-- `npm` and `zip`
+- `npm` and `zip` (or `bsdtar` on Windows)
 
 ### Build Commands
 ```bash
@@ -73,14 +72,34 @@ npm run typecheck
 npm run build
 
 # Package flashable module zip (SweetClocker-<version>.zip)
+# On Linux / macOS / WSL:
 ./build.sh
+
+# On Windows:
+./build.bat
 ```
 
 ---
 
-## Credits
+## AI Disclosure & Hardware Verification
 
-- **[iRedDragonICY](https://github.com/iRedDragonICY)** — For efficiency benchmarking, voltage curve testing, and identifying target hardware OPP sweet spots across Snapdragon 8s Gen 4 clusters.
+This project is built using modern **vibe coding** workflows — combining developer direction and architectural design with agentic AI pair programming (Claude & Gemini). While scaffolding, refactoring, and UI enhancements were accelerated through AI assistance, **every single feature, kernel interface, VFS lock mechanism, frequency profile, and UI interaction has been directly tested, verified, and validated on real physical hardware** (POCO F7 / Redmi Turbo 4, Snapdragon 8s Gen 4 / SM8735).
+
+Real-world stability, thermal behavior, power efficiency, and gesture fidelity were verified directly on-device.
+
+---
+
+## Credits & Third-Party Acknowledgements
+
+SweetClocker builds upon foundational tools, research, and design systems from the open-source community:
+
+- **[iRedDragonICY](https://github.com/iRedDragonICY)** — Benchmark research, voltage/power curve testing, and discovery of target OPP sweet spots across Snapdragon 8s Gen 4 clusters.
+- **[KernelSU](https://github.com/tiann/KernelSU) & [KernelSU Next](https://github.com/rifsxd/KernelSU-Next)** — Kernel-based root solution, module packaging system, and internal WebUI bridge APIs.
+- **[APatch](https://github.com/bmax121/APatch) & [Magisk](https://github.com/topjohnwu/Magisk)** — Root environments, installer frameworks, and module compatibility standards.
+- **[MMRL](https://github.com/DerGoogler/MMRL)** — Modern Android root module manager and WebUI host.
+- **Google Material Design 3** — Expressive Material You tokens, Monet dynamic color extraction principles, and component design patterns.
+- **Outfit & Inter Typefaces** — Typography designed by Outfit Type Foundry and Rasmus Andersson, bundled offline under SIL Open Font License.
+- **Vite & TypeScript** — Frontend tooling and compiler toolchain powering frameworkless WebUI performance.
 
 ---
 
