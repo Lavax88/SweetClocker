@@ -1,6 +1,7 @@
 import type {
   TelemetrySnapshot,
   IoStats,
+  NetStats,
   CpuConfigLimits,
   GpuConfigLimits
 } from '../../telemetry/types';
@@ -8,15 +9,18 @@ import {
   applyCpuConfig,
   applyGpuConfig,
   applyIoConfig,
+  applyNetConfig,
   resetGpuConfig,
   resetIoConfig,
+  resetNetConfig,
   resetToSweetclocks,
   getIoStats,
+  getNetStats,
   sampleOnce
 } from '../../telemetry/sampler';
 import { toast } from '../../bridge/ksu';
 import { formatFreqMHz } from '../formatters';
-import { showGpuWarningDialog } from '../components/dialog';
+import { showGpuWarningDialog, askApplyBoot } from '../components/dialog';
 import { store, type TuningSubView } from '../../state/store';
 
 export interface ClusterConfig {
@@ -94,12 +98,35 @@ export const CLUSTERS_CONFIG: ClusterConfig[] = [
 ];
 
 let currentIoData: IoStats | null = null;
+let currentNetData: NetStats | null = null;
+
+const TCP_ALGO_DESCRIPTIONS: Record<string, string> = {
+  bbr: 'Google BBR (Bottleneck Bandwidth and RTT): Model-based congestion control that optimizes throughput and latency over Wi-Fi and mobile networks while preventing bufferbloat.',
+  cubic: 'CUBIC: Window-based congestion control designed for high-bandwidth, high-latency networks. Highly stable and standard default in Android/Linux.',
+  reno: 'TCP Reno: Traditional loss-based additive-increase / multiplicative-decrease (AIMD) algorithm.',
+  bic: 'BIC: Binary Increase Congestion control designed for networks with large delay-bandwidth product.',
+  westwood: 'TCP Westwood: Bandwidth-estimation algorithm designed for lossy wireless and mobile environments.',
+  westwoodplus: 'TCP Westwood+: Improved Westwood with enhanced RTT estimation under lossy wireless conditions.',
+  fq_codel: 'FQ-CoDel: Fair Queuing with Controlled Delay packet scheduler and congestion controller.',
+  dctcp: 'DCTCP: Data Center TCP utilizing Explicit Congestion Notification (ECN).',
+  vegas: 'TCP Vegas: Delay-based congestion avoidance algorithm that predicts packet loss by measuring RTT variations.',
+  scalable: 'Scalable TCP: Algorithm designed for gigabit wide-area networks with scaled recovery.'
+};
+
+function getAlgoDescription(algo: string): string {
+  const key = algo.toLowerCase();
+  return (
+    TCP_ALGO_DESCRIPTIONS[key] ??
+    `Kernel-provided TCP congestion control module (${algo}).`
+  );
+}
 
 export function showTuningSubView(viewName: TuningSubView, pushHistory = true): void {
   const hubView = document.getElementById('tuning-hub-view');
   const cpuClocksView = document.getElementById('tuning-cpu-clocks-view');
   const gpuClocksView = document.getElementById('tuning-gpu-clocks-view');
   const ioView = document.getElementById('tuning-io-view');
+  const netView = document.getElementById('tuning-net-view');
   const fabContainer = document.getElementById('tuning-fab-container');
 
   const currentView = store.get('currentTuningSubView');
@@ -108,6 +135,7 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     if (hubView) hubView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
     if (ioView) ioView.style.display = 'none';
+    if (netView) netView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'block';
     if (fabContainer) {
       requestAnimationFrame(() => {
@@ -124,6 +152,7 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     if (hubView) hubView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (ioView) ioView.style.display = 'none';
+    if (netView) netView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'block';
     if (fabContainer) {
       requestAnimationFrame(() => {
@@ -140,6 +169,7 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     if (hubView) hubView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
+    if (netView) netView.style.display = 'none';
     if (ioView) ioView.style.display = 'block';
     if (fabContainer) {
       requestAnimationFrame(() => {
@@ -153,10 +183,29 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     }
     store.set('currentTuningSubView', 'io-management');
     renderIoView();
+  } else if (viewName === 'net-management') {
+    if (hubView) hubView.style.display = 'none';
+    if (cpuClocksView) cpuClocksView.style.display = 'none';
+    if (gpuClocksView) gpuClocksView.style.display = 'none';
+    if (ioView) ioView.style.display = 'none';
+    if (netView) netView.style.display = 'block';
+    if (fabContainer) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => fabContainer.classList.add('fab-visible'));
+      });
+    }
+    if (pushHistory && currentView !== 'net-management') {
+      try {
+        history.pushState({ subview: 'net-management' }, '');
+      } catch (e) {}
+    }
+    store.set('currentTuningSubView', 'net-management');
+    renderNetView();
   } else {
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
     if (ioView) ioView.style.display = 'none';
+    if (netView) netView.style.display = 'none';
     if (hubView) hubView.style.display = 'block';
     if (fabContainer) fabContainer.classList.remove('fab-visible');
     store.set('currentTuningSubView', 'hub');
@@ -447,7 +496,6 @@ function renderGpuTuningCard(data: TelemetrySnapshot): HTMLDivElement {
     <div class="tuning-card-header">
       <div class="tuning-card-title-group">
         <span class="tuning-card-title">${gpuData.model || 'Adreno GPU'}</span>
-        <span class="cluster-name">GPU clock limits</span>
       </div>
     </div>
 
@@ -622,9 +670,6 @@ function updateGpuTuningCardValues(
 export async function renderIoView(userEnabledOverride: boolean | null = null): Promise<void> {
   const grid = document.getElementById('io-tuning-grid');
   const enableToggle = document.getElementById('io-enable-toggle') as HTMLInputElement | null;
-  const applyBootToggle = document.getElementById(
-    'io-apply-boot-toggle'
-  ) as HTMLInputElement | null;
 
   if (!grid) return;
 
@@ -642,7 +687,6 @@ export async function renderIoView(userEnabledOverride: boolean | null = null): 
       : data.enabled || (enableToggle ? enableToggle.checked : false);
 
   if (enableToggle) enableToggle.checked = isEnabled;
-  if (applyBootToggle) applyBootToggle.checked = data.applyBoot;
 
   if (!isEnabled) {
     grid.innerHTML = `<div class="grid-placeholder" style="padding: 24px; text-align: center;">I/O Management is disabled.<br><span style="font-size: 0.8rem; opacity: 0.7;">Turn ON the switch above to inspect and customize block device schedulers.</span></div>`;
@@ -718,6 +762,95 @@ export async function renderIoView(userEnabledOverride: boolean | null = null): 
 
     grid.appendChild(card);
   }
+}
+
+export async function renderNetView(userEnabledOverride: boolean | null = null): Promise<void> {
+  const grid = document.getElementById('net-tuning-grid');
+  const enableToggle = document.getElementById('net-enable-toggle') as HTMLInputElement | null;
+
+  if (!grid) return;
+
+  const data = await getNetStats();
+  currentNetData = data;
+
+  if (!data) {
+    grid.innerHTML = '<div class="grid-placeholder">Failed to query kernel TCP congestion controls.</div>';
+    return;
+  }
+
+  const isEnabled =
+    userEnabledOverride !== null
+      ? userEnabledOverride
+      : data.enabled || (enableToggle ? enableToggle.checked : false);
+
+  if (enableToggle) enableToggle.checked = isEnabled;
+
+  if (!isEnabled) {
+    grid.innerHTML = `<div class="grid-placeholder" style="padding: 24px; text-align: center;">Network Tuning is disabled.<br><span style="font-size: 0.8rem; opacity: 0.7;">Turn ON the switch above to inspect and customize TCP congestion controls.</span></div>`;
+    return;
+  }
+
+  const activeAlgo = data.customAlgo || data.currentAlgo || data.defaultAlgo;
+
+  const radioItemsHtml = data.availAlgos
+    .map((algo) => {
+      const isSelected = algo === activeAlgo;
+      const isDefault = algo === data.defaultAlgo;
+      return `
+        <div class="m3e-radio-card ${isSelected ? 'active' : ''}" data-algo="${algo}">
+          <div class="m3e-radio-left">
+            <div class="m3e-radio-control">
+              <div class="m3e-radio-circle">
+                <div class="m3e-radio-dot"></div>
+              </div>
+            </div>
+            <div class="m3e-radio-text">
+              <div class="m3e-radio-title-row">
+                <span class="m3e-radio-title">${algo}</span>
+                ${isDefault ? '<span class="m3-option-badge badge-default">Default</span>' : ''}
+              </div>
+              <span class="m3e-radio-desc">${getAlgoDescription(algo)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  grid.innerHTML = `
+    <div class="card tuning-card net-card" style="margin-bottom: 0; padding: 16px;">
+      <div class="io-card-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <span class="io-dev-title">/proc/sys/net/ipv4/tcp_congestion_control</span>
+        </div>
+      </div>
+
+      <div class="tuning-stats-row" style="margin-top: 6px;">
+        <span>Current Active Setting</span>
+        <span class="tuning-stat-val" id="net-active-lbl">${data.currentAlgo} ${data.currentAlgo === data.defaultAlgo ? '(Default)' : ''}</span>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <label class="tuning-control-label">Kernel Congestion Control (${data.availAlgos.length})</label>
+        <div class="m3e-radio-list" id="net-algo-radio-list">
+          ${radioItemsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const radioList = grid.querySelector<HTMLElement>('#net-algo-radio-list');
+    if (radioList) {
+      const cards = radioList.querySelectorAll<HTMLElement>('.m3e-radio-card');
+      cards.forEach((card) => {
+        card.onclick = () => {
+          cards.forEach((c) => c.classList.remove('active'));
+          card.classList.add('active');
+        };
+      });
+    }
+  }, 0);
 }
 
 // Frequency Bottom Sheet Helper
@@ -882,6 +1015,8 @@ export function initTuningScreen(): void {
         updateGpuControlsLockState();
       } else if (feature === 'io-management') {
         showTuningSubView('io-management', true);
+      } else if (feature === 'network-management') {
+        showTuningSubView('net-management', true);
       }
     });
   });
@@ -911,6 +1046,14 @@ export function initTuningScreen(): void {
     });
   }
 
+  const netBackBtn = document.getElementById('tune-net-back-btn');
+  if (netBackBtn) {
+    netBackBtn.addEventListener('click', () => {
+      if (history.state?.subview === 'net-management') history.back();
+      else showTuningSubView('hub', false);
+    });
+  }
+
   // I/O Toggle Switch
   const ioEnableToggle = document.getElementById('io-enable-toggle') as HTMLInputElement | null;
   if (ioEnableToggle) {
@@ -924,6 +1067,24 @@ export function initTuningScreen(): void {
         if (grid) {
           grid.innerHTML =
             '<div class="grid-placeholder" style="padding: 24px; text-align: center;">I/O Management is disabled.<br><span style="font-size: 0.8rem; opacity: 0.7;">Turn ON the toggle above to inspect and customize block device schedulers.</span></div>';
+        }
+      }
+    });
+  }
+
+  // Network Toggle Switch
+  const netEnableToggle = document.getElementById('net-enable-toggle') as HTMLInputElement | null;
+  if (netEnableToggle) {
+    netEnableToggle.addEventListener('change', async (e) => {
+      const isChecked = (e.target as HTMLInputElement).checked;
+      if (isChecked) {
+        await renderNetView(true);
+      } else {
+        if (currentNetData) currentNetData.enabled = false;
+        const grid = document.getElementById('net-tuning-grid');
+        if (grid) {
+          grid.innerHTML =
+            '<div class="grid-placeholder" style="padding: 24px; text-align: center;">Network Tuning is disabled.<br><span style="font-size: 0.8rem; opacity: 0.7;">Turn ON the toggle above to inspect and customize TCP congestion controls.</span></div>';
         }
       }
     });
@@ -991,11 +1152,7 @@ export function initTuningScreen(): void {
         }
       } else if (currentSub === 'io-management') {
         const ioEnable = document.getElementById('io-enable-toggle') as HTMLInputElement | null;
-        const ioApplyBoot = document.getElementById(
-          'io-apply-boot-toggle'
-        ) as HTMLInputElement | null;
         const isEnabled = ioEnable?.checked ?? false;
-        const applyBoot = ioApplyBoot?.checked ?? false;
 
         const configMap: Record<string, string> = {};
         const ioCards = document.querySelectorAll<HTMLElement>('#io-tuning-grid .io-card');
@@ -1008,13 +1165,57 @@ export function initTuningScreen(): void {
           }
         });
 
+        const choice = await askApplyBoot({
+          title: 'Apply at Boot?',
+          message:
+            'Do you want to re-apply these custom storage schedulers on system boot, or only apply them for the current session?'
+        });
+        if (choice === null) return;
+        const applyBoot = choice;
+
         toast('Applying I/O scheduler configuration...');
         const ok = await applyIoConfig(configMap, applyBoot, isEnabled);
         if (ok) {
-          toast('I/O scheduler configuration applied!');
+          toast(
+            applyBoot
+              ? 'I/O configuration applied and saved to boot!'
+              : 'I/O configuration applied for current session!'
+          );
           renderIoView();
         } else {
           toast('Failed to apply I/O configuration');
+        }
+      } else if (currentSub === 'net-management') {
+        const netEnable = document.getElementById('net-enable-toggle') as HTMLInputElement | null;
+        const isEnabled = netEnable?.checked ?? false;
+
+        const activeRadio = document.querySelector<HTMLElement>(
+          '#net-algo-radio-list .m3e-radio-card.active'
+        );
+        const selectedAlgo =
+          activeRadio?.getAttribute('data-algo') ||
+          currentNetData?.customAlgo ||
+          currentNetData?.currentAlgo ||
+          'cubic';
+
+        const choice = await askApplyBoot({
+          title: 'Apply at Boot?',
+          message: `Do you want to re-apply TCP congestion control (${selectedAlgo}) on system boot, or only apply it for the current session?`
+        });
+        if (choice === null) return;
+        const applyBoot = choice;
+
+        toast('Applying TCP congestion control...');
+        const ok = await applyNetConfig(selectedAlgo, applyBoot, isEnabled);
+        if (ok) {
+          toast(
+            applyBoot
+              ? `TCP ${selectedAlgo} applied and saved to boot!`
+              : `TCP ${selectedAlgo} applied for current session!`
+          );
+          renderNetView();
+        } else {
+          toast('Failed to apply network configuration');
         }
       }
     });
@@ -1054,6 +1255,15 @@ export function initTuningScreen(): void {
           renderIoView();
         } else {
           toast('Failed to reset I/O configuration');
+        }
+      } else if (currentSub === 'net-management') {
+        toast('Resetting TCP congestion control to default...');
+        const ok = await resetNetConfig();
+        if (ok) {
+          toast('TCP congestion control reset to default system value!');
+          renderNetView();
+        } else {
+          toast('Failed to reset network configuration');
         }
       }
     });

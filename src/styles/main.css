@@ -164,6 +164,23 @@ body.system-font *::after {
   margin-left: auto;
 }
 
+.top-bar-actions .btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  border-radius: var(--md-corner-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-bar-actions .btn .btn-icon {
+  margin: 0;
+  width: 20px;
+  height: 20px;
+}
+
 .lightning-icon {
   width: 28px;
   height: 28px;
@@ -261,12 +278,6 @@ body.nav-floating .scroll-content {
     grid-template-columns: 1fr;
   }
   
-  .top-bar-actions .btn {
-    padding: 0 12px;
-    height: 36px;
-    font-size: 0.8rem;
-  }
-  
   .status-badge {
     padding: 4px 8px;
     font-size: 0.75rem;
@@ -274,15 +285,6 @@ body.nav-floating .scroll-content {
 }
 
 @media (max-width: 400px) {
-  .top-bar-actions .btn {
-    width: 36px;
-    padding: 0;
-    justify-content: center;
-    font-size: 0;
-  }
-  .top-bar-actions .btn .btn-icon {
-    margin: 0;
-  }
   .app-logo-title {
     gap: 4px;
   }

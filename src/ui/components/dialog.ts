@@ -55,3 +55,70 @@ export function initGpuWarningDialog(): void {
     };
   }
 }
+
+// Apply at Boot Prompt Dialog
+let applyBootResolve: ((result: boolean | null) => void) | null = null;
+
+export function askApplyBoot(opts: {
+  title?: string;
+  message: string;
+}): Promise<boolean | null> {
+  return new Promise((resolve) => {
+    applyBootResolve = resolve;
+
+    const backdrop = document.getElementById('apply-boot-dialog-backdrop');
+    const titleEl = document.getElementById('apply-boot-dialog-title');
+    const msgEl = document.getElementById('apply-boot-dialog-message');
+
+    if (titleEl && opts.title) titleEl.innerText = opts.title;
+    if (msgEl) msgEl.innerText = opts.message;
+
+    if (backdrop) {
+      backdrop.style.display = 'flex';
+      requestAnimationFrame(() => backdrop.classList.add('active'));
+    }
+
+    try {
+      history.pushState({ modal: true }, '');
+    } catch (e) {}
+  });
+}
+
+export function hideApplyBootDialog(result: boolean | null = null): void {
+  const backdrop = document.getElementById('apply-boot-dialog-backdrop');
+  if (backdrop) {
+    backdrop.classList.remove('active');
+    setTimeout(() => {
+      backdrop.style.display = 'none';
+    }, 250);
+  }
+
+  if (applyBootResolve) {
+    applyBootResolve(result);
+    applyBootResolve = null;
+  }
+}
+
+export function initApplyBootDialog(): void {
+  const backdrop = document.getElementById('apply-boot-dialog-backdrop');
+  const nowBtn = document.getElementById('apply-boot-dialog-now');
+  const bootBtn = document.getElementById('apply-boot-dialog-boot');
+
+  if (nowBtn) {
+    nowBtn.onclick = () => {
+      hideApplyBootDialog(false);
+    };
+  }
+
+  if (bootBtn) {
+    bootBtn.onclick = () => {
+      hideApplyBootDialog(true);
+    };
+  }
+
+  if (backdrop) {
+    backdrop.onclick = (e) => {
+      if (e.target === backdrop) hideApplyBootDialog(null);
+    };
+  }
+}

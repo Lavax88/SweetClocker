@@ -10,7 +10,12 @@ import {
 } from './screens/tuning';
 import { initLogsScreen, updateLogsView } from './screens/logs';
 import { initPreferencesScreen } from './screens/preferences';
-import { initGpuWarningDialog, hideGpuWarningDialog } from './components/dialog';
+import {
+  initGpuWarningDialog,
+  hideGpuWarningDialog,
+  initApplyBootDialog,
+  hideApplyBootDialog
+} from './components/dialog';
 import { initFloatingNav, type FloatingNavController } from './components/floatingNav';
 
 export async function initApp(): Promise<void> {
@@ -32,6 +37,7 @@ export async function initApp(): Promise<void> {
 
   // 3. Initialize Component Listeners
   initGpuWarningDialog();
+  initApplyBootDialog();
   setupNavigation();
   initPreferencesScreen();
   initLogsScreen();
@@ -51,6 +57,7 @@ export async function initApp(): Promise<void> {
     const freqBackdrop = document.getElementById('freq-sheet-backdrop');
     const govBackdrop = document.getElementById('gov-sheet-backdrop');
     const gpuWarningBackdrop = document.getElementById('gpu-warning-dialog-backdrop');
+    const applyBootBackdrop = document.getElementById('apply-boot-dialog-backdrop');
 
     if (freqBackdrop?.classList.contains('active')) {
       freqBackdrop.classList.remove('active');
@@ -64,9 +71,18 @@ export async function initApp(): Promise<void> {
       hideGpuWarningDialog();
       return;
     }
+    if (applyBootBackdrop?.classList.contains('active')) {
+      hideApplyBootDialog(null);
+      return;
+    }
 
     const currentSub = store.get('currentTuningSubView');
-    if (currentSub === 'cpu-clocks' || currentSub === 'gpu-clocks' || currentSub === 'io-management') {
+    if (
+      currentSub === 'cpu-clocks' ||
+      currentSub === 'gpu-clocks' ||
+      currentSub === 'io-management' ||
+      currentSub === 'net-management'
+    ) {
       showTuningSubView('hub', false);
     }
   });
