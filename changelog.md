@@ -1,5 +1,18 @@
 # SweetClocker Changelog
 
+## v1.5.0 (versionCode 124)
+
+**New Features & Enhancements**
+* **Dynamic TCP Congestion Control**: Dynamically discover and select kernel-supported TCP congestion algorithms (BBR, CUBIC, Reno, Westwood, BIC, etc.) with automatic default recording, runtime drift compensation, and one-click reset.
+* **Interactive Boot Persistence Confirmation**: Replaced static apply-at-boot checkboxes with an interactive Material 3 dialog when applying tuning changes, allowing users to apply settings for the active session only or save them across reboots.
+* **Modernized WebUI & Telemetry Engine**: Complete TypeScript and Vite migration with a deep declarative HardwareEngine, batch sampling daemon protocol (telemetry.sh), and smooth real-time metrics.
+* **Fluid Floating Navigation Bar**: Introduced gesture-driven floating nav ("Jelly Bar") with boundary containment, spring-like elastic overscroll effects, and customizable navigation preferences.
+* **Icon & Layout Redesign**: Re-architected CPU and GPU stroked chip icons, status-bar styled Wi-Fi network icon, official Material Symbols storage hard drive icon, and symmetric divider layout spacing.
+
+**Bug Fixes & Stability Improvements**
+* **Navigation & Layout**: Fixed text descender clipping and vertical centering in navigation pills, and decoupled viewport state to prevent layout squashing on various screen aspect ratios.
+* **Storage Filtering**: Filtered out non-configurable virtual block devices (loop*, zram*) from I/O discovery.
+
 ## v1.4.0 (versionCode 123)
 **New Features & Enhancements**
 
