@@ -28,6 +28,7 @@ if (Test-Path $zipName) {
   service.sh `
   post-fs-data.sh `
   customize.sh `
+  hotinstall.sh `
   uninstall.sh `
   sweetspot-apply.sh `
   telemetry.sh `
