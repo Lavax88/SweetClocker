@@ -17,6 +17,7 @@ import {
   hideApplyBootDialog
 } from './components/dialog';
 import { initFloatingNav, type FloatingNavController } from './components/floatingNav';
+import { initPageSwipe, slideToTab } from './components/pageSwipe';
 
 export async function initApp(): Promise<void> {
   // 1. Initialize Theme & Modes
@@ -129,12 +130,14 @@ async function triggerImmediateUpdate(): Promise<void> {
 
 let floatingNavController: FloatingNavController | null = null;
 
-export function selectTab(target: AppTab): void {
+export function selectTab(target: AppTab, skipSlide = false): void {
   const currentTab = store.get('activeTab');
   if (target === currentTab) {
     if (target === 'page-tuning' && store.get('currentTuningSubView') !== 'hub') {
       showTuningSubView('hub', false);
     }
+    if (!skipSlide) slideToTab(target);
+    floatingNavController?.updatePosition(false);
     return;
   }
 
@@ -156,9 +159,13 @@ export function selectTab(target: AppTab): void {
     t.classList.toggle('active', isTarget);
   });
 
-  pages.forEach((p) => p.classList.remove('active'));
-  const targetPage = document.getElementById(target);
-  if (targetPage) targetPage.classList.add('active');
+  pages.forEach((p) => {
+    p.classList.toggle('active', p.id === target);
+  });
+
+  if (!skipSlide) {
+    slideToTab(target);
+  }
 
   if (target === 'page-tuning') {
     showTuningSubView('hub', false);
@@ -193,4 +200,25 @@ function setupNavigation(): void {
   floatingNavController = initFloatingNav((target) => {
     selectTab(target);
   });
+
+  initPageSwipe({
+    onSettle: (settledTab) => {
+      selectTab(settledTab, true);
+    },
+    onAnimateHighlighter: (targetTab) => {
+      floatingNavController?.animateToTab(targetTab);
+    },
+    onProgress: (fromTab, toTab, progress) => {
+      floatingNavController?.setProgress(fromTab, toTab, progress);
+    },
+    onOverscroll: (overscrollPx) => {
+      floatingNavController?.setOverscroll(overscrollPx);
+    },
+    onResetSprings: () => {
+      floatingNavController?.resetCapsuleSpring();
+    }
+  });
+
+  // Ensure track starts at active tab
+  slideToTab(store.get('activeTab'), true);
 }
