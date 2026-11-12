@@ -1,5 +1,19 @@
 # SweetClocker Changelog
 
+## v1.5.1 (versionCode 125)
+
+**New Features & Enhancements**
+* **Live Page Swipe ViewPager**: Introduced gesture-driven horizontal live swiping between all dashboard views (Dashboard, Tuning, Logs, Preferences) with real-time 1:1 finger tracking, velocity flick detection, and dual elastic rubber-band boundaries.
+* **Module Hot Install (No Reboot Required)**: Added full support for hot module updates/installation without needing a device reboot on modern root managers (KernelSU, APatch, and Magisk).
+* **Interactive Installation Volume Key Selector**: Added an interactive volume key prompt during ZIP flashing (`KEY_VOLUMEUP` to preserve existing user settings, `KEY_VOLUMEDOWN` to reset to factory defaults) with fallback timer.
+* **Material 3 Expressive Morphing Icons**: Implemented hardware-accelerated outline-to-filled icon cross-fade and scale morphing (`0.48s cubic-bezier(0.2, 0, 0, 1)`) across active and unselected navigation tabs.
+* **Refined Floating Navigation Transitions**: Synchronized floating nav capsule movement with ViewPager gestures, introduced hysteresis to eliminate micro-flutter during live dragging, and added gentle, slow fade-in animations for active tab labels.
+
+**Bug Fixes & Stability Improvements**
+* **Preferences Card Squashing**: Resolved CSS flexbox `flex-shrink` bug where settings cards were squashed on smaller viewports, restoring full natural scroll height and preventing content clipping.
+* **Swipe Gesture Unblocking**: Removed restrictive exclusion filters so horizontal swiping initiates smoothly across controls without getting blocked.
+* **Boundary Freeze Fix**: Fixed edge clipping and freeze bugs when dragging the floating navbar capsule to extreme screen edges.
+
 ## v1.5.0 (versionCode 124)
 
 **New Features & Enhancements**
