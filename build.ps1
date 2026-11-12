@@ -14,7 +14,7 @@ $moduleProp = Get-Content "module.prop" | Out-String
 if ($moduleProp -match "version=(.+)") {
     $ver = $matches[1].Trim()
 } else {
-    $ver = "1.4.0"
+    $ver = "1.5.0"
 }
 $zipName = "SweetClocker-$ver.zip"
 
