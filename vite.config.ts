@@ -17,7 +17,8 @@ export default defineConfig(({ command }) => {
     build: {
       outDir: 'webroot',
       emptyOutDir: true,
-      target: 'es2022',
+      target: ['chrome90', 'safari16', 'es2022'],
+      cssTarget: ['chrome90', 'safari16'],
       assetsDir: 'assets',
       minify: 'oxc',
       sourcemap: false,

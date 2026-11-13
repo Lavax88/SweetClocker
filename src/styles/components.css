@@ -185,14 +185,12 @@ body.nav-floating .bottom-nav {
   border: 1px solid var(--nav-floating-border);
   box-shadow: var(--nav-floating-shadow);
   background-color: var(--nav-floating-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px));
   justify-content: space-between;
   gap: 0;
   touch-action: none;
   overflow: hidden;
-  isolation: isolate;
-  contain: paint;
 }
 
 /* Floating Navigation Bar Sliding Jelly Highlighter */

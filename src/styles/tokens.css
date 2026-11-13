@@ -75,7 +75,7 @@
   --glass-border: rgba(255, 255, 255, 0.06);
 
   /* M3 Expressive Floating Navigation Bar Tokens */
-  --nav-floating-bg: color-mix(in srgb, var(--md-sys-color-surface) 86%, transparent);
+  --nav-floating-bg: color-mix(in srgb, var(--md-sys-color-surface) 68%, transparent);
   --nav-floating-border: var(--md-sys-color-outline-variant);
   --nav-floating-shadow: var(--md-elevation-3);
 
@@ -170,7 +170,7 @@ html.theme-light, body.theme-light, body.light-mode {
 
   --glass-bg: rgba(255, 255, 255, 0.55);
   --glass-border: rgba(0, 0, 0, 0.04);
-  --nav-floating-bg: color-mix(in srgb, var(--md-sys-color-surface) 88%, transparent);
+  --nav-floating-bg: color-mix(in srgb, var(--md-sys-color-surface) 70%, transparent);
   --nav-floating-border: var(--md-sys-color-outline-variant);
   --nav-floating-shadow: var(--md-elevation-2);
 
@@ -189,7 +189,7 @@ html.theme-amoled, body.theme-amoled {
   --md-sys-color-surface-variant: #141414;
   --glass-bg: rgba(0, 0, 0, 0.85);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --nav-floating-bg: color-mix(in srgb, var(--md-sys-color-surface) 92%, transparent);
+  --nav-floating-bg: color-mix(in srgb, var(--md-sys-color-surface) 74%, transparent);
   --nav-floating-border: var(--md-sys-color-outline-variant);
   --nav-floating-shadow: var(--md-elevation-3);
 }
