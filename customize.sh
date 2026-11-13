@@ -72,7 +72,7 @@ rm -f "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null
 for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do
     umount -l "$mount_point" 2>/dev/null
 done
-rm -rf "/dev/sweetclocker" 2>/dev/null
+rm -rf "/dev/sweetclocker" "/dev/.sweetclocker_hotinstall.lock" 2>/dev/null
 
 # Set permissions for scripts and webroot
 set_perm_recursive "$MODPATH" 0 0 0755 0644

@@ -16,6 +16,19 @@ log_msg() {
     echo "[$TS] $*" >> "$LOG_FILE"
 }
 
+LOCK_FILE="/dev/.sweetclocker_hotinstall.lock"
+
+# Prevent duplicate or concurrent rapid hot-installs within 5 seconds
+if [ -f "$LOCK_FILE" ]; then
+    lock_ts=$(cat "$LOCK_FILE" 2>/dev/null)
+    now=$(date +%s)
+    if [ -n "$lock_ts" ] && [ $((now - lock_ts)) -lt 5 ]; then
+        log_msg "hotinstall.sh: Hot-install already executed <5s ago, skipping duplicate trigger."
+        exit 0
+    fi
+fi
+date +%s > "$LOCK_FILE" 2>/dev/null
+
 log_msg "hotinstall.sh: module hot-installed, reloading runtime..."
 
 # Terminate any previously running SweetClocker background monitoring loops

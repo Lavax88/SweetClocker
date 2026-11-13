@@ -20,8 +20,12 @@ done
 
 # Verify SoC before starting background polling loops
 if ! sh "$MODDIR/sweetspot-apply.sh" --check-soc; then
-    log_msg "service.sh: Aborting polling loop — incompatible device (not Snapdragon 8s Gen 4 / SM8735)."
-    exit 1
+    # Retry once after a brief pause in case of transient process interruption during hot-install
+    sleep 1
+    if ! sh "$MODDIR/sweetspot-apply.sh" --check-soc; then
+        log_msg "service.sh: Aborting polling loop — SoC verification check failed."
+        exit 1
+    fi
 fi
 
 log_msg "service.sh: loop started, fast-poll phase (5s interval, 3min)"
