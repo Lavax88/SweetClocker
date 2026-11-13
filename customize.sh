@@ -99,11 +99,11 @@ if [ "$MODPATH" != "$TARGET_MOD" ] && [ -d "/data/adb/modules" ]; then
     set_perm "$TARGET_MOD/uninstall.sh" 0 0 0755
 fi
 
-# Execute hotinstall immediately (restarts background daemon and applies clocks)
-if [ -f "$MODPATH/hotinstall.sh" ]; then
-    sh "$MODPATH/hotinstall.sh"
-elif [ -f "$TARGET_MOD/hotinstall.sh" ]; then
+# Execute hotinstall immediately from the live persistent path (restarts background daemon and applies clocks)
+if [ -f "$TARGET_MOD/hotinstall.sh" ]; then
     sh "$TARGET_MOD/hotinstall.sh"
+elif [ -f "$MODPATH/hotinstall.sh" ]; then
+    sh "$MODPATH/hotinstall.sh"
 fi
 
 ui_print "- SweetClocker installation complete!"

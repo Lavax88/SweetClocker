@@ -5,6 +5,19 @@
 MODDIR="${0%/*}"
 [ "$MODDIR" = "$0" ] && MODDIR="."
 
+# Redirect away from transient staging directories (e.g. /data/adb/modules_update)
+case "$MODDIR" in
+    *modules_update*)
+        if [ -d "/data/adb/modules/sweetclocker" ]; then
+            MODDIR="/data/adb/modules/sweetclocker"
+        fi
+        ;;
+esac
+
+if [ ! -f "$MODDIR/sweetspot-apply.sh" ] && [ -f "/data/adb/modules/sweetclocker/sweetspot-apply.sh" ]; then
+    MODDIR="/data/adb/modules/sweetclocker"
+fi
+
 LOG_FILE="/data/local/tmp/sweetclocker.log"
 
 log_msg() {

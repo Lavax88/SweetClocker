@@ -2,6 +2,19 @@
 MODDIR="${0%/*}"
 [ "$MODDIR" = "$0" ] && MODDIR="."
 
+# Redirect away from transient staging directories (e.g. /data/adb/modules_update)
+case "$MODDIR" in
+    *modules_update*)
+        if [ -d "/data/adb/modules/sweetclocker" ]; then
+            MODDIR="/data/adb/modules/sweetclocker"
+        fi
+        ;;
+esac
+
+if [ ! -f "$MODDIR/sweetspot-apply.sh" ] && [ -f "/data/adb/modules/sweetclocker/sweetspot-apply.sh" ]; then
+    MODDIR="/data/adb/modules/sweetclocker"
+fi
+
 LOG_FILE="/data/local/tmp/sweetclocker.log"
 
 log_msg() {
@@ -19,6 +32,11 @@ until [ "$(getprop sys.boot_completed)" = "1" ]; do
 done
 
 # Verify SoC before starting background polling loops
+if [ ! -f "$MODDIR/sweetspot-apply.sh" ]; then
+    log_msg "service.sh: Aborting polling loop — sweetspot-apply.sh not found at '$MODDIR'."
+    exit 1
+fi
+
 if ! sh "$MODDIR/sweetspot-apply.sh" --check-soc; then
     # Retry once after a brief pause in case of transient process interruption during hot-install
     sleep 1
