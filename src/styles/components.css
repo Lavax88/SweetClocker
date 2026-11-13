@@ -126,13 +126,12 @@
   padding: 0 16px var(--bottom-inset) 16px;
   z-index: 100;
   box-shadow: var(--md-elevation-2);
-  backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
-  contain: layout style;
   transition: bottom 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
               width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
               max-width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -174,6 +173,7 @@
 /* Material 3 Expressive Floating Navigation Bar (SukiSU Pill Style) */
 html.nav-floating .bottom-nav,
 body.nav-floating .bottom-nav {
+  position: fixed;
   bottom: calc(16px + var(--bottom-inset));
   left: 50%;
   transform: translateX(-50%);
@@ -184,13 +184,15 @@ body.nav-floating .bottom-nav {
   border-radius: var(--md-corner-full);
   border: 1px solid var(--nav-floating-border);
   box-shadow: var(--nav-floating-shadow);
-  background-color: var(--nav-floating-bg);
-  backdrop-filter: blur(var(--glass-blur, 16px));
+  background-color: var(--nav-floating-bg) !important;
   -webkit-backdrop-filter: blur(var(--glass-blur, 16px));
+  backdrop-filter: blur(var(--glass-blur, 16px));
   justify-content: space-between;
   gap: 0;
   touch-action: none;
-  overflow: hidden;
+  contain: none !important;
+  overflow: visible;
+  z-index: 100;
 }
 
 /* Floating Navigation Bar Sliding Jelly Highlighter */
@@ -331,6 +333,8 @@ body.nav-floating .bottom-nav.nav-dragging .nav-highlighter {
    ========================================================== */
 html.nav-floating .bottom-nav .nav-tab,
 body.nav-floating .bottom-nav .nav-tab {
+  position: relative;
+  z-index: 2;
   flex-direction: row;
   height: 48px;
   max-width: none;
@@ -512,8 +516,8 @@ body.nav-floating .bottom-nav .nav-tab.active .tab-label {
 .hero-card {
   background: var(--glass-bg);
   color: var(--md-sys-color-on-surface);
-  backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   box-shadow: var(--md-elevation-1);
   padding: 24px;
@@ -1667,8 +1671,8 @@ body.nav-floating .logs-fab-container {
   right: 0;
   bottom: 0;
   background-color: var(--m3-sheet-backdrop-color);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -2124,8 +2128,8 @@ body.nav-floating .logs-fab-container {
   right: 0;
   bottom: 0;
   background-color: var(--m3-dialog-backdrop-color);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   z-index: 1100;
   display: flex;
   align-items: center;
