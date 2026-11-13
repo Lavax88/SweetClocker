@@ -8,18 +8,18 @@ export default defineConfig(({ command }) => {
     base: './',
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
+        '@': path.resolve(import.meta.dirname, './src'),
         '@bridge/mock': isDev
-          ? path.resolve(__dirname, './src/bridge/mock.ts')
-          : path.resolve(__dirname, './src/bridge/mock-stub.ts')
+          ? path.resolve(import.meta.dirname, './src/bridge/mock.ts')
+          : path.resolve(import.meta.dirname, './src/bridge/mock-stub.ts')
       }
     },
     build: {
       outDir: 'webroot',
       emptyOutDir: true,
-      target: 'es2020',
+      target: 'es2022',
       assetsDir: 'assets',
-      minify: 'esbuild',
+      minify: 'oxc',
       sourcemap: false,
       rollupOptions: {
         output: {
