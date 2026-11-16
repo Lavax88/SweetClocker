@@ -82,7 +82,8 @@ export async function initApp(): Promise<void> {
       currentSub === 'cpu-clocks' ||
       currentSub === 'gpu-clocks' ||
       currentSub === 'io-management' ||
-      currentSub === 'net-management'
+      currentSub === 'net-management' ||
+      currentSub === 'props-management'
     ) {
       showTuningSubView('hub', false);
     }
