@@ -1696,8 +1696,6 @@ body.nav-floating .props-fab-container {
   right: 0;
   bottom: 0;
   background-color: var(--m3-sheet-backdrop-color);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -1705,6 +1703,7 @@ body.nav-floating .props-fab-container {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1), visibility 0.3s cubic-bezier(0.2, 0, 0, 1);
+  will-change: opacity;
 }
 
 .m3-sheet-backdrop.active {
@@ -1724,6 +1723,7 @@ body.nav-floating .props-fab-container {
   display: flex;
   flex-direction: column;
   max-height: 80vh;
+  will-change: transform;
 }
 
 .m3-sheet-backdrop.active .m3-bottom-sheet {
@@ -2153,8 +2153,6 @@ body.nav-floating .props-fab-container {
   right: 0;
   bottom: 0;
   background-color: var(--m3-dialog-backdrop-color);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   z-index: 1100;
   display: flex;
   align-items: center;
@@ -2163,6 +2161,7 @@ body.nav-floating .props-fab-container {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s cubic-bezier(0.2, 0, 0, 1), visibility 0.25s cubic-bezier(0.2, 0, 0, 1);
+  will-change: opacity;
 }
 
 .m3-dialog-backdrop.active {
@@ -2657,8 +2656,7 @@ body.nav-floating .props-fab-container {
 .prop-text-input:focus {
   border-color: var(--md-sys-color-primary);
   background-color: var(--md-sys-color-surface);
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -1px;
+  outline: none;
 }
 
 .prop-textarea {
@@ -2680,8 +2678,7 @@ body.nav-floating .props-fab-container {
 .prop-textarea:focus {
   border-color: var(--md-sys-color-primary);
   background-color: var(--md-sys-color-surface);
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -1px;
+  outline: none;
 }
 
 .prop-value-preview {
@@ -2968,6 +2965,8 @@ body.nav-floating .props-fab-container {
   gap: 14px;
   overflow-y: auto;
   max-height: 72vh;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Material 3 Expressive Text Input Fields */
@@ -2994,15 +2993,17 @@ body.nav-floating .props-fab-container {
   display: flex;
   align-items: center;
   padding: 0 14px;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
   transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1),
-              background-color 0.2s ease,
-              box-shadow 0.2s ease;
+              background-color 0.2s ease;
 }
 
 .m3e-input-box:focus-within {
   border-color: var(--md-sys-color-primary);
   background-color: var(--md-sys-color-surface-container, #22202a);
-  box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .m3e-input-mono {
@@ -3013,8 +3014,17 @@ body.nav-floating .props-fab-container {
   color: var(--md-sys-color-on-surface);
   font-family: var(--font-mono);
   font-size: 0.875rem;
-  outline: none;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
   padding: 0;
+}
+
+.m3e-input-mono:focus,
+.m3e-input-mono:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }
 
 .m3e-input-mono::placeholder {

@@ -63,7 +63,7 @@ html, body {
 }
 
 button:focus-visible,
-input:focus-visible,
+input:not(.m3e-input-mono):focus-visible,
 select:focus-visible,
 .segment:focus-visible,
 .nav-tab:focus-visible,
