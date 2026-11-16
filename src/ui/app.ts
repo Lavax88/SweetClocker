@@ -154,6 +154,15 @@ export function selectTab(target: AppTab, skipSlide = false): void {
   const pages = document.querySelectorAll<HTMLElement>('.page-section');
   const fabContainer = document.getElementById('tuning-fab-container');
   const logsFab = document.getElementById('logs-fab-container');
+  const propsFab = document.getElementById('props-fab-container');
+  const propsScrim = document.getElementById('props-fab-scrim');
+
+  const hidePropsFab = () => {
+    propsFab?.classList.remove('fab-visible', 'speed-dial-open');
+    propsScrim?.classList.remove('visible');
+    const trigger = document.getElementById('props-fab-trigger');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  };
 
   navTabs.forEach((t) => {
     const isTarget = t.getAttribute('data-target') === target;
@@ -171,12 +180,15 @@ export function selectTab(target: AppTab, skipSlide = false): void {
   if (target === 'page-tuning') {
     showTuningSubView('hub', false);
     logsFab?.classList.remove('fab-visible');
+    hidePropsFab();
   } else if (target === 'page-logs') {
     fabContainer?.classList.remove('fab-visible');
     logsFab?.classList.add('fab-visible');
+    hidePropsFab();
   } else {
     fabContainer?.classList.remove('fab-visible');
     logsFab?.classList.remove('fab-visible');
+    hidePropsFab();
   }
 
   store.set('activeTab', target);

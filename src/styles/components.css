@@ -1502,7 +1502,8 @@ body.nav-floating .logs-container-card {
 
 /* M3 Floating Action Buttons Container */
 .tuning-fab-container,
-.logs-fab-container {
+.logs-fab-container,
+.props-fab-container {
   position: fixed;
   bottom: calc(76px + var(--bottom-inset));
   right: 20px;
@@ -1522,20 +1523,24 @@ body.nav-floating .logs-container-card {
 html.nav-floating .tuning-fab-container,
 body.nav-floating .tuning-fab-container,
 html.nav-floating .logs-fab-container,
-body.nav-floating .logs-fab-container {
+body.nav-floating .logs-fab-container,
+html.nav-floating .props-fab-container,
+body.nav-floating .props-fab-container {
   bottom: calc(88px + var(--bottom-inset));
 }
 
 /* Progressive enhancement: hide FABs when JS is loaded until fab-visible is applied */
 .js .tuning-fab-container:not(.fab-visible),
-.js .logs-fab-container:not(.fab-visible) {
+.js .logs-fab-container:not(.fab-visible),
+.js .props-fab-container:not(.fab-visible) {
   opacity: 0;
   transform: translateY(64px) scale(0.8);
   pointer-events: none;
 }
 
 .tuning-fab-container.fab-visible,
-.logs-fab-container.fab-visible {
+.logs-fab-container.fab-visible,
+.props-fab-container.fab-visible {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
@@ -2721,4 +2726,146 @@ body.nav-floating .logs-fab-container {
   overflow-y: auto;
   max-height: 58vh;
   padding-right: 4px;
+}
+
+/* Props Speed Dial FAB Component */
+.props-fab-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 97;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+.props-fab-scrim.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.props-fab-trigger {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  z-index: 99;
+}
+
+.props-fab-trigger .props-trigger-icon {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.props-fab-container.speed-dial-open .props-fab-trigger .props-trigger-icon {
+  transform: rotate(135deg);
+}
+
+.props-speed-dial-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+  pointer-events: none;
+}
+
+.props-speed-dial-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.85);
+  transition: opacity 0.22s cubic-bezier(0.05, 0.7, 0.1, 1),
+              transform 0.22s cubic-bezier(0.05, 0.7, 0.1, 1);
+  pointer-events: none;
+}
+
+.props-fab-container.speed-dial-open .props-speed-dial-menu {
+  pointer-events: auto;
+}
+
+.props-fab-container.speed-dial-open .props-speed-dial-item {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.props-fab-container.speed-dial-open .props-speed-dial-item:nth-child(4) {
+  transition-delay: 0.02s;
+}
+
+.props-fab-container.speed-dial-open .props-speed-dial-item:nth-child(3) {
+  transition-delay: 0.05s;
+}
+
+.props-fab-container.speed-dial-open .props-speed-dial-item:nth-child(2) {
+  transition-delay: 0.08s;
+}
+
+.props-fab-container.speed-dial-open .props-speed-dial-item:nth-child(1) {
+  transition-delay: 0.11s;
+}
+
+.props-speed-dial-label {
+  background: var(--md-sys-color-surface-container-high, #24222b);
+  color: var(--md-sys-color-on-surface, #e6e1e5);
+  font-family: var(--font-family);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(255, 255, 255, 0.1));
+  white-space: nowrap;
+  user-select: none;
+  letter-spacing: 0.15px;
+}
+
+.m3-fab-mini {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--md-elevation-2);
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m3-fab-mini:active {
+  transform: scale(0.92);
+  box-shadow: var(--md-elevation-1);
+}
+
+.m3-fab-mini-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.m3-fab-tertiary {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.m3-fab-tertiary:hover {
+  background-color: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+}
+
+.m3-fab-danger {
+  background-color: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.m3-fab-danger:hover {
+  background-color: rgba(239, 68, 68, 0.28);
 }

@@ -133,10 +133,21 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
   const netView = document.getElementById('tuning-net-view');
   const propsView = document.getElementById('tuning-props-subview');
   const fabContainer = document.getElementById('tuning-fab-container');
+  const propsFabContainer = document.getElementById('props-fab-container');
+  const propsFabScrim = document.getElementById('props-fab-scrim');
+
+  const closeSpeedDial = () => {
+    if (propsFabContainer) propsFabContainer.classList.remove('speed-dial-open');
+    if (propsFabScrim) propsFabScrim.classList.remove('visible');
+    const trigger = document.getElementById('props-fab-trigger');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  };
 
   const currentView = store.get('currentTuningSubView');
 
   if (viewName === 'cpu-clocks') {
+    closeSpeedDial();
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
     if (hubView) hubView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
     if (ioView) ioView.style.display = 'none';
@@ -155,6 +166,8 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     }
     store.set('currentTuningSubView', 'cpu-clocks');
   } else if (viewName === 'gpu-clocks') {
+    closeSpeedDial();
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
     if (hubView) hubView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (ioView) ioView.style.display = 'none';
@@ -173,6 +186,8 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     }
     store.set('currentTuningSubView', 'gpu-clocks');
   } else if (viewName === 'io-management') {
+    closeSpeedDial();
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
     if (hubView) hubView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
@@ -192,6 +207,8 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     store.set('currentTuningSubView', 'io-management');
     renderIoView();
   } else if (viewName === 'net-management') {
+    closeSpeedDial();
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
     if (hubView) hubView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
@@ -211,6 +228,7 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     store.set('currentTuningSubView', 'net-management');
     renderNetView();
   } else if (viewName === 'props-management') {
+    closeSpeedDial();
     if (hubView) hubView.style.display = 'none';
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
@@ -218,6 +236,11 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     if (netView) netView.style.display = 'none';
     if (propsView) propsView.style.display = 'block';
     if (fabContainer) fabContainer.classList.remove('fab-visible');
+    if (propsFabContainer) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => propsFabContainer.classList.add('fab-visible'));
+      });
+    }
     if (pushHistory && currentView !== 'props-management') {
       try {
         history.pushState({ subview: 'props-management' }, '');
@@ -226,6 +249,8 @@ export function showTuningSubView(viewName: TuningSubView, pushHistory = true): 
     store.set('currentTuningSubView', 'props-management');
     renderPropsView();
   } else {
+    closeSpeedDial();
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
     if (cpuClocksView) cpuClocksView.style.display = 'none';
     if (gpuClocksView) gpuClocksView.style.display = 'none';
     if (ioView) ioView.style.display = 'none';
@@ -1577,7 +1602,84 @@ export function initTuningScreen(): void {
   // SYSTEM PROPERTIES EVENT WIRING
   // ==========================================
 
-  // Action Bar Buttons
+  // Speed Dial FAB Controls
+  const propsFabContainer = document.getElementById('props-fab-container');
+  const propsFabScrim = document.getElementById('props-fab-scrim');
+  const propsFabTrigger = document.getElementById('props-fab-trigger');
+
+  const closeSpeedDial = () => {
+    if (propsFabContainer) propsFabContainer.classList.remove('speed-dial-open');
+    if (propsFabScrim) propsFabScrim.classList.remove('visible');
+    if (propsFabTrigger) propsFabTrigger.setAttribute('aria-expanded', 'false');
+  };
+
+  const toggleSpeedDial = () => {
+    if (!propsFabContainer) return;
+    const willOpen = !propsFabContainer.classList.contains('speed-dial-open');
+    propsFabContainer.classList.toggle('speed-dial-open', willOpen);
+    if (propsFabScrim) propsFabScrim.classList.toggle('visible', willOpen);
+    if (propsFabTrigger) propsFabTrigger.setAttribute('aria-expanded', String(willOpen));
+  };
+
+  if (propsFabTrigger) {
+    propsFabTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSpeedDial();
+    });
+  }
+
+  if (propsFabScrim) {
+    propsFabScrim.addEventListener('click', () => {
+      closeSpeedDial();
+    });
+  }
+
+  const fabAddProp = document.getElementById('fab-add-prop');
+  if (fabAddProp) {
+    fabAddProp.addEventListener('click', () => {
+      closeSpeedDial();
+      openPropEditSheet();
+    });
+  }
+
+  const fabImportProps = document.getElementById('fab-import-props');
+  if (fabImportProps) {
+    fabImportProps.addEventListener('click', () => {
+      closeSpeedDial();
+      openPropImportDialog();
+    });
+  }
+
+  const fabExportProps = document.getElementById('fab-export-props');
+  if (fabExportProps) {
+    fabExportProps.addEventListener('click', () => {
+      closeSpeedDial();
+      openPropExportSheet();
+    });
+  }
+
+  const handleResetProps = async () => {
+    closeSpeedDial();
+    const confirmed = window.confirm(
+      'Reset all system properties back to their factory/original defaults? This will revert all modified and custom properties and clear boot overrides.'
+    );
+    if (!confirmed) return;
+    toast('Resetting all properties to defaults...');
+    const ok = await propsEngine.resetAllProps();
+    if (ok) {
+      toast('All properties reset to original defaults!');
+      await renderPropsView(false);
+    } else {
+      toast('Failed to reset all properties');
+    }
+  };
+
+  const fabResetProps = document.getElementById('fab-reset-props');
+  if (fabResetProps) {
+    fabResetProps.addEventListener('click', handleResetProps);
+  }
+
+  // Legacy/Fallback Action Bar Buttons
   const btnAddProp = document.getElementById('btn-add-prop');
   if (btnAddProp) {
     btnAddProp.addEventListener('click', () => {
@@ -1601,20 +1703,7 @@ export function initTuningScreen(): void {
 
   const btnResetProps = document.getElementById('btn-reset-props');
   if (btnResetProps) {
-    btnResetProps.addEventListener('click', async () => {
-      const confirmed = window.confirm(
-        'Reset all system properties back to their factory/original defaults? This will revert all modified and custom properties and clear boot overrides.'
-      );
-      if (!confirmed) return;
-      toast('Resetting all properties to defaults...');
-      const ok = await propsEngine.resetAllProps();
-      if (ok) {
-        toast('All properties reset to original defaults!');
-        await renderPropsView(false);
-      } else {
-        toast('Failed to reset all properties');
-      }
-    });
+    btnResetProps.addEventListener('click', handleResetProps);
   }
 
   // Search input and clear button
