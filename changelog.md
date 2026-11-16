@@ -1,5 +1,22 @@
 # SweetClocker Changelog
 
+## v1.6.0 (versionCode 126)
+
+**New Features & Enhancements**
+* **System Properties Manager**: Integrated a full-featured runtime and early-boot system properties management (`system.prop`) subview in WebUI with instant search, category filtering, live inspection, and read-only (`RO`) indicators.
+* **Virtualized Prop Rendering (120 FPS)**: Implemented high-performance virtual scrolling (`VirtualPropList`) capable of rendering all 1,500+ Android system properties with smooth scrolling and near-instant load times.
+* **Material 3 Expressive Action Controls**: Replaced static action headers with an M3 Speed-Dial Floating Action Button (FAB) for adding, importing, exporting, and resetting properties.
+* **Redesigned Bottom Sheets & Confirmation Dialogs**: Re-architected property edit, import diff, export, and reset dialogs following Material 3 Expressive standards with 44px minimum touch targets and balanced button hierarchy.
+* **Dual-Mode Import & Export Engine**: Added support for exporting modified properties or full device dumps in standard `.prop` format, alongside an intelligent import diff engine with live/boot application controls.
+* **Factory Defaults Tracking**: Recorded original firmware property states in persistent storage (`.sweetclocker_prop_defaults`) with safe reset capabilities and factory default preservation during reflashes.
+* **Hot Install & Toolchain Upgrades**: Hardened installer against concurrent hot install race conditions and false SoC aborts, and upgraded toolchain to TypeScript 7.0.2 and Vite 8.3.8.
+
+**Bug Fixes & Stability Improvements**
+* **Virtual Keyboard Performance**: Removed full-screen `backdrop-filter` Gaussian blur passes from modal backdrops, restoring 120 FPS frame rates during Android soft keyboard (IME) animations.
+* **Input Focus Outline**: Removed harsh 2px `box-shadow` outline rings and default focus-visible outlines on property input fields, replacing them with clean Material 3 border color transitions.
+* **Floating Navbar Glass Blur**: Restored live frosted glass blur effects across floating navigation bar capsules.
+* **Export Dialog Clean-Up**: Removed redundant "Full Backup" badge from the full system properties dump export option.
+
 ## v1.5.1 (versionCode 125)
 
 **New Features & Enhancements**
