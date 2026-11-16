@@ -2218,3 +2218,507 @@ body.nav-floating .logs-fab-container {
   border-radius: var(--md-corner-extra-small);
   font-size: 0.85em;
 }
+
+/* 9. SYSTEM PROPERTIES MANAGEMENT (M3 Expressive) */
+
+/* Virtual Props List Container & Rows */
+#props-list-container {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: calc(100vh - 310px);
+  min-height: 280px;
+  background-color: var(--md-sys-color-surface);
+  border-radius: var(--md-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-elevation-1);
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
+}
+
+.virtual-prop-spacer {
+  width: 100%;
+  pointer-events: none;
+}
+
+.virtual-prop-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.prop-row {
+  box-sizing: border-box;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  transition: background-color var(--transition-speed) var(--transition-easing);
+  user-select: none;
+  -webkit-user-select: none;
+  gap: 12px;
+}
+
+.prop-row:hover {
+  background-color: var(--chip-hover-bg);
+}
+
+.prop-row:active {
+  background-color: var(--md-sys-color-surface-variant);
+  transform: scale(0.995);
+}
+
+.prop-row:last-child {
+  border-bottom: none;
+}
+
+.prop-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+}
+
+.prop-key {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.prop-key mark {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.prop-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.prop-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--md-corner-full);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 1.2;
+  font-family: var(--font-family);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.badge-boot {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+  color: var(--md-sys-color-primary);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent);
+}
+
+.badge-modified {
+  background-color: color-mix(in srgb, var(--md-sys-color-warning) 18%, transparent);
+  color: var(--md-sys-color-warning);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-warning) 35%, transparent);
+}
+
+.badge-custom {
+  background-color: color-mix(in srgb, var(--md-sys-color-success) 18%, transparent);
+  color: var(--md-sys-color-success);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-success) 35%, transparent);
+}
+
+/* Prop Search Bar & Clear */
+.prop-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.prop-search-icon {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  fill: var(--md-sys-color-on-surface-variant);
+  pointer-events: none;
+}
+
+.prop-search-input {
+  width: 100%;
+  height: 42px;
+  border-radius: var(--md-corner-full);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  padding: 0 40px 0 42px;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+}
+
+.prop-search-input:focus {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+}
+
+.prop-search-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.65;
+}
+
+.prop-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-corner-full);
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.prop-search-clear:hover {
+  background-color: var(--chip-hover-bg);
+  color: var(--md-sys-color-on-surface);
+}
+
+.prop-search-clear svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Filter Chips */
+.prop-filter-chips {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.prop-filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: var(--md-corner-full);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--font-family);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-speed) var(--transition-easing);
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+  gap: 6px;
+}
+
+.filter-chip:hover {
+  background-color: var(--chip-hover-bg);
+  border-color: var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface);
+}
+
+.filter-chip.active {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+  font-weight: 600;
+  box-shadow: var(--md-elevation-1);
+}
+
+/* Action Toolbar for System Props Subview */
+.props-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.props-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Prop Import Table & Diff Visualization */
+.prop-import-table-container {
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-corner-medium);
+  margin-top: 12px;
+  margin-bottom: 12px;
+  background-color: var(--md-sys-color-surface);
+}
+
+.prop-import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78125rem;
+  font-family: var(--font-mono);
+  table-layout: auto;
+}
+
+.prop-import-table th {
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--font-family);
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.prop-import-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  vertical-align: middle;
+}
+
+.prop-import-table tr:last-child td {
+  border-bottom: none;
+}
+
+.prop-import-table tr:hover {
+  background-color: var(--chip-hover-bg);
+}
+
+.diff-before {
+  color: var(--md-sys-color-error);
+  text-decoration: line-through;
+  opacity: 0.8;
+  font-size: 0.725rem;
+  word-break: break-all;
+  display: block;
+}
+
+.diff-after {
+  color: var(--md-sys-color-success);
+  font-weight: 600;
+  font-size: 0.725rem;
+  word-break: break-all;
+  display: block;
+}
+
+.diff-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--md-corner-extra-small);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: var(--font-family);
+  letter-spacing: 0.3px;
+}
+
+.diff-tag-new {
+  background-color: color-mix(in srgb, var(--md-sys-color-success) 20%, transparent);
+  color: var(--md-sys-color-success);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-success) 35%, transparent);
+}
+
+.diff-tag-change {
+  background-color: color-mix(in srgb, var(--md-sys-color-warning) 20%, transparent);
+  color: var(--md-sys-color-warning);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-warning) 35%, transparent);
+}
+
+.diff-tag-same {
+  background-color: color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 35%, transparent);
+}
+
+/* Modals & Bottom Sheets for System Properties */
+#prop-edit-sheet,
+#prop-export-sheet {
+  max-height: 85vh;
+}
+
+#prop-edit-sheet .prop-form-group,
+#prop-import-dialog .prop-form-group,
+#prop-export-sheet .prop-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.prop-form-label {
+  font-family: var(--font-family);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.prop-text-input {
+  width: 100%;
+  height: 44px;
+  border-radius: var(--md-corner-medium);
+  border: 1px solid var(--md-sys-color-outline);
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  padding: 0 14px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color var(--transition-speed), background-color var(--transition-speed);
+}
+
+.prop-text-input:focus {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface);
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+.prop-textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: var(--md-corner-medium);
+  border: 1px solid var(--md-sys-color-outline);
+  background-color: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  outline: none;
+  resize: vertical;
+  line-height: 1.4;
+  transition: border-color var(--transition-speed), background-color var(--transition-speed);
+}
+
+.prop-textarea:focus {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface);
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+.prop-value-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--md-sys-color-surface-variant);
+  border-radius: var(--md-corner-small);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font-family: var(--font-mono);
+  font-size: 0.78125rem;
+  color: var(--md-sys-color-on-surface-variant);
+  word-break: break-all;
+}
+
+.prop-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  user-select: none;
+}
+
+.prop-switch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prop-switch-title {
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+
+.prop-switch-desc {
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.prop-sheet-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  flex-wrap: wrap;
+}
+
+.prop-sheet-actions-between {
+  justify-content: space-between;
+}
+
+#prop-import-dialog {
+  max-width: 520px;
+  width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#prop-import-dialog .m3-dialog-content {
+  overflow-y: auto;
+  max-height: 58vh;
+  padding-right: 4px;
+}

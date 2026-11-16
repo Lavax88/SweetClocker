@@ -69,7 +69,11 @@ select:focus-visible,
 .nav-tab:focus-visible,
 .credit-action-btn:focus-visible,
 .color-dot:focus-visible,
-.io-option-chip:focus-visible {
+.io-option-chip:focus-visible,
+.filter-chip:focus-visible,
+.prop-row:focus-visible,
+.prop-search-input:focus-visible,
+.prop-search-clear:focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
   outline-offset: 2px;
 }
@@ -79,7 +83,8 @@ button:active,
 .segment:active,
 .io-option-chip:active,
 .m3-fab:active,
-.credit-action-btn:active {
+.credit-action-btn:active,
+.filter-chip:active {
   transform: scale(0.97);
 }
 
@@ -293,6 +298,27 @@ body.nav-floating .page-section {
   .status-badge {
     padding: 4px 8px;
     font-size: 0.75rem;
+  }
+
+  #props-list-container {
+    height: calc(100vh - 350px);
+    min-height: 220px;
+  }
+
+  .prop-row {
+    padding: 0 12px;
+  }
+
+  .prop-key {
+    font-size: 0.75rem;
+  }
+
+  .prop-value {
+    font-size: 0.7rem;
+  }
+
+  #prop-import-dialog {
+    width: 95vw;
   }
 }
 
