@@ -374,22 +374,15 @@
 
           <!-- SYSTEM PROPERTIES SUBVIEW -->
           <div id="tuning-props-subview" class="tuning-subview" style="display: none;">
-            <div class="card card-elevated hero-card" style="padding: 16px; margin-bottom: 12px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <button class="btn btn-outlined btn-icon-only" id="props-back-hub-btn" aria-label="Back to Hub" style="width: 36px; height: 36px; min-width: 36px; border-radius: 50%;">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; fill: currentColor;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                  </button>
-                  <div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <h3 class="section-header" style="margin: 0;">System Properties</h3>
-                      <span class="badge-pill badge-boot" id="props-count-badge">0 props</span>
-                    </div>
-                    <p style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); margin: 3px 0 0 0; line-height: 1.3;">
-                      Inspect, override runtime props (resetprop) & boot config (system.prop)
-                    </p>
-                  </div>
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <h3 class="section-header" style="margin: 0;">System Properties</h3>
+                  <span class="badge-pill badge-boot" id="props-count-badge">0 props</span>
                 </div>
+                <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4; margin: 0;">
+                  Inspect, override runtime props (resetprop) &amp; configure early boot persistence (system.prop).
+                </p>
               </div>
 
               <!-- Search Bar & Filter Chips -->
@@ -735,43 +728,56 @@
 
   <!-- Material 3 System Prop Edit Bottom Sheet -->
   <div class="m3-sheet-backdrop" id="prop-edit-sheet-backdrop" style="display: none;">
-    <div class="m3-bottom-sheet" id="prop-edit-sheet">
+    <div class="m3-bottom-sheet m3e-sheet" id="prop-edit-sheet">
       <div class="m3-sheet-handle"></div>
       <div class="m3-sheet-header">
-        <div class="m3-sheet-title-group">
-          <h4 class="m3-sheet-title" id="prop-edit-sheet-title">Edit Property</h4>
-          <span class="m3-sheet-subtitle" id="prop-edit-sheet-subtitle">Modify runtime & boot value</span>
+        <div class="m3e-sheet-title-row">
+          <div class="m3e-sheet-icon-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-props"></use></svg>
+          </div>
+          <div class="m3-sheet-title-group">
+            <h4 class="m3-sheet-title" id="prop-edit-sheet-title">Edit Property</h4>
+            <span class="m3-sheet-subtitle" id="prop-edit-sheet-subtitle">Modify runtime &amp; boot persistence</span>
+          </div>
         </div>
-        <button class="icon-btn" id="prop-edit-sheet-close" aria-label="Close">
+        <button class="icon-btn m3e-close-btn" id="prop-edit-sheet-close" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </div>
-      <div class="m3-sheet-content" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
-        <div class="prop-field-group">
-          <label for="prop-edit-key" style="display: block; font-size: 0.75rem; color: var(--md-sys-color-primary); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Property Key</label>
-          <input type="text" id="prop-edit-key" class="prop-input" placeholder="e.g. ro.build.display.id" style="width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 0.85rem; padding: 10px 12px; border-radius: var(--md-corner-small); border: 1px solid var(--md-sys-color-outline); background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface);">
-        </div>
-
-        <div class="prop-meta-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--md-sys-color-surface-container-high); padding: 12px; border-radius: var(--md-corner-small);">
-          <div>
-            <span style="display: block; font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px;">Original Value</span>
-            <span class="code-pill badge-pill" id="prop-edit-orig-val" style="display: inline-block; word-break: break-all;">--</span>
-          </div>
-          <div>
-            <span style="display: block; font-size: 0.75rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px;">Live Value</span>
-            <span class="code-pill badge-pill" id="prop-edit-live-val" style="display: inline-block; word-break: break-all;">--</span>
+      <div class="m3-sheet-content m3e-sheet-body">
+        <div class="m3e-field-container">
+          <label for="prop-edit-key" class="m3e-field-label">Property Key</label>
+          <div class="m3e-input-box">
+            <input type="text" id="prop-edit-key" class="m3e-input-mono" placeholder="e.g. ro.build.display.id" autocomplete="off" spellcheck="false">
           </div>
         </div>
 
-        <div class="prop-field-group">
-          <label for="prop-edit-value" style="display: block; font-size: 0.75rem; color: var(--md-sys-color-primary); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">New Value</label>
-          <input type="text" id="prop-edit-value" class="prop-input" placeholder="Enter new property value" style="width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 0.85rem; padding: 10px 12px; border-radius: var(--md-corner-small); border: 1px solid var(--md-sys-color-outline); background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface);">
+        <div class="m3e-info-card" id="prop-edit-meta-card">
+          <div class="m3e-info-col">
+            <span class="m3e-info-label">Factory Default</span>
+            <span class="m3e-val-pill" id="prop-edit-orig-val">--</span>
+          </div>
+          <div class="m3e-info-divider"></div>
+          <div class="m3e-info-col">
+            <span class="m3e-info-label">Live Value</span>
+            <span class="m3e-val-pill m3e-val-live" id="prop-edit-live-val">--</span>
+          </div>
         </div>
 
-        <div class="io-switch-row" style="padding: 8px 0; border: none;">
-          <div class="io-switch-info">
-            <span class="io-switch-title">Apply on Boot</span>
-            <span class="io-switch-desc">Persist in module system.prop on device startup</span>
+        <div class="m3e-field-container">
+          <label for="prop-edit-value" class="m3e-field-label">Target Value</label>
+          <div class="m3e-input-box">
+            <input type="text" id="prop-edit-value" class="m3e-input-mono" placeholder="Enter new property value" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="m3e-tile-row">
+          <div class="m3e-tile-icon-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          </div>
+          <div class="m3e-tile-text">
+            <span class="m3e-tile-title">Apply on Boot</span>
+            <span class="m3e-tile-desc">Save to module system.prop for persistent early boot injection</span>
           </div>
           <label class="m3-switch">
             <input type="checkbox" id="prop-edit-boot-switch" checked>
@@ -779,11 +785,14 @@
           </label>
         </div>
 
-        <div class="prop-edit-actions" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 8px;">
-          <button class="btn btn-outlined btn-small" id="prop-edit-reset-btn" style="color: var(--md-sys-color-error); border-color: var(--md-sys-color-error);">Reset to Default</button>
-          <button class="btn btn-outlined btn-small" id="prop-edit-delete-btn" style="display: none;">Delete</button>
+        <div class="m3e-action-bar">
+          <button class="btn btn-outlined btn-danger btn-small" id="prop-edit-reset-btn">Reset to Default</button>
+          <button class="btn btn-outlined btn-danger btn-small" id="prop-edit-delete-btn" style="display: none;">Delete</button>
           <button class="btn btn-tonal btn-small" id="prop-edit-cancel-btn">Cancel</button>
-          <button class="btn btn-filled btn-small" id="prop-edit-save-btn">Save & Apply</button>
+          <button class="btn btn-filled btn-small" id="prop-edit-save-btn">
+            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Save &amp; Apply
+          </button>
         </div>
       </div>
     </div>
@@ -791,93 +800,168 @@
 
   <!-- Prop Import Dialog Modal -->
   <div class="m3-dialog-backdrop" id="prop-import-dialog-backdrop" style="display: none;">
-    <div class="m3-dialog" id="prop-import-dialog" style="max-width: 520px; max-height: 85vh; display: flex; flex-direction: column;">
-      <div class="m3-dialog-icon">
-        <svg viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--md-sys-color-primary);"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+    <div class="m3-dialog m3e-dialog-wide" id="prop-import-dialog">
+      <div class="m3e-dialog-top">
+        <div class="m3e-dialog-icon-circle">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+        </div>
+        <div class="m3e-dialog-header-text">
+          <h3 class="m3-dialog-title" id="prop-import-title">Import Properties</h3>
+          <p class="m3e-dialog-subtitle">Upload a .prop configuration file or paste key=value tweaks</p>
+        </div>
       </div>
-      <h3 class="m3-dialog-title" id="prop-import-title">Import System Properties</h3>
-      <p class="m3-dialog-text" style="margin-bottom: 8px;">
-        Upload a <code class="code-pill">.prop</code> / <code class="code-pill">.txt</code> file or paste <code class="code-pill">key=value</code> pairs below.
-      </p>
 
-      <div style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <label class="btn btn-tonal btn-small" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
-            <span>Choose File</span>
+      <div class="m3e-dialog-scrollable">
+        <div class="m3e-upload-card" id="prop-import-upload-zone">
+          <label class="m3e-upload-label" for="prop-import-file-input">
+            <svg class="m3e-upload-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            <span class="m3e-upload-text">Choose .prop or .txt file</span>
+            <span class="m3e-upload-hint">or drop file here</span>
             <input type="file" id="prop-import-file-input" accept=".prop,.txt" style="display: none;">
           </label>
-          <span id="prop-import-filename" style="font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); word-break: break-all;"></span>
+          <div id="prop-import-filename-pill" class="m3e-filename-pill" style="display: none;">
+            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span id="prop-import-filename">filename.prop</span>
+          </div>
         </div>
 
-        <textarea id="prop-import-paste-textarea" rows="4" placeholder="ro.test.prop=1&#10;persist.sys.custom=value" style="width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 0.8rem; padding: 10px; border-radius: var(--md-corner-small); border: 1px solid var(--md-sys-color-outline); background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); resize: vertical;"></textarea>
-
-        <!-- Preview diff table container -->
-        <div id="prop-import-diff-container" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-corner-small); display: none;">
-          <table class="prop-import-table" id="prop-import-diff-table" style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
-            <thead>
-              <tr style="background: var(--md-sys-color-surface-container-high); text-align: left;">
-                <th style="padding: 6px 8px; width: 32px;"><input type="checkbox" id="prop-import-select-all" checked></th>
-                <th style="padding: 6px 8px;">Key</th>
-                <th style="padding: 6px 8px;">Current</th>
-                <th style="padding: 6px 8px;">New</th>
-              </tr>
-            </thead>
-            <tbody id="prop-import-diff-tbody"></tbody>
-          </table>
+        <div class="m3e-or-divider">
+          <span>OR PASTE CONTENT</span>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 8px;">
-          <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; cursor: pointer;">
-            <span>Apply Live via resetprop</span>
-            <input type="checkbox" id="prop-import-apply-live" checked>
-          </label>
-          <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; cursor: pointer;">
-            <span>Set on Boot (system.prop)</span>
-            <input type="checkbox" id="prop-import-set-boot" checked>
-          </label>
+        <div class="m3e-field-container">
+          <textarea id="prop-import-paste-textarea" class="m3e-textarea-mono" rows="4" placeholder="ro.vendor.display.mode=1&#10;debug.sf.latch_unsignaled=1" spellcheck="false"></textarea>
+        </div>
+
+        <div id="prop-import-diff-container" class="m3e-diff-card" style="display: none;">
+          <div class="m3e-diff-card-header">
+            <label class="m3e-checkbox-label">
+              <input type="checkbox" id="prop-import-select-all" class="m3e-checkbox" checked>
+              <span class="m3e-diff-title">Detected Properties</span>
+            </label>
+            <span class="m3e-diff-badge" id="prop-import-count-badge">0 items</span>
+          </div>
+          <div class="m3e-diff-table-wrapper">
+            <table class="prop-import-table" id="prop-import-diff-table">
+              <thead>
+                <tr>
+                  <th style="width: 36px;"></th>
+                  <th>Property</th>
+                  <th>Current</th>
+                  <th>New</th>
+                </tr>
+              </thead>
+              <tbody id="prop-import-diff-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="m3e-options-box">
+          <div class="m3e-option-row">
+            <div class="m3e-option-text">
+              <span class="m3e-option-title">Apply Live</span>
+              <span class="m3e-option-sub">Set runtime values immediately via resetprop</span>
+            </div>
+            <label class="m3-switch">
+              <input type="checkbox" id="prop-import-apply-live" checked>
+              <span class="m3-switch-slider"></span>
+            </label>
+          </div>
+          <div class="m3e-option-divider"></div>
+          <div class="m3e-option-row">
+            <div class="m3e-option-text">
+              <span class="m3e-option-title">Save to Boot</span>
+              <span class="m3e-option-sub">Persist in module system.prop on reboot</span>
+            </div>
+            <label class="m3-switch">
+              <input type="checkbox" id="prop-import-set-boot" checked>
+              <span class="m3-switch-slider"></span>
+            </label>
+          </div>
         </div>
       </div>
 
-      <div class="m3-dialog-actions" style="margin-top: 14px;">
+      <div class="m3-dialog-actions m3e-dialog-actions">
         <button class="btn btn-tonal" id="prop-import-cancel-btn">Cancel</button>
-        <button class="btn btn-filled" id="prop-import-submit-btn">Import Properties</button>
+        <button class="btn btn-filled" id="prop-import-submit-btn">
+          <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+          Import Selected
+        </button>
       </div>
     </div>
   </div>
 
   <!-- Prop Export Bottom Sheet -->
   <div class="m3-sheet-backdrop" id="prop-export-sheet-backdrop" style="display: none;">
-    <div class="m3-bottom-sheet" id="prop-export-sheet">
+    <div class="m3-bottom-sheet m3e-sheet" id="prop-export-sheet">
       <div class="m3-sheet-handle"></div>
       <div class="m3-sheet-header">
-        <div class="m3-sheet-title-group">
-          <h4 class="m3-sheet-title">Export Properties</h4>
-          <span class="m3-sheet-subtitle">Download .prop file or copy to clipboard</span>
+        <div class="m3e-sheet-title-row">
+          <div class="m3e-sheet-icon-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          </div>
+          <div class="m3-sheet-title-group">
+            <h4 class="m3-sheet-title">Export Properties</h4>
+            <span class="m3-sheet-subtitle">Share with others or create a full system backup</span>
+          </div>
         </div>
-        <button class="icon-btn" id="prop-export-sheet-close" aria-label="Close">
+        <button class="icon-btn m3e-close-btn" id="prop-export-sheet-close" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </div>
-      <div class="m3-sheet-content" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
-        <div class="setting-group" style="margin: 0;">
-          <label style="font-weight: 600; font-size: 0.85rem; margin-bottom: 8px; display: block;">Export Content</label>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
-              <input type="radio" name="prop-export-choice" value="modified" checked>
-              <span>Custom &amp; Modified Properties only (Recommended)</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
-              <input type="radio" name="prop-export-choice" value="all">
-              <span>Full System Props Dump (All live properties)</span>
-            </label>
+      <div class="m3-sheet-content m3e-sheet-body">
+        <label class="m3e-field-label">Export Scope</label>
+        <div class="m3e-radio-list" id="prop-export-radio-list">
+          <div class="m3e-radio-card active" data-export-choice="modified">
+            <div class="m3e-radio-left">
+              <div class="m3e-radio-control">
+                <div class="m3e-radio-circle">
+                  <div class="m3e-radio-dot"></div>
+                </div>
+              </div>
+              <div class="m3e-radio-text">
+                <div class="m3e-radio-title-row">
+                  <span class="m3e-radio-title">Custom &amp; Modified Props</span>
+                  <span class="m3-option-badge badge-sweet">Recommended</span>
+                </div>
+                <span class="m3e-radio-desc">Exports only the properties you modified or added. Clean, compact, and ideal to share with others.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="m3e-radio-card" data-export-choice="all">
+            <div class="m3e-radio-left">
+              <div class="m3e-radio-control">
+                <div class="m3e-radio-circle">
+                  <div class="m3e-radio-dot"></div>
+                </div>
+              </div>
+              <div class="m3e-radio-text">
+                <div class="m3e-radio-title-row">
+                  <span class="m3e-radio-title">Full System Props Dump</span>
+                  <span class="badge-pill badge-boot">Full Backup</span>
+                </div>
+                <span class="m3e-radio-desc">Exports all ~1,500+ live system properties from your device as a complete reference backup.</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
-          <button class="btn btn-outlined btn-small" id="prop-export-close-btn">Close</button>
-          <button class="btn btn-tonal btn-small" id="prop-export-copy-btn">Copy to Clipboard</button>
-          <button class="btn btn-filled btn-small" id="prop-export-download-btn">Download .prop</button>
+        <div class="m3e-format-banner">
+          <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: var(--md-sys-color-primary); flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          <span>Saved in standard Android <code class="code-pill">.prop</code> (key=value) format. Fully compatible with Magisk, KernelSU, and APatch.</span>
+        </div>
+
+        <div class="m3e-action-bar">
+          <button class="btn btn-tonal btn-small" id="prop-export-close-btn">Cancel</button>
+          <button class="btn btn-tonal btn-small" id="prop-export-copy-btn">
+            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            Copy Text
+          </button>
+          <button class="btn btn-filled btn-small" id="prop-export-download-btn">
+            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download .prop
+          </button>
         </div>
       </div>
     </div>

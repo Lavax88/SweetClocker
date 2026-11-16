@@ -1132,6 +1132,7 @@ function openPropEditSheet(prop?: SystemPropItem): void {
   const bootSwitch = document.getElementById('prop-edit-boot-switch') as HTMLInputElement | null;
   const resetBtn = document.getElementById('prop-edit-reset-btn');
   const deleteBtn = document.getElementById('prop-edit-delete-btn');
+  const metaCard = document.getElementById('prop-edit-meta-card');
 
   if (!backdrop) return;
 
@@ -1139,10 +1140,11 @@ function openPropEditSheet(prop?: SystemPropItem): void {
     activeEditProp = prop;
     if (title) title.innerText = 'Edit Property';
     if (subtitle) subtitle.innerText = prop.key;
+    if (metaCard) metaCard.style.display = 'flex';
     if (keyInput) {
       keyInput.value = prop.key;
       keyInput.readOnly = true;
-      keyInput.style.opacity = '0.75';
+      keyInput.disabled = true;
     }
     if (origVal) origVal.innerText = prop.defaultValue || '(none)';
     if (liveVal) liveVal.innerText = prop.value || '(empty)';
@@ -1159,10 +1161,11 @@ function openPropEditSheet(prop?: SystemPropItem): void {
     activeEditProp = null;
     if (title) title.innerText = 'Add Property';
     if (subtitle) subtitle.innerText = 'Create custom system property';
+    if (metaCard) metaCard.style.display = 'none';
     if (keyInput) {
       keyInput.value = '';
       keyInput.readOnly = false;
-      keyInput.style.opacity = '1';
+      keyInput.disabled = false;
     }
     if (origVal) origVal.innerText = '(new)';
     if (liveVal) liveVal.innerText = '(none)';
@@ -1195,12 +1198,14 @@ function openPropImportDialog(): void {
   const backdrop = document.getElementById('prop-import-dialog-backdrop');
   const fileInput = document.getElementById('prop-import-file-input') as HTMLInputElement | null;
   const fileName = document.getElementById('prop-import-filename');
+  const fileNamePill = document.getElementById('prop-import-filename-pill');
   const textarea = document.getElementById('prop-import-paste-textarea') as HTMLTextAreaElement | null;
   const diffContainer = document.getElementById('prop-import-diff-container');
   const diffTbody = document.getElementById('prop-import-diff-tbody');
 
   if (fileInput) fileInput.value = '';
   if (fileName) fileName.innerText = '';
+  if (fileNamePill) fileNamePill.style.display = 'none';
   if (textarea) textarea.value = '';
   if (diffContainer) diffContainer.style.display = 'none';
   if (diffTbody) diffTbody.innerHTML = '';
@@ -1240,6 +1245,9 @@ function updateImportDiffPreview(rawText: string): void {
     return;
   }
 
+  const countBadge = document.getElementById('prop-import-count-badge');
+  if (countBadge) countBadge.innerText = `${keys.length} items`;
+
   const currentMap = new Map<string, string>();
   for (const item of currentPropsList) {
     currentMap.set(item.key, item.value);
@@ -1266,7 +1274,12 @@ function updateImportDiffPreview(rawText: string): void {
   diffContainer.style.display = 'block';
   diffTbody.innerHTML = parsedImportDiffs
     .map((diff, index) => {
-      const tagClass = diff.status === 'add' ? 'diff-tag tag-add' : diff.status === 'modify' ? 'diff-tag tag-modify' : 'diff-tag tag-same';
+      const tagClass =
+        diff.status === 'add'
+          ? 'diff-tag diff-tag-new'
+          : diff.status === 'modify'
+          ? 'diff-tag diff-tag-change'
+          : 'diff-tag diff-tag-same';
       const tagLabel = diff.status === 'add' ? 'NEW' : diff.status === 'modify' ? 'MOD' : 'SAME';
       return `
         <tr style="border-bottom: 1px solid var(--md-sys-color-outline-variant);">
@@ -1853,6 +1866,8 @@ export function initTuningScreen(): void {
       const file = importFileInput.files?.[0];
       if (file) {
         if (importFilename) importFilename.innerText = file.name;
+        const filenamePill = document.getElementById('prop-import-filename-pill');
+        if (filenamePill) filenamePill.style.display = 'inline-flex';
         const reader = new FileReader();
         reader.onload = () => {
           const text = (reader.result as string) || '';
@@ -1932,13 +1947,29 @@ export function initTuningScreen(): void {
     exportCloseBottomBtn.addEventListener('click', closePropExportSheet);
   }
 
+  // Export radio cards selection
+  const exportRadioList = document.getElementById('prop-export-radio-list');
+  if (exportRadioList) {
+    const cards = exportRadioList.querySelectorAll<HTMLElement>('.m3e-radio-card');
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        cards.forEach((c) => c.classList.remove('active'));
+        card.classList.add('active');
+      });
+    });
+  }
+
+  const getExportScope = (): boolean => {
+    const activeCard = document.querySelector<HTMLElement>(
+      '#prop-export-radio-list .m3e-radio-card.active'
+    );
+    return activeCard?.getAttribute('data-export-choice') === 'all';
+  };
+
   const exportDownloadBtn = document.getElementById('prop-export-download-btn');
   if (exportDownloadBtn) {
     exportDownloadBtn.addEventListener('click', () => {
-      const selectedChoice = document.querySelector<HTMLInputElement>(
-        'input[name="prop-export-choice"]:checked'
-      );
-      const includeAll = selectedChoice?.value === 'all';
+      const includeAll = getExportScope();
       const text = propsEngine.exportProps(includeAll);
       downloadTextFile('sweetclocker_props.prop', text);
       toast('Properties downloaded as .prop file');
@@ -1949,10 +1980,7 @@ export function initTuningScreen(): void {
   const exportCopyBtn = document.getElementById('prop-export-copy-btn');
   if (exportCopyBtn) {
     exportCopyBtn.addEventListener('click', async () => {
-      const selectedChoice = document.querySelector<HTMLInputElement>(
-        'input[name="prop-export-choice"]:checked'
-      );
-      const includeAll = selectedChoice?.value === 'all';
+      const includeAll = getExportScope();
       const text = propsEngine.exportProps(includeAll);
       try {
         await navigator.clipboard.writeText(text);
