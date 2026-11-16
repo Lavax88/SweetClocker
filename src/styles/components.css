@@ -2380,6 +2380,12 @@ body.nav-floating .props-fab-container {
   border: 1px solid color-mix(in srgb, var(--md-sys-color-success) 35%, transparent);
 }
 
+.badge-ro {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 14%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+}
+
 /* Prop Search Bar & Clear */
 .prop-search-container {
   position: relative;
@@ -3562,7 +3568,6 @@ body.nav-floating .props-fab-container {
 }
 
 .m3e-export-cancel-btn {
-  height: 40px;
   font-weight: 500;
   opacity: 0.9;
 }
@@ -3625,4 +3630,64 @@ body.nav-floating .props-fab-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   }
+}
+
+/* ==========================================================================
+   Material 3 Expressive Confirmation Dialog
+   ========================================================================== */
+
+.m3e-confirm-dialog {
+  max-width: 420px;
+  width: 90vw;
+  border-radius: 28px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--md-sys-color-surface);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3e-confirm-dialog-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.m3e-confirm-dialog-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
+  color: var(--md-sys-color-error);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.m3e-confirm-dialog-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.m3e-confirm-dialog-body {
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.45;
+  margin-bottom: 20px;
+}
+
+.m3e-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.m3e-confirm-actions .m3e-btn {
+  width: 100%;
 }

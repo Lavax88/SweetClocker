@@ -6,6 +6,11 @@ const ALT_MODULE_PROP_PATH = '/data/adb/modules/SweetClocker/system.prop';
 const CUSTOM_PROP_PATH = '/data/local/tmp/.sweetclocker_props_custom';
 const DEFAULTS_PROP_PATH = '/data/local/tmp/.sweetclocker_props_defaults';
 
+const RESOLVE_MOD_PROP_CMD = `mod_prop="${MODULE_PROP_PATH}"
+[ -d "/data/adb/modules/SweetClocker" ] && mod_prop="${ALT_MODULE_PROP_PATH}"
+mod_dir="$(dirname "$mod_prop")"
+[ -d "$mod_dir" ] || mkdir -p "$mod_dir" 2>/dev/null`;
+
 export function parsePropLine(line: string): { key: string; value: string } | null {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith('#')) return null;
@@ -85,8 +90,7 @@ class PropsEngine {
       }
 
       const fetchCmd = `
-mod_prop="${MODULE_PROP_PATH}"
-[ -d "/data/adb/modules/SweetClocker" ] && mod_prop="${ALT_MODULE_PROP_PATH}"
+${RESOLVE_MOD_PROP_CMD}
 def_file="${DEFAULTS_PROP_PATH}"
 cust_file="${CUSTOM_PROP_PATH}"
 
@@ -155,7 +159,6 @@ getprop 2>/dev/null
 
       const state: PropsState = {
         props: items,
-        items,
         defaultsMap,
         customMap,
         bootMap
@@ -169,6 +172,7 @@ getprop 2>/dev/null
   /**
    * Applies a single property change live via resetprop -n and conditionally
    * persists it to system.prop (boot) and .sweetclocker_props_custom.
+   * If applyBoot is false, the modification applies live but is removed from boot/custom files.
    */
   public async applyProp(key: string, value: string, applyBoot: boolean): Promise<boolean> {
     return this.enqueue(async () => {
@@ -178,11 +182,12 @@ getprop 2>/dev/null
 
       if (!sanitizedKey) return false;
 
-      // Update in-memory maps
-      state.customMap[sanitizedKey] = sanitizedVal;
+      // Update in-memory maps: only persist to customMap & bootMap if applyBoot is true
       if (applyBoot) {
+        state.customMap[sanitizedKey] = sanitizedVal;
         state.bootMap[sanitizedKey] = sanitizedVal;
       } else {
+        delete state.customMap[sanitizedKey];
         delete state.bootMap[sanitizedKey];
       }
 
@@ -194,10 +199,7 @@ getprop 2>/dev/null
       const safeEscapedVal = sanitizedVal.replace(/'/g, "'\\''");
 
       const cmd = `
-mod_prop="${MODULE_PROP_PATH}"
-[ -d "/data/adb/modules/SweetClocker" ] && mod_prop="${ALT_MODULE_PROP_PATH}"
-mod_dir="$(dirname "$mod_prop")"
-[ -d "$mod_dir" ] || mkdir -p "$mod_dir" 2>/dev/null
+${RESOLVE_MOD_PROP_CMD}
 
 # 1. Apply live via resetprop -n or setprop
 if command -v resetprop >/dev/null 2>&1; then
@@ -207,13 +209,21 @@ else
 fi
 
 # 2. Write custom override file
+if [ -n "${customFileContent.trim()}" ]; then
 cat << 'EOF_CUST' > "${CUSTOM_PROP_PATH}"
 ${customFileContent}EOF_CUST
+else
+  rm -f "${CUSTOM_PROP_PATH}" 2>/dev/null
+fi
 
 # 3. Write module boot system.prop file
+if [ -n "${bootFileContent.trim()}" ]; then
 cat << 'EOF_BOOT' > "$mod_prop"
 ${bootFileContent}EOF_BOOT
-chmod 0644 "$mod_prop" 2>/dev/null
+  chmod 0644 "$mod_prop" 2>/dev/null
+else
+  rm -f "$mod_prop" 2>/dev/null
+fi
 `;
 
       const { errno } = await exec(cmd);
@@ -228,7 +238,7 @@ chmod 0644 "$mod_prop" 2>/dev/null
         key: sanitizedKey,
         value: sanitizedVal,
         defaultValue,
-        customValue: sanitizedVal,
+        customValue: applyBoot ? sanitizedVal : null,
         isModified,
         isCustom,
         applyBoot,
@@ -279,8 +289,7 @@ fi`
 fi`;
 
       const cmd = `
-mod_prop="${MODULE_PROP_PATH}"
-[ -d "/data/adb/modules/SweetClocker" ] && mod_prop="${ALT_MODULE_PROP_PATH}"
+${RESOLVE_MOD_PROP_CMD}
 
 # 1. Live revert
 ${liveResetCmd}
@@ -354,8 +363,7 @@ fi
       }
 
       const cmd = `
-mod_prop="${MODULE_PROP_PATH}"
-[ -d "/data/adb/modules/SweetClocker" ] && mod_prop="${ALT_MODULE_PROP_PATH}"
+${RESOLVE_MOD_PROP_CMD}
 
 # Revert modified props live
 ${revertCommands.join('\n')}
@@ -411,10 +419,11 @@ rm -f "$mod_prop" 2>/dev/null
 
         const itemApplyBoot = diff.applyBoot !== undefined ? diff.applyBoot : applyBoot;
 
-        state.customMap[sanitizedKey] = sanitizedVal;
         if (itemApplyBoot) {
+          state.customMap[sanitizedKey] = sanitizedVal;
           state.bootMap[sanitizedKey] = sanitizedVal;
         } else {
+          delete state.customMap[sanitizedKey];
           delete state.bootMap[sanitizedKey];
         }
 
@@ -432,7 +441,7 @@ rm -f "$mod_prop" 2>/dev/null
           key: sanitizedKey,
           value: sanitizedVal,
           defaultValue: defaultVal,
-          customValue: sanitizedVal,
+          customValue: itemApplyBoot ? sanitizedVal : null,
           isModified: true,
           isCustom: !hasDefault,
           applyBoot: itemApplyBoot,
@@ -452,10 +461,7 @@ rm -f "$mod_prop" 2>/dev/null
       const bootFileContent = formatPropsMap(state.bootMap);
 
       const cmd = `
-mod_prop="${MODULE_PROP_PATH}"
-[ -d "/data/adb/modules/SweetClocker" ] && mod_prop="${ALT_MODULE_PROP_PATH}"
-mod_dir="$(dirname "$mod_prop")"
-[ -d "$mod_dir" ] || mkdir -p "$mod_dir" 2>/dev/null
+${RESOLVE_MOD_PROP_CMD}
 
 # 1. Live apply
 ${liveCommands.join('\n')}

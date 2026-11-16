@@ -93,7 +93,6 @@ export interface SystemPropItem {
 
 export interface PropsState {
   props: SystemPropItem[];
-  items?: SystemPropItem[];
   defaultsMap: Record<string, string>;
   customMap: Record<string, string>;
   bootMap: Record<string, string>;

@@ -1,19 +1,11 @@
 import type { SystemPropItem } from '../../telemetry/types';
+import { escapeHtml } from '../../utils/escape';
 
 export interface VirtualPropListOptions {
   container: HTMLElement;
   itemHeight?: number;
   overscan?: number;
   onSelectProp: (prop: SystemPropItem) => void;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 function escapeRegExp(str: string): string {
@@ -188,6 +180,9 @@ export class VirtualPropList {
         const valTitle = escapeHtml(prop.value || '');
 
         let badges = '';
+        if (prop.isReadOnly) {
+          badges += '<span class="badge-pill badge-ro">RO</span>';
+        }
         if (prop.isCustom) {
           badges += '<span class="badge-pill badge-custom">Custom</span>';
         }

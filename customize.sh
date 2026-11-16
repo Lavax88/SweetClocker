@@ -56,20 +56,23 @@ if [ -f "$CUSTOM_CPU" ] || [ -f "$CUSTOM_IO" ] || [ -f "$CUSTOM_NET" ] || [ -f "
         ui_print "- Resetting custom settings to SweetClocker sweetspots..."
         rm -f "$CUSTOM_CPU" "$CUSTOM_IO" "$CUSTOM_NET" "$CUSTOM_PROPS" 2>/dev/null
         rm -f "$MODPATH/system.prop" "/data/adb/modules/sweetclocker/system.prop" 2>/dev/null
+        rm -f "/data/local/tmp/.sweetclocker_io_defaults" 2>/dev/null
+        rm -f "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null
+        rm -f "/data/local/tmp/.sweetclocker_props_defaults" 2>/dev/null
     else
         ui_print "- Keeping your current custom configuration."
     fi
 else
     ui_print "- Clean install: sweetspot defaults will be applied."
+    rm -f "/data/local/tmp/.sweetclocker_io_defaults" 2>/dev/null
+    rm -f "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null
+    rm -f "/data/local/tmp/.sweetclocker_props_defaults" 2>/dev/null
 fi
 
 # Clean up logs, state, mounts, and lock files
 ui_print "- Cleaning up old logs, state files, and mounts..."
 rm -f "/data/local/tmp/sweetclocker.log" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_state" 2>/dev/null
-rm -f "/data/local/tmp/.sweetclocker_io_defaults" 2>/dev/null
-rm -f "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null
-rm -f "/data/local/tmp/.sweetclocker_props_defaults" 2>/dev/null
 
 # Unmount any existing policy mount locks if active before updating files
 for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do

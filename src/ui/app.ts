@@ -16,6 +16,11 @@ import {
   initApplyBootDialog,
   hideApplyBootDialog
 } from './components/dialog';
+import {
+  closePropEditSheet,
+  closePropImportDialog,
+  closePropExportSheet
+} from './screens/props';
 import { initFloatingNav, type FloatingNavController } from './components/floatingNav';
 import { initPageSwipe, slideToTab } from './components/pageSwipe';
 
@@ -74,6 +79,30 @@ export async function initApp(): Promise<void> {
     }
     if (applyBootBackdrop?.classList.contains('active')) {
       hideApplyBootDialog(null);
+      return;
+    }
+
+    const confirmBackdrop = document.getElementById('m3-confirm-dialog-backdrop');
+    if (confirmBackdrop && confirmBackdrop.style.display !== 'none') {
+      confirmBackdrop.style.display = 'none';
+      return;
+    }
+
+    const propEditBackdrop = document.getElementById('prop-edit-sheet-backdrop');
+    if (propEditBackdrop?.classList.contains('active')) {
+      closePropEditSheet();
+      return;
+    }
+
+    const propImportBackdrop = document.getElementById('prop-import-dialog-backdrop');
+    if (propImportBackdrop?.classList.contains('active')) {
+      closePropImportDialog();
+      return;
+    }
+
+    const propExportBackdrop = document.getElementById('prop-export-sheet-backdrop');
+    if (propExportBackdrop?.classList.contains('active')) {
+      closePropExportSheet();
       return;
     }
 
