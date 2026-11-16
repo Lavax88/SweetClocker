@@ -52,12 +52,33 @@ if [ -f "/data/local/tmp/.sweetclocker_net_defaults" ]; then
         log_uninstall "Reverted TCP congestion control to default ('${default_algo}')"
     fi
 fi
+if [ -f "/data/local/tmp/.sweetclocker_props_defaults" ]; then
+    log_uninstall "Reverting system properties to initial defaults..."
+    if command -v resetprop >/dev/null 2>&1 && [ -f "/data/local/tmp/.sweetclocker_props_custom" ]; then
+        while IFS='=' read -r prop_key prop_val; do
+            [ -z "$prop_key" ] && continue
+            case "$prop_key" in \#*) continue ;; esac
+            orig_val=$(grep "^\[${prop_key}\]:" "/data/local/tmp/.sweetclocker_props_defaults" 2>/dev/null | sed -e 's/^[^:]*: \[//' -e 's/\]$//')
+            if [ -n "$orig_val" ]; then
+                resetprop -n "$prop_key" "$orig_val" 2>/dev/null
+                log_uninstall "Reverted prop '${prop_key}' to default ('${orig_val}')"
+            else
+                resetprop --delete "$prop_key" 2>/dev/null
+                log_uninstall "Deleted custom prop '${prop_key}'"
+            fi
+        done < "/data/local/tmp/.sweetclocker_props_custom"
+    fi
+fi
 rm -f /data/local/tmp/.sweetclocker_state 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_custom 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_io_defaults 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_io_custom 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_net_defaults 2>/dev/null
 rm -f /data/local/tmp/.sweetclocker_net_custom 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_props_defaults 2>/dev/null
+rm -f /data/local/tmp/.sweetclocker_props_custom 2>/dev/null
+rm -f /data/adb/modules/sweetclocker/system.prop 2>/dev/null
+rm -f /data/adb/modules/SweetClocker/system.prop 2>/dev/null
 
 # 6. Delete bypass lock overrides
 rm -f /data/local/tmp/sweetclocker_force 2>/dev/null

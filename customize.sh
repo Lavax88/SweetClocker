@@ -9,9 +9,10 @@ STATE_DIR="/data/local/tmp"
 CUSTOM_CPU="$STATE_DIR/.sweetclocker_custom"
 CUSTOM_IO="$STATE_DIR/.sweetclocker_io_custom"
 CUSTOM_NET="$STATE_DIR/.sweetclocker_net_custom"
+CUSTOM_PROPS="$STATE_DIR/.sweetclocker_props_custom"
 
 # Volume Key Selector: Check if existing custom settings are present
-if [ -f "$CUSTOM_CPU" ] || [ -f "$CUSTOM_IO" ] || [ -f "$CUSTOM_NET" ]; then
+if [ -f "$CUSTOM_CPU" ] || [ -f "$CUSTOM_IO" ] || [ -f "$CUSTOM_NET" ] || [ -f "$CUSTOM_PROPS" ]; then
     ui_print " "
     ui_print "=========================================="
     ui_print " Existing custom settings detected!"
@@ -53,7 +54,8 @@ if [ -f "$CUSTOM_CPU" ] || [ -f "$CUSTOM_IO" ] || [ -f "$CUSTOM_NET" ]; then
 
     if [ "$chosen_action" = "reset" ]; then
         ui_print "- Resetting custom settings to SweetClocker sweetspots..."
-        rm -f "$CUSTOM_CPU" "$CUSTOM_IO" "$CUSTOM_NET" 2>/dev/null
+        rm -f "$CUSTOM_CPU" "$CUSTOM_IO" "$CUSTOM_NET" "$CUSTOM_PROPS" 2>/dev/null
+        rm -f "$MODPATH/system.prop" "/data/adb/modules/sweetclocker/system.prop" 2>/dev/null
     else
         ui_print "- Keeping your current custom configuration."
     fi
@@ -67,6 +69,7 @@ rm -f "/data/local/tmp/sweetclocker.log" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_state" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_io_defaults" 2>/dev/null
 rm -f "/data/local/tmp/.sweetclocker_net_defaults" 2>/dev/null
+rm -f "/data/local/tmp/.sweetclocker_props_defaults" 2>/dev/null
 
 # Unmount any existing policy mount locks if active before updating files
 for mount_point in $(grep "sweetclocker" /proc/mounts 2>/dev/null | awk '{print $2}'); do
@@ -83,6 +86,7 @@ set_perm "$MODPATH/telemetry.sh" 0 0 0755
 set_perm "$MODPATH/hotinstall.sh" 0 0 0755
 set_perm "$MODPATH/uninstall.sh" 0 0 0755
 set_perm_recursive "$MODPATH/webroot" 0 0 0755 0644
+[ -f "$MODPATH/system.prop" ] && set_perm "$MODPATH/system.prop" 0 0 0644
 
 # Universal Live-Sync Fallback for APatch / SukiSU / Magisk:
 TARGET_MOD="/data/adb/modules/sweetclocker"
@@ -97,6 +101,7 @@ if [ "$MODPATH" != "$TARGET_MOD" ] && [ -d "/data/adb/modules" ]; then
     set_perm "$TARGET_MOD/telemetry.sh" 0 0 0755
     set_perm "$TARGET_MOD/hotinstall.sh" 0 0 0755
     set_perm "$TARGET_MOD/uninstall.sh" 0 0 0755
+    [ -f "$TARGET_MOD/system.prop" ] && set_perm "$TARGET_MOD/system.prop" 0 0 0644
 fi
 
 # Execute hotinstall immediately from the live persistent path (restarts background daemon and applies clocks)
