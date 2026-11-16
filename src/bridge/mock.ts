@@ -62,6 +62,59 @@ const mockNetState = {
   availAlgos: ['bbr', 'cubic', 'reno', 'bic', 'westwood']
 };
 
+const INITIAL_MOCK_PROPS: Record<string, string> = {
+  'ro.product.model': 'POCO F7 Pro',
+  'ro.product.brand': 'POCO',
+  'ro.product.name': 'vermeer',
+  'ro.product.device': 'vermeer',
+  'ro.product.manufacturer': 'Xiaomi',
+  'ro.product.cpu.abi': 'arm64-v8a',
+  'ro.build.version.release': '15',
+  'ro.build.version.sdk': '35',
+  'ro.build.version.security_patch': '2026-06-01',
+  'ro.build.type': 'user',
+  'ro.build.flavor': 'sweetclocker-user',
+  'ro.build.display.id': 'VKQ1.240305.002 release-keys',
+  'ro.board.platform': 'pineapple',
+  'ro.hardware': 'qcom',
+  'ro.sf.lcd_density': '440',
+  'debug.sf.latch_unsignaled': '1',
+  'debug.sf.enable_hwc_vds': '1',
+  'debug.sf.early_app_phase_offset_ns': '500000',
+  'debug.sf.early_gl_app_phase_offset_ns': '15000000',
+  'debug.sf.early_phase_offset_ns': '500000',
+  'debug.sf.early_gl_phase_offset_ns': '3000000',
+  'debug.sf.high_fps_early_gl_phase_offset_ns': '6000000',
+  'debug.sf.high_fps_early_phase_offset_ns': '6100000',
+  'debug.sf.high_fps_late_sf_phase_offset_ns': '7000000',
+  'debug.sf.high_fps_late_app_phase_offset_ns': '1000000',
+  'debug.sf.disable_backpressure': '1',
+  'debug.sf.showfps': '0',
+  'debug.sf.swaprect': '0',
+  'debug.hwui.renderer': 'skiagl',
+  'debug.hwui.fps_divisor': '1',
+  'persist.sys.timezone': 'UTC',
+  'persist.sys.locale': 'en-US',
+  'persist.sys.dalvik.vm.lib.2': 'libart.so',
+  'persist.sys.composition.type': 'gpu',
+  'persist.sys.ui.hw': 'true',
+  'dalvik.vm.heapgrowthlimit': '256m',
+  'dalvik.vm.heapsize': '512m',
+  'dalvik.vm.heapstartsize': '16m',
+  'dalvik.vm.heapmaxfree': '8m',
+  'dalvik.vm.heapminfree': '2m',
+  'dalvik.vm.heaptargetutilization': '0.75',
+  'sys.usb.config': 'none',
+  'sys.usb.state': 'none',
+  'wifi.interface': 'wlan0'
+};
+
+const mockPropsDefaults: Record<string, string> = { ...INITIAL_MOCK_PROPS };
+const mockPropsCustom: Record<string, string> = {};
+const mockPropsBoot: Record<string, string> = {};
+const mockPropsLive: Record<string, string> = { ...INITIAL_MOCK_PROPS };
+
+
 let mockBypass = false;
 let mockLog = `[2026-07-20 00:02:18] post-fs-data.sh: boot start, log truncated
 [2026-07-20 00:02:18] discovered policy0 -> cpus [0,1] -> target 1286400 kHz (LITTLE, matches expected)
@@ -128,6 +181,109 @@ function generateMockTelemetryRecord(): string {
 export function mockExec(command: string): Promise<ExecResult> {
   return new Promise((resolve) => {
     setTimeout(() => {
+      // 0. System Properties Fetch (must precede generic telemetry '---' check)
+      if (
+        command.includes('---PROPS_CUSTOM---') ||
+        command.includes('---PROPS_BOOT---') ||
+        (command.includes('.sweetclocker_props_defaults') && command.includes('getprop'))
+      ) {
+        const defStr = Object.entries(mockPropsDefaults)
+          .map(([k, v]) => `[${k}]: [${v}]`)
+          .join('\n');
+        const custStr = Object.entries(mockPropsCustom)
+          .map(([k, v]) => `${k}=${v}`)
+          .join('\n');
+        const bootStr = Object.entries(mockPropsBoot)
+          .map(([k, v]) => `${k}=${v}`)
+          .join('\n');
+        const liveStr = Object.entries(mockPropsLive)
+          .map(([k, v]) => `[${k}]: [${v}]`)
+          .join('\n');
+
+        resolve({
+          errno: 0,
+          stdout: `${defStr}\n---PROPS_CUSTOM---\n${custStr}\n---PROPS_BOOT---\n${bootStr}\n---PROPS_LIVE---\n${liveStr}\n`,
+          stderr: ''
+        });
+        return;
+      }
+
+      // System Properties File Updates / Resets
+      if (
+        command.includes('EOF_CUST') ||
+        command.includes('EOF_BOOT') ||
+        command.includes('.sweetclocker_props_custom') ||
+        (command.includes('system.prop') && !command.includes('---')) ||
+        command.includes('resetprop')
+      ) {
+        // Parse custom file updates if present
+        const custMatch = command.match(/cat << 'EOF_CUST' > [^\n]+\n([\s\S]*?)EOF_CUST/);
+        if (custMatch && custMatch[1] !== undefined) {
+          Object.keys(mockPropsCustom).forEach(k => delete mockPropsCustom[k]);
+          custMatch[1].trim().split('\n').forEach(line => {
+            const idx = line.indexOf('=');
+            if (idx > 0) {
+              const k = line.slice(0, idx).trim();
+              const v = line.slice(idx + 1).trim();
+              if (k) mockPropsCustom[k] = v;
+            }
+          });
+        }
+
+        // Parse boot file updates if present
+        const bootMatch = command.match(/cat << 'EOF_BOOT' > [^\n]+\n([\s\S]*?)EOF_BOOT/);
+        if (bootMatch && bootMatch[1] !== undefined) {
+          Object.keys(mockPropsBoot).forEach(k => delete mockPropsBoot[k]);
+          bootMatch[1].trim().split('\n').forEach(line => {
+            const idx = line.indexOf('=');
+            if (idx > 0) {
+              const k = line.slice(0, idx).trim();
+              const v = line.slice(idx + 1).trim();
+              if (k) mockPropsBoot[k] = v;
+            }
+          });
+        }
+
+        // Parse resetprop --delete
+        const deleteMatches = command.matchAll(/resetprop --delete '([^']+)'/g);
+        for (const m of deleteMatches) {
+          if (m[1]) {
+            delete mockPropsLive[m[1]];
+            delete mockPropsCustom[m[1]];
+            delete mockPropsBoot[m[1]];
+          }
+        }
+
+        // Parse resetprop -n / resetprop
+        const setMatches = command.matchAll(/resetprop (?:-n )?'([^']+)' '([^']*)'/g);
+        for (const m of setMatches) {
+          if (m[1]) {
+            mockPropsLive[m[1]] = m[2] ?? '';
+          }
+        }
+
+        // Check if clearing custom / boot files
+        if (command.includes('rm -f "${CUSTOM_PROP_PATH}"') || command.includes('.sweetclocker_props_custom')) {
+          if (command.includes('rm -f')) {
+            Object.keys(mockPropsCustom).forEach(k => delete mockPropsCustom[k]);
+          }
+        }
+        if (command.includes('rm -f "$mod_prop"') || command.includes('system.prop')) {
+          if (command.includes('rm -f')) {
+            Object.keys(mockPropsBoot).forEach(k => delete mockPropsBoot[k]);
+          }
+        }
+
+        // Check for full reset
+        if (command.includes('rm -f "${CUSTOM_PROP_PATH}"') && command.includes('rm -f "$mod_prop"')) {
+          Object.keys(mockPropsLive).forEach(k => delete mockPropsLive[k]);
+          Object.assign(mockPropsLive, mockPropsDefaults);
+        }
+
+        resolve({ errno: 0, stdout: '', stderr: '' });
+        return;
+      }
+
       // Telemetry command or script
       if (command.includes('telemetry.sh') || command.includes('scaling_cur_freq') || command.includes('---')) {
         resolve({ errno: 0, stdout: generateMockTelemetryRecord(), stderr: '' });

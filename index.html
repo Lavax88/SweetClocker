@@ -115,6 +115,9 @@
       <path d="M 6.48 13.35 A 7.55 7.55 0 0 1 17.52 13.35 A 1.35 1.35 0 0 1 15.55 15.19 A 4.85 4.85 0 0 0 8.45 15.19 A 1.35 1.35 0 0 1 6.48 13.35 Z"/>
       <path d="M 2.23 9.70 A 13.15 13.15 0 0 1 21.77 9.70 A 1.35 1.35 0 0 1 19.77 11.51 A 10.45 10.45 0 0 0 4.23 11.51 A 1.35 1.35 0 0 1 2.23 9.70 Z"/>
     </symbol>
+    <symbol id="icon-props" viewBox="0 -960 960 960">
+      <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm80-80h480v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM160-240v-480 480Z"/>
+    </symbol>
   </svg>
 
   <!-- App Container -->
@@ -247,6 +250,16 @@
                 </div>
                 <svg class="tune-card-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
               </div>
+              <div class="tune-card tune-card-row" data-tune-feature="props-management">
+                <div class="tune-card-icon-bare">
+                  <svg class="tune-card-svg-bare" aria-hidden="true"><use href="#icon-props"></use></svg>
+                </div>
+                <div class="tune-card-info">
+                  <h4 class="tune-card-title">System Properties</h4>
+                  <span class="tune-card-sub">Android getprop, resetprop & boot props</span>
+                </div>
+                <svg class="tune-card-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
             </div>
           </div>
 
@@ -356,6 +369,41 @@
 
             <div class="tuning-grid" id="net-tuning-grid">
               <div class="grid-placeholder">Enable Network Tuning to inspect congestion controls…</div>
+            </div>
+          </div>
+
+          <!-- SYSTEM PROPERTIES SUBVIEW -->
+          <div id="tuning-props-subview" class="tuning-subview" style="display: none;">
+            <div class="card card-elevated hero-card" style="padding: 20px; margin-bottom: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <h3 class="section-header" style="margin: 0;">System Properties</h3>
+                  <span class="badge-pill badge-boot" id="props-count-badge">0 props</span>
+                </div>
+                <p style="font-size: 0.825rem; color: var(--md-sys-color-on-surface-variant); line-height: 1.4; margin: 0;">
+                  Inspect, override runtime props (resetprop) &amp; configure early boot persistence (system.prop).
+                </p>
+              </div>
+
+              <!-- Search Bar & Filter Chips -->
+              <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <div class="prop-search-container">
+                  <input type="text" id="prop-search-input" class="prop-search-input" placeholder="Search property name or value…">
+                  <button class="prop-search-clear" id="prop-search-clear" aria-label="Clear search" style="display: none;">
+                    <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                  </button>
+                </div>
+                <div class="prop-filter-chips">
+                  <button class="filter-chip active" data-prop-filter="all">All Props</button>
+                  <button class="filter-chip" data-prop-filter="modified">Modified</button>
+                  <button class="filter-chip" data-prop-filter="boot">Boot Config</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Virtual list container -->
+            <div id="props-list-container" class="props-list-container">
+              <div class="grid-placeholder">Loading system properties…</div>
             </div>
           </div>
 
@@ -526,6 +574,48 @@
             </button>
           </div>
 
+      <!-- Floating Speed-Dial Action Buttons for System Properties -->
+      <div class="props-fab-scrim" id="props-fab-scrim" aria-hidden="true"></div>
+      <div class="props-fab-container" id="props-fab-container">
+        <div class="props-speed-dial-menu" id="props-speed-dial-menu" aria-hidden="true">
+          <!-- Reset All -->
+          <div class="props-speed-dial-item">
+            <span class="props-speed-dial-label">Reset All</span>
+            <button class="m3-fab-mini m3-fab-danger" id="fab-reset-props" title="Reset All to Defaults" aria-label="Reset All to Defaults">
+              <svg class="m3-fab-mini-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            </button>
+          </div>
+          <!-- Export -->
+          <div class="props-speed-dial-item">
+            <span class="props-speed-dial-label">Export Props</span>
+            <button class="m3-fab-mini m3-fab-secondary" id="fab-export-props" title="Export Props" aria-label="Export Props">
+              <svg class="m3-fab-mini-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            </button>
+          </div>
+          <!-- Import -->
+          <div class="props-speed-dial-item">
+            <span class="props-speed-dial-label">Import Props</span>
+            <button class="m3-fab-mini m3-fab-secondary" id="fab-import-props" title="Import Props" aria-label="Import Props">
+              <svg class="m3-fab-mini-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            </button>
+          </div>
+          <!-- Add Prop -->
+          <div class="props-speed-dial-item">
+            <span class="props-speed-dial-label">Add Prop</span>
+            <button class="m3-fab-mini m3-fab-tertiary" id="fab-add-prop" title="Add Custom Prop" aria-label="Add Custom Prop">
+              <svg class="m3-fab-mini-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Speed Dial Trigger Button -->
+        <button class="m3-fab m3-fab-primary fab-icon-only props-fab-trigger" id="props-fab-trigger" title="Props Actions" aria-label="Props Actions" aria-expanded="false">
+          <svg class="m3-fab-icon props-trigger-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </button>
+      </div>
+
       <!-- Bottom Navigation Bar -->
       <nav class="bottom-nav">
         <div class="nav-highlighter" id="nav-highlighter" aria-hidden="true"></div>
@@ -632,6 +722,277 @@
           <span class="checkbox-text" style="font-size: 0.8rem;">Don’t show again</span>
         </label>
         <button class="btn btn-filled" id="gpu-warning-dialog-dismiss">I Understand</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Material 3 Expressive Confirmation Dialog Modal -->
+  <div class="m3-dialog-backdrop" id="m3-confirm-dialog-backdrop" style="display: none;">
+    <div class="m3-dialog m3e-confirm-dialog" id="m3-confirm-dialog">
+      <div class="m3e-confirm-dialog-top">
+        <div class="m3e-confirm-dialog-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        </div>
+        <div class="m3e-dialog-header-text">
+          <h3 class="m3-dialog-title" id="m3-confirm-dialog-title">Confirm Action</h3>
+        </div>
+      </div>
+      <div class="m3e-confirm-dialog-body" id="m3-confirm-dialog-message">
+        Are you sure you want to proceed?
+      </div>
+      <div class="m3e-confirm-actions">
+        <button type="button" class="m3e-btn m3e-btn-outlined" id="m3-confirm-dialog-cancel-btn">Cancel</button>
+        <button type="button" class="m3e-btn m3e-btn-danger" id="m3-confirm-dialog-confirm-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Material 3 System Prop Edit Bottom Sheet -->
+  <div class="m3-sheet-backdrop" id="prop-edit-sheet-backdrop" style="display: none;">
+    <div class="m3-bottom-sheet m3e-sheet" id="prop-edit-sheet">
+      <div class="m3-sheet-handle"></div>
+      <div class="m3-sheet-header">
+        <div class="m3e-sheet-title-row">
+          <div class="m3e-sheet-icon-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-props"></use></svg>
+          </div>
+          <div class="m3-sheet-title-group">
+            <h4 class="m3-sheet-title" id="prop-edit-sheet-title">Edit Property</h4>
+            <span class="m3-sheet-subtitle" id="prop-edit-sheet-subtitle">Modify runtime &amp; boot persistence</span>
+          </div>
+        </div>
+        <button class="icon-btn m3e-close-btn" id="prop-edit-sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="m3-sheet-content m3e-sheet-body">
+        <div class="m3e-field-container">
+          <label for="prop-edit-key" class="m3e-field-label">Property Key</label>
+          <div class="m3e-input-box">
+            <input type="text" id="prop-edit-key" class="m3e-input-mono" placeholder="e.g. ro.build.display.id" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="m3e-info-card" id="prop-edit-meta-card">
+          <div class="m3e-info-col">
+            <span class="m3e-info-label">Factory Default</span>
+            <span class="m3e-val-pill" id="prop-edit-orig-val">--</span>
+          </div>
+          <div class="m3e-info-divider"></div>
+          <div class="m3e-info-col">
+            <span class="m3e-info-label">Live Value</span>
+            <span class="m3e-val-pill m3e-val-live" id="prop-edit-live-val">--</span>
+          </div>
+        </div>
+
+        <div class="m3e-field-container">
+          <label for="prop-edit-value" class="m3e-field-label">Target Value</label>
+          <div class="m3e-input-box">
+            <input type="text" id="prop-edit-value" class="m3e-input-mono" placeholder="Enter new property value" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="m3e-tile-row">
+          <div class="m3e-tile-icon-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          </div>
+          <div class="m3e-tile-text">
+            <span class="m3e-tile-title">Apply on Boot</span>
+            <span class="m3e-tile-desc">Save to module system.prop for persistent early boot injection</span>
+          </div>
+          <label class="m3-switch">
+            <input type="checkbox" id="prop-edit-boot-switch" checked>
+            <span class="m3-switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="m3e-edit-actions">
+          <div class="m3e-edit-secondary-group">
+            <button type="button" class="m3e-btn m3e-btn-outlined m3e-btn-danger" id="prop-edit-reset-btn">Reset</button>
+            <button type="button" class="m3e-btn m3e-btn-outlined m3e-btn-danger" id="prop-edit-delete-btn" style="display: none;">Delete</button>
+            <button type="button" class="m3e-btn m3e-btn-outlined" id="prop-edit-cancel-btn">Cancel</button>
+          </div>
+          <button type="button" class="m3e-btn m3e-btn-primary m3e-edit-save-btn" id="prop-edit-save-btn">
+            <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>Save &amp; Apply</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prop Import Dialog Modal -->
+  <div class="m3-dialog-backdrop" id="prop-import-dialog-backdrop" style="display: none;">
+    <div class="m3-dialog m3e-dialog-wide" id="prop-import-dialog">
+      <div class="m3e-dialog-top">
+        <div class="m3e-dialog-icon-circle">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+        </div>
+        <div class="m3e-dialog-header-text">
+          <h3 class="m3-dialog-title" id="prop-import-title">Import Properties</h3>
+          <p class="m3e-dialog-subtitle">Upload a .prop configuration file or paste key=value tweaks</p>
+        </div>
+      </div>
+
+      <div class="m3e-dialog-scrollable">
+        <div class="m3e-upload-card" id="prop-import-upload-zone">
+          <label class="m3e-upload-label" for="prop-import-file-input">
+            <div class="m3e-btn m3e-btn-tonal m3e-upload-action-btn">
+              <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+              <span>Choose .prop File</span>
+            </div>
+            <span class="m3e-upload-hint">or drop file here to import</span>
+            <input type="file" id="prop-import-file-input" accept=".prop,.txt" style="display: none;">
+          </label>
+          <div id="prop-import-filename-pill" class="m3e-filename-pill" style="display: none;">
+            <svg viewBox="0 0 24 24" class="m3e-btn-icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span id="prop-import-filename">filename.prop</span>
+          </div>
+        </div>
+
+        <div class="m3e-or-divider">
+          <span>OR PASTE CONTENT</span>
+        </div>
+
+        <div class="m3e-field-container">
+          <textarea id="prop-import-paste-textarea" class="m3e-textarea-mono" rows="4" placeholder="ro.vendor.display.mode=1&#10;debug.sf.latch_unsignaled=1" spellcheck="false"></textarea>
+        </div>
+
+        <div id="prop-import-diff-container" class="m3e-diff-card" style="display: none;">
+          <div class="m3e-diff-card-header">
+            <label class="m3e-checkbox-label">
+              <input type="checkbox" id="prop-import-select-all" class="m3e-checkbox" checked>
+              <span class="m3e-diff-title">Detected Properties</span>
+            </label>
+            <span class="m3e-diff-badge" id="prop-import-count-badge">0 items</span>
+          </div>
+          <div class="m3e-diff-table-wrapper">
+            <table class="prop-import-table" id="prop-import-diff-table">
+              <thead>
+                <tr>
+                  <th style="width: 36px;"></th>
+                  <th>Property</th>
+                  <th>Current</th>
+                  <th>New</th>
+                </tr>
+              </thead>
+              <tbody id="prop-import-diff-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="m3e-options-box">
+          <div class="m3e-option-row">
+            <div class="m3e-option-text">
+              <span class="m3e-option-title">Apply Live</span>
+              <span class="m3e-option-sub">Set runtime values immediately via resetprop</span>
+            </div>
+            <label class="m3-switch">
+              <input type="checkbox" id="prop-import-apply-live" checked>
+              <span class="m3-switch-slider"></span>
+            </label>
+          </div>
+          <div class="m3e-option-divider"></div>
+          <div class="m3e-option-row">
+            <div class="m3e-option-text">
+              <span class="m3e-option-title">Save to Boot</span>
+              <span class="m3e-option-sub">Persist in module system.prop on reboot</span>
+            </div>
+            <label class="m3-switch">
+              <input type="checkbox" id="prop-import-set-boot" checked>
+              <span class="m3-switch-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="m3e-dialog-actions">
+        <button type="button" class="m3e-btn m3e-btn-outlined" id="prop-import-cancel-btn">
+          <span>Cancel</span>
+        </button>
+        <button type="button" class="m3e-btn m3e-btn-primary" id="prop-import-submit-btn">
+          <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+          <span>Import Selected</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prop Export Bottom Sheet -->
+  <div class="m3-sheet-backdrop" id="prop-export-sheet-backdrop" style="display: none;">
+    <div class="m3-bottom-sheet m3e-sheet" id="prop-export-sheet">
+      <div class="m3-sheet-handle"></div>
+      <div class="m3-sheet-header">
+        <div class="m3e-sheet-title-row">
+          <div class="m3e-sheet-icon-pill">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          </div>
+          <div class="m3-sheet-title-group">
+            <h4 class="m3-sheet-title">Export Properties</h4>
+            <span class="m3-sheet-subtitle">Share with others or create a full system backup</span>
+          </div>
+        </div>
+        <button class="icon-btn m3e-close-btn" id="prop-export-sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="m3-sheet-content m3e-sheet-body">
+        <label class="m3e-field-label">Export Scope</label>
+        <div class="m3e-radio-list" id="prop-export-radio-list">
+          <div class="m3e-radio-card active" data-export-choice="modified">
+            <div class="m3e-radio-left">
+              <div class="m3e-radio-control">
+                <div class="m3e-radio-circle">
+                  <div class="m3e-radio-dot"></div>
+                </div>
+              </div>
+              <div class="m3e-radio-text">
+                <div class="m3e-radio-title-row">
+                  <span class="m3e-radio-title">Custom &amp; Modified Props</span>
+                  <span class="m3-option-badge badge-sweet">Recommended</span>
+                </div>
+                <span class="m3e-radio-desc">Exports only the properties you modified or added. Clean, compact, and ideal to share with others.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="m3e-radio-card" data-export-choice="all">
+            <div class="m3e-radio-left">
+              <div class="m3e-radio-control">
+                <div class="m3e-radio-circle">
+                  <div class="m3e-radio-dot"></div>
+                </div>
+              </div>
+              <div class="m3e-radio-text">
+                <div class="m3e-radio-title-row">
+                  <span class="m3e-radio-title">Full System Props Dump</span>
+                </div>
+                <span class="m3e-radio-desc">Exports all ~1,500+ live system properties from your device as a complete reference backup.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="m3e-format-banner">
+          <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: var(--md-sys-color-primary); flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          <span>Saved in standard Android <code class="code-pill">.prop</code> (key=value) format. Fully compatible with Magisk, KernelSU, and APatch.</span>
+        </div>
+
+        <div class="m3e-export-actions">
+          <div class="m3e-export-primary-row">
+            <button type="button" class="m3e-btn m3e-btn-tonal" id="prop-export-copy-btn">
+              <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              <span>Copy Text</span>
+            </button>
+            <button type="button" class="m3e-btn m3e-btn-primary" id="prop-export-download-btn">
+              <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              <span>Download .prop</span>
+            </button>
+          </div>
+          <button type="button" class="m3e-btn m3e-btn-outlined m3e-export-cancel-btn" id="prop-export-close-btn">
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   </div>

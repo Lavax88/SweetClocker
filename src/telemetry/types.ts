@@ -79,3 +79,31 @@ export interface GpuConfigLimits {
   max?: number;
   gov?: string;
 }
+
+export interface SystemPropItem {
+  key: string;
+  value: string;
+  defaultValue: string;
+  customValue: string | null;
+  isModified: boolean;
+  isCustom: boolean;
+  applyBoot: boolean;
+  isReadOnly?: boolean;
+}
+
+export interface PropsState {
+  props: SystemPropItem[];
+  defaultsMap: Record<string, string>;
+  customMap: Record<string, string>;
+  bootMap: Record<string, string>;
+}
+
+export interface PropImportDiffItem {
+  key: string;
+  currentValue: string;
+  newValue: string;
+  applyBoot?: boolean;
+  selected?: boolean;
+  status?: 'add' | 'modify' | 'unchanged';
+}
+

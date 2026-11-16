@@ -18,6 +18,11 @@ import {
   getNetStats,
   sampleOnce
 } from '../../telemetry/sampler';
+import {
+  renderPropsView,
+  setupPropsListeners,
+  closePropsSpeedDial
+} from './props';
 import { toast } from '../../bridge/ksu';
 import { formatFreqMHz } from '../formatters';
 import { showGpuWarningDialog, askApplyBoot } from '../components/dialog';
@@ -122,94 +127,55 @@ function getAlgoDescription(algo: string): string {
 }
 
 export function showTuningSubView(viewName: TuningSubView, pushHistory = true): void {
-  const hubView = document.getElementById('tuning-hub-view');
-  const cpuClocksView = document.getElementById('tuning-cpu-clocks-view');
-  const gpuClocksView = document.getElementById('tuning-gpu-clocks-view');
-  const ioView = document.getElementById('tuning-io-view');
-  const netView = document.getElementById('tuning-net-view');
+  closePropsSpeedDial();
+
+  const views: Record<TuningSubView, HTMLElement | null> = {
+    hub: document.getElementById('tuning-hub-view'),
+    'cpu-clocks': document.getElementById('tuning-cpu-clocks-view'),
+    'gpu-clocks': document.getElementById('tuning-gpu-clocks-view'),
+    'io-management': document.getElementById('tuning-io-view'),
+    'net-management': document.getElementById('tuning-net-view'),
+    'props-management': document.getElementById('tuning-props-subview'),
+  };
+
   const fabContainer = document.getElementById('tuning-fab-container');
+  const propsFabContainer = document.getElementById('props-fab-container');
+
+  (Object.keys(views) as TuningSubView[]).forEach((key) => {
+    const el = views[key];
+    if (el) el.style.display = key === viewName ? 'block' : 'none';
+  });
+
+  if (viewName === 'props-management') {
+    if (fabContainer) fabContainer.classList.remove('fab-visible');
+    if (propsFabContainer) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => propsFabContainer.classList.add('fab-visible'));
+      });
+    }
+  } else if (viewName !== 'hub') {
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
+    if (fabContainer) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => fabContainer.classList.add('fab-visible'));
+      });
+    }
+  } else {
+    if (propsFabContainer) propsFabContainer.classList.remove('fab-visible');
+    if (fabContainer) fabContainer.classList.remove('fab-visible');
+  }
 
   const currentView = store.get('currentTuningSubView');
-
-  if (viewName === 'cpu-clocks') {
-    if (hubView) hubView.style.display = 'none';
-    if (gpuClocksView) gpuClocksView.style.display = 'none';
-    if (ioView) ioView.style.display = 'none';
-    if (netView) netView.style.display = 'none';
-    if (cpuClocksView) cpuClocksView.style.display = 'block';
-    if (fabContainer) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => fabContainer.classList.add('fab-visible'));
-      });
-    }
-    if (pushHistory && currentView !== 'cpu-clocks') {
-      try {
-        history.pushState({ subview: 'cpu-clocks' }, '');
-      } catch (e) {}
-    }
-    store.set('currentTuningSubView', 'cpu-clocks');
-  } else if (viewName === 'gpu-clocks') {
-    if (hubView) hubView.style.display = 'none';
-    if (cpuClocksView) cpuClocksView.style.display = 'none';
-    if (ioView) ioView.style.display = 'none';
-    if (netView) netView.style.display = 'none';
-    if (gpuClocksView) gpuClocksView.style.display = 'block';
-    if (fabContainer) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => fabContainer.classList.add('fab-visible'));
-      });
-    }
-    if (pushHistory && currentView !== 'gpu-clocks') {
-      try {
-        history.pushState({ subview: 'gpu-clocks' }, '');
-      } catch (e) {}
-    }
-    store.set('currentTuningSubView', 'gpu-clocks');
-  } else if (viewName === 'io-management') {
-    if (hubView) hubView.style.display = 'none';
-    if (cpuClocksView) cpuClocksView.style.display = 'none';
-    if (gpuClocksView) gpuClocksView.style.display = 'none';
-    if (netView) netView.style.display = 'none';
-    if (ioView) ioView.style.display = 'block';
-    if (fabContainer) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => fabContainer.classList.add('fab-visible'));
-      });
-    }
-    if (pushHistory && currentView !== 'io-management') {
-      try {
-        history.pushState({ subview: 'io-management' }, '');
-      } catch (e) {}
-    }
-    store.set('currentTuningSubView', 'io-management');
-    renderIoView();
-  } else if (viewName === 'net-management') {
-    if (hubView) hubView.style.display = 'none';
-    if (cpuClocksView) cpuClocksView.style.display = 'none';
-    if (gpuClocksView) gpuClocksView.style.display = 'none';
-    if (ioView) ioView.style.display = 'none';
-    if (netView) netView.style.display = 'block';
-    if (fabContainer) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => fabContainer.classList.add('fab-visible'));
-      });
-    }
-    if (pushHistory && currentView !== 'net-management') {
-      try {
-        history.pushState({ subview: 'net-management' }, '');
-      } catch (e) {}
-    }
-    store.set('currentTuningSubView', 'net-management');
-    renderNetView();
-  } else {
-    if (cpuClocksView) cpuClocksView.style.display = 'none';
-    if (gpuClocksView) gpuClocksView.style.display = 'none';
-    if (ioView) ioView.style.display = 'none';
-    if (netView) netView.style.display = 'none';
-    if (hubView) hubView.style.display = 'block';
-    if (fabContainer) fabContainer.classList.remove('fab-visible');
-    store.set('currentTuningSubView', 'hub');
+  if (pushHistory && currentView !== viewName) {
+    try {
+      history.pushState({ subview: viewName }, '');
+    } catch (e) {}
   }
+  store.set('currentTuningSubView', viewName);
+
+  if (viewName === 'io-management') renderIoView();
+  else if (viewName === 'net-management') renderNetView();
+  else if (viewName === 'props-management') renderPropsView();
 }
 
 export function updateGpuControlsLockState(): void {
@@ -1017,6 +983,8 @@ export function initTuningScreen(): void {
         showTuningSubView('io-management', true);
       } else if (feature === 'network-management') {
         showTuningSubView('net-management', true);
+      } else if (feature === 'props-management') {
+        showTuningSubView('props-management', true);
       }
     });
   });
@@ -1050,6 +1018,14 @@ export function initTuningScreen(): void {
   if (netBackBtn) {
     netBackBtn.addEventListener('click', () => {
       if (history.state?.subview === 'net-management') history.back();
+      else showTuningSubView('hub', false);
+    });
+  }
+
+  const propsBackBtn = document.getElementById('props-back-hub-btn');
+  if (propsBackBtn) {
+    propsBackBtn.addEventListener('click', () => {
+      if (history.state?.subview === 'props-management') history.back();
       else showTuningSubView('hub', false);
     });
   }
@@ -1268,4 +1244,7 @@ export function initTuningScreen(): void {
       }
     });
   }
+
+  // Wire System Properties Subview Listeners
+  setupPropsListeners();
 }

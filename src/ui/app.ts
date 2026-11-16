@@ -16,6 +16,11 @@ import {
   initApplyBootDialog,
   hideApplyBootDialog
 } from './components/dialog';
+import {
+  closePropEditSheet,
+  closePropImportDialog,
+  closePropExportSheet
+} from './screens/props';
 import { initFloatingNav, type FloatingNavController } from './components/floatingNav';
 import { initPageSwipe, slideToTab } from './components/pageSwipe';
 
@@ -77,12 +82,37 @@ export async function initApp(): Promise<void> {
       return;
     }
 
+    const confirmBackdrop = document.getElementById('m3-confirm-dialog-backdrop');
+    if (confirmBackdrop && confirmBackdrop.style.display !== 'none') {
+      confirmBackdrop.style.display = 'none';
+      return;
+    }
+
+    const propEditBackdrop = document.getElementById('prop-edit-sheet-backdrop');
+    if (propEditBackdrop?.classList.contains('active')) {
+      closePropEditSheet();
+      return;
+    }
+
+    const propImportBackdrop = document.getElementById('prop-import-dialog-backdrop');
+    if (propImportBackdrop?.classList.contains('active')) {
+      closePropImportDialog();
+      return;
+    }
+
+    const propExportBackdrop = document.getElementById('prop-export-sheet-backdrop');
+    if (propExportBackdrop?.classList.contains('active')) {
+      closePropExportSheet();
+      return;
+    }
+
     const currentSub = store.get('currentTuningSubView');
     if (
       currentSub === 'cpu-clocks' ||
       currentSub === 'gpu-clocks' ||
       currentSub === 'io-management' ||
-      currentSub === 'net-management'
+      currentSub === 'net-management' ||
+      currentSub === 'props-management'
     ) {
       showTuningSubView('hub', false);
     }
@@ -153,6 +183,15 @@ export function selectTab(target: AppTab, skipSlide = false): void {
   const pages = document.querySelectorAll<HTMLElement>('.page-section');
   const fabContainer = document.getElementById('tuning-fab-container');
   const logsFab = document.getElementById('logs-fab-container');
+  const propsFab = document.getElementById('props-fab-container');
+  const propsScrim = document.getElementById('props-fab-scrim');
+
+  const hidePropsFab = () => {
+    propsFab?.classList.remove('fab-visible', 'speed-dial-open');
+    propsScrim?.classList.remove('visible');
+    const trigger = document.getElementById('props-fab-trigger');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  };
 
   navTabs.forEach((t) => {
     const isTarget = t.getAttribute('data-target') === target;
@@ -170,12 +209,15 @@ export function selectTab(target: AppTab, skipSlide = false): void {
   if (target === 'page-tuning') {
     showTuningSubView('hub', false);
     logsFab?.classList.remove('fab-visible');
+    hidePropsFab();
   } else if (target === 'page-logs') {
     fabContainer?.classList.remove('fab-visible');
     logsFab?.classList.add('fab-visible');
+    hidePropsFab();
   } else {
     fabContainer?.classList.remove('fab-visible');
     logsFab?.classList.remove('fab-visible');
+    hidePropsFab();
   }
 
   store.set('activeTab', target);

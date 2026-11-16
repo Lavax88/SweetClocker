@@ -1,15 +1,11 @@
 /* effects.css - Glassmorphism, backdrop-filter tuning, and Reduce Effects overrides */
 
-/* Static surface glassmorphism with @supports guard */
-@supports (backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px)) {
-  .m3-sheet-backdrop {
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-  }
-  .m3-dialog-backdrop {
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-  }
+/* Modal backdrops & bottom sheets follow standard Material 3 Scrim specs (clean elevation scrim
+   without real-time Gaussian blur) to prevent mobile virtual keyboard / resize frame drops */
+.m3-sheet-backdrop,
+.m3-dialog-backdrop {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Optimize continuously updating Hero Card (no expensive real-time blur) */
