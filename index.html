@@ -785,13 +785,15 @@
           </label>
         </div>
 
-        <div class="m3e-action-bar">
-          <button class="btn btn-outlined btn-danger btn-small" id="prop-edit-reset-btn">Reset to Default</button>
-          <button class="btn btn-outlined btn-danger btn-small" id="prop-edit-delete-btn" style="display: none;">Delete</button>
-          <button class="btn btn-tonal btn-small" id="prop-edit-cancel-btn">Cancel</button>
-          <button class="btn btn-filled btn-small" id="prop-edit-save-btn">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            Save &amp; Apply
+        <div class="m3e-edit-actions">
+          <div class="m3e-edit-secondary-group">
+            <button type="button" class="m3e-btn m3e-btn-outlined m3e-btn-danger" id="prop-edit-reset-btn">Reset</button>
+            <button type="button" class="m3e-btn m3e-btn-outlined m3e-btn-danger" id="prop-edit-delete-btn" style="display: none;">Delete</button>
+            <button type="button" class="m3e-btn m3e-btn-outlined" id="prop-edit-cancel-btn">Cancel</button>
+          </div>
+          <button type="button" class="m3e-btn m3e-btn-primary m3e-edit-save-btn" id="prop-edit-save-btn">
+            <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>Save &amp; Apply</span>
           </button>
         </div>
       </div>
@@ -814,13 +816,15 @@
       <div class="m3e-dialog-scrollable">
         <div class="m3e-upload-card" id="prop-import-upload-zone">
           <label class="m3e-upload-label" for="prop-import-file-input">
-            <svg class="m3e-upload-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-            <span class="m3e-upload-text">Choose .prop or .txt file</span>
-            <span class="m3e-upload-hint">or drop file here</span>
+            <div class="m3e-btn m3e-btn-tonal m3e-upload-action-btn">
+              <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+              <span>Choose .prop File</span>
+            </div>
+            <span class="m3e-upload-hint">or drop file here to import</span>
             <input type="file" id="prop-import-file-input" accept=".prop,.txt" style="display: none;">
           </label>
           <div id="prop-import-filename-pill" class="m3e-filename-pill" style="display: none;">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <svg viewBox="0 0 24 24" class="m3e-btn-icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
             <span id="prop-import-filename">filename.prop</span>
           </div>
         </div>
@@ -881,11 +885,13 @@
         </div>
       </div>
 
-      <div class="m3-dialog-actions m3e-dialog-actions">
-        <button class="btn btn-tonal" id="prop-import-cancel-btn">Cancel</button>
-        <button class="btn btn-filled" id="prop-import-submit-btn">
-          <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
-          Import Selected
+      <div class="m3e-dialog-actions">
+        <button type="button" class="m3e-btn m3e-btn-outlined" id="prop-import-cancel-btn">
+          <span>Cancel</span>
+        </button>
+        <button type="button" class="m3e-btn m3e-btn-primary" id="prop-import-submit-btn">
+          <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+          <span>Import Selected</span>
         </button>
       </div>
     </div>
@@ -952,15 +958,19 @@
           <span>Saved in standard Android <code class="code-pill">.prop</code> (key=value) format. Fully compatible with Magisk, KernelSU, and APatch.</span>
         </div>
 
-        <div class="m3e-action-bar">
-          <button class="btn btn-tonal btn-small" id="prop-export-close-btn">Cancel</button>
-          <button class="btn btn-tonal btn-small" id="prop-export-copy-btn">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-            Copy Text
-          </button>
-          <button class="btn btn-filled btn-small" id="prop-export-download-btn">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; margin-right: 4px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-            Download .prop
+        <div class="m3e-export-actions">
+          <div class="m3e-export-primary-row">
+            <button type="button" class="m3e-btn m3e-btn-tonal" id="prop-export-copy-btn">
+              <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              <span>Copy Text</span>
+            </button>
+            <button type="button" class="m3e-btn m3e-btn-primary" id="prop-export-download-btn">
+              <svg viewBox="0 0 24 24" class="m3e-btn-icon" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              <span>Download .prop</span>
+            </button>
+          </div>
+          <button type="button" class="m3e-btn m3e-btn-outlined m3e-export-cancel-btn" id="prop-export-close-btn">
+            Cancel
           </button>
         </div>
       </div>
