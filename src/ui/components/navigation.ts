@@ -14,18 +14,31 @@ export const TAB_ORDER: AppTab[] = [
 
 const navItemSheet = new CSSStyleSheet();
 navItemSheet.replaceSync(`
+  :host(:is(:state(--vertical), :--vertical)) .outer {
+    align-items: center !important;
+  }
   .inner {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
   }
-  .base {
+  :host(:is(:state(--vertical), :--vertical)) .base {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: transform 360ms cubic-bezier(0.2, 0, 0, 1);
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    row-gap: 0 !important;
+    transition: transform 360ms cubic-bezier(0.2, 0, 0, 1),
+                row-gap 360ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  :host(:is(:state(--vertical), :--vertical)[selected]) .base {
+    row-gap: 4px !important;
+  }
+  :host(:is(:state(--vertical), :--vertical)) .indicator {
+    top: 0 !important;
   }
   .label {
     max-height: 0;
