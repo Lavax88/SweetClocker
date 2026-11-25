@@ -1,23 +1,5 @@
 /* components.css - Layout grids, M3E component sizing, log viewer & virtualized list styles */
 
-/* Status Indicator Dot */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--md-sys-color-outline);
-  display: inline-block;
-}
-.status-dot.success {
-  background-color: var(--md-sys-color-success);
-}
-.status-dot.warning {
-  background-color: var(--md-sys-color-warning);
-}
-.status-dot.error {
-  background-color: var(--md-sys-color-error);
-}
-
 /* Dashboard CPU Cores Grid */
 .cores-grid {
   display: grid;
@@ -69,14 +51,29 @@
   flex-wrap: wrap;
 }
 
-.cluster-tag {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  background-color: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  letter-spacing: 0.4px;
+.cluster-badge {
+  --m3e-badge-container-color: var(--md-sys-color-secondary-container);
+  --m3e-badge-color: var(--md-sys-color-on-secondary-container);
+}
+
+.m3e-tag-ro {
+  --m3e-badge-container-color: var(--md-sys-color-surface-container-highest);
+  --m3e-badge-color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3e-tag-custom {
+  --m3e-badge-container-color: var(--md-sys-color-tertiary-container);
+  --m3e-badge-color: var(--md-sys-color-on-tertiary-container);
+}
+
+.m3e-tag-modified {
+  --m3e-badge-container-color: var(--md-sys-color-primary-container);
+  --m3e-badge-color: var(--md-sys-color-on-primary-container);
+}
+
+.m3e-tag-boot {
+  --m3e-badge-container-color: var(--md-sys-color-secondary-container);
+  --m3e-badge-color: var(--md-sys-color-on-secondary-container);
 }
 
 .core-sub-compact {
@@ -91,27 +88,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
-}
-
-.temp-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 9999px;
-}
-.temp-pill.temp-cold {
-  background-color: var(--md-sys-color-success-container);
-  color: var(--md-sys-color-on-success-container);
-}
-.temp-pill.temp-warm {
-  background-color: var(--md-sys-color-warning-container);
-  color: var(--md-sys-color-on-warning-container);
-}
-.temp-pill.temp-hot {
-  background-color: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
 }
 
 .core-usage-lbl {
@@ -406,30 +384,6 @@
   justify-content: flex-end;
 }
 
-.badge-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  letter-spacing: 0.2px;
-}
-.badge-ro {
-  background-color: var(--md-sys-color-surface-container-highest);
-  color: var(--md-sys-color-on-surface-variant);
-}
-.badge-custom {
-  background-color: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
-}
-.badge-modified {
-  background-color: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-.badge-boot {
-  background-color: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
-
 /* Logs Screen */
 .logs-container-card {
   display: flex;
@@ -519,23 +473,13 @@
 .color-options {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.color-dot {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
+.custom-swatch-wrap {
   position: relative;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-
-.color-dot.active {
-  border-color: var(--md-sys-color-on-surface);
-  transform: scale(1.12);
+  display: inline-flex;
 }
 
 #custom-color-picker {
@@ -614,37 +558,6 @@
 
 .mono-input {
   font-family: var(--font-mono);
-}
-
-.prop-meta-grid {
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-  padding: 12px 14px;
-}
-
-.prop-meta-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.prop-meta-label {
-  font-size: 0.72rem;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.prop-meta-val {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  word-break: break-all;
-}
-
-.prop-meta-val.live {
-  color: var(--md-sys-color-primary);
-  font-weight: 600;
 }
 
 /* AGENTS.md: 44px+ touch targets & full pill geometry for sheet/dialog buttons */
@@ -728,19 +641,6 @@ m3e-bottom-sheet m3e-button {
 .diff-table-wrapper {
   max-height: 180px;
   overflow-y: auto;
-}
-
-.prop-import-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-}
-
-.prop-import-table th {
-  text-align: left;
-  padding: 6px 8px;
-  color: var(--md-sys-color-on-surface-variant);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .import-options-stack {

@@ -79,7 +79,6 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
     swipe(
       phase({
         onEnd: (detail) => {
-          // Block horizontal tab swiping inside Tuning subviews or open modals/sheets
           if (store.get('currentTuningSubView') !== 'hub') return;
           if (document.querySelector('m3e-bottom-sheet[open], m3e-dialog[open]')) return;
 

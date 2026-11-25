@@ -22,7 +22,7 @@
             <m3e-icon name="arrow_back"></m3e-icon>
           </m3e-icon-button>
           <m3e-chip id="service-status" variant="outlined">
-            <span slot="icon" class="status-dot warning" id="service-status-dot"></span>
+            <m3e-badge slot="icon" size="small" id="service-status-dot"></m3e-badge>
             <span id="service-status-text">Loading…</span>
           </m3e-chip>
         </div>
@@ -321,13 +321,28 @@
                 <div class="setting-group">
                   <label class="setting-label">Seed Color (Accent)</label>
                   <div class="color-options">
-                    <button type="button" class="color-dot" style="background-color: #6750A4;" data-color="#6750A4" title="M3 Default Purple" aria-label="Purple"></button>
-                    <button type="button" class="color-dot" style="background-color: #006A6A;" data-color="#006A6A" title="Teal" aria-label="Teal"></button>
-                    <button type="button" class="color-dot" style="background-color: #8b5000;" data-color="#8b5000" title="Orange" aria-label="Orange"></button>
-                    <button type="button" class="color-dot" style="background-color: #386a20;" data-color="#386a20" title="Green" aria-label="Green"></button>
-                    <button type="button" class="color-dot" style="background-color: #005FAF;" data-color="#005FAF" title="Blue" aria-label="Blue"></button>
-                    <button type="button" class="color-dot" style="background-color: #A60067;" data-color="#A60067" title="Pink" aria-label="Pink"></button>
-                    <div class="color-dot" id="custom-color-indicator" style="background-color: #795548;" title="Custom Color">
+                    <m3e-icon-button variant="filled" toggle class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #6750A4; --m3e-filled-icon-button-selected-container-color: #6750A4; --m3e-filled-icon-button-selected-icon-color: #ffffff;" data-color="#6750A4" aria-label="M3 Default Purple">
+                      <m3e-icon slot="selected" name="check"></m3e-icon>
+                    </m3e-icon-button>
+                    <m3e-icon-button variant="filled" toggle class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #006A6A; --m3e-filled-icon-button-selected-container-color: #006A6A; --m3e-filled-icon-button-selected-icon-color: #ffffff;" data-color="#006A6A" aria-label="Teal">
+                      <m3e-icon slot="selected" name="check"></m3e-icon>
+                    </m3e-icon-button>
+                    <m3e-icon-button variant="filled" toggle class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #8b5000; --m3e-filled-icon-button-selected-container-color: #8b5000; --m3e-filled-icon-button-selected-icon-color: #ffffff;" data-color="#8b5000" aria-label="Orange">
+                      <m3e-icon slot="selected" name="check"></m3e-icon>
+                    </m3e-icon-button>
+                    <m3e-icon-button variant="filled" toggle class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #386a20; --m3e-filled-icon-button-selected-container-color: #386a20; --m3e-filled-icon-button-selected-icon-color: #ffffff;" data-color="#386a20" aria-label="Green">
+                      <m3e-icon slot="selected" name="check"></m3e-icon>
+                    </m3e-icon-button>
+                    <m3e-icon-button variant="filled" toggle class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #005FAF; --m3e-filled-icon-button-selected-container-color: #005FAF; --m3e-filled-icon-button-selected-icon-color: #ffffff;" data-color="#005FAF" aria-label="Blue">
+                      <m3e-icon slot="selected" name="check"></m3e-icon>
+                    </m3e-icon-button>
+                    <m3e-icon-button variant="filled" toggle class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #A60067; --m3e-filled-icon-button-selected-container-color: #A60067; --m3e-filled-icon-button-selected-icon-color: #ffffff;" data-color="#A60067" aria-label="Pink">
+                      <m3e-icon slot="selected" name="check"></m3e-icon>
+                    </m3e-icon-button>
+                    <div class="custom-swatch-wrap">
+                      <m3e-icon-button variant="filled" toggle id="custom-color-indicator" class="seed-swatch-btn" style="--m3e-filled-icon-button-container-color: #795548; --m3e-filled-icon-button-selected-container-color: #795548; --m3e-filled-icon-button-selected-icon-color: #ffffff;" aria-label="Custom Seed Color">
+                        <m3e-icon slot="selected" name="check"></m3e-icon>
+                      </m3e-icon-button>
                       <input type="color" id="custom-color-picker" value="#795548" aria-label="Custom Seed Color">
                     </div>
                   </div>
@@ -337,7 +352,7 @@
                   <label class="setting-label">Monet Sync Status</label>
                   <div class="monet-row">
                     <m3e-chip id="monet-status-chip" variant="outlined">
-                      <span slot="icon" class="status-dot success" id="monet-indicator"></span>
+                      <m3e-badge slot="icon" size="small" id="monet-indicator"></m3e-badge>
                       <span id="monet-sync-text">System Monet Active</span>
                     </m3e-chip>
                     <m3e-button variant="outlined" size="small" id="reset-monet-btn">Reset to Monet Sync</m3e-button>

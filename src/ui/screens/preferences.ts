@@ -88,11 +88,13 @@ export function initPreferencesScreen(): void {
     });
   }
 
-  // Accent Color dots
-  const colorDots = document.querySelectorAll<HTMLElement>('.color-dot:not(#custom-color-indicator)');
-  colorDots.forEach((dot) => {
-    dot.addEventListener('click', () => {
-      const hex = dot.getAttribute('data-color');
+  // Accent Color swatches
+  const colorBtns = document.querySelectorAll<M3eButtonElement>(
+    '.seed-swatch-btn:not(#custom-color-indicator)'
+  );
+  colorBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const hex = btn.getAttribute('data-color');
       if (hex) {
         setManualSeedColor(hex);
         toast('Theme accent updated');
@@ -101,8 +103,7 @@ export function initPreferencesScreen(): void {
   });
 
   const picker = document.getElementById('custom-color-picker') as HTMLInputElement | null;
-  const pickerIndicator = document.getElementById('custom-color-indicator');
-  if (picker && pickerIndicator) {
+  if (picker) {
     const onColorChange = (e: Event) => {
       const val = (e.target as HTMLInputElement).value;
       setManualSeedColor(val);

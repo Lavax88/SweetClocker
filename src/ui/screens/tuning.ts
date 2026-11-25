@@ -268,16 +268,16 @@ function renderClusterTuningCard(cluster: ClusterConfig, data: TelemetrySnapshot
 
   const maxBadge =
     curMax === cluster.sweetclockMax
-      ? '<span class="badge-pill badge-modified">★ Sweetclock</span>'
+      ? '<m3e-badge size="large" class="m3e-tag-modified">★ Sweetclock</m3e-badge>'
       : curMax === hwMax
-        ? '<span class="badge-pill badge-ro">HW Max</span>'
+        ? '<m3e-badge size="large" class="m3e-tag-ro">HW Max</m3e-badge>'
         : '';
 
   card.innerHTML = `
     <div slot="content" class="tuning-card-inner">
       <div class="tuning-card-header">
         <span class="tuning-card-title">${cluster.name}</span>
-        <span class="cluster-tag">${cluster.clusterLabel}</span>
+        <m3e-badge size="large" class="cluster-badge">${cluster.clusterLabel}</m3e-badge>
       </div>
 
       <div class="tuning-stats-row">
@@ -361,9 +361,9 @@ function renderClusterTuningCard(cluster: ClusterConfig, data: TelemetrySnapshot
           if (maxValLbl) maxValLbl.innerText = formatFreqMHz(selectedFreq);
           const badge =
             selectedFreq === cluster.sweetclockMax
-              ? '<span class="badge-pill badge-modified">★ Sweetclock</span>'
+              ? '<m3e-badge size="large" class="m3e-tag-modified">★ Sweetclock</m3e-badge>'
               : selectedFreq === hwMax
-                ? '<span class="badge-pill badge-ro">HW Max</span>'
+                ? '<m3e-badge size="large" class="m3e-tag-ro">HW Max</m3e-badge>'
                 : '';
           if (maxBadgeWrap) {
             maxBadgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
@@ -408,7 +408,7 @@ function updateClusterTuningCardValues(
     if (maxBadgeWrap) {
       const badge =
         curMax === cluster.sweetclockMax
-          ? '<span class="badge-pill badge-modified">★ Sweetclock</span>'
+          ? '<m3e-badge size="large" class="m3e-tag-modified">★ Sweetclock</m3e-badge>'
           : '';
       maxBadgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
     }
@@ -440,12 +440,12 @@ function renderGpuTuningCard(data: TelemetrySnapshot): HTMLElement {
       : [264, 355, 443, 540, 650, 738, 855, 937];
 
   const hwMax = gpuData.hwMax || availFreqs[availFreqs.length - 1] || 937;
-  const minBadge = curMin === 264 ? '<span class="badge-pill badge-boot">Default</span>' : '';
+  const minBadge = curMin === 264 ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>' : '';
   const maxBadge =
     curMax === hwMax
-      ? '<span class="badge-pill badge-ro">HW Max</span>'
+      ? '<m3e-badge size="large" class="m3e-tag-ro">HW Max</m3e-badge>'
       : curMax === 937
-        ? '<span class="badge-pill badge-boot">Default</span>'
+        ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>'
         : '';
 
   card.innerHTML = `
@@ -521,7 +521,7 @@ function renderGpuTuningCard(data: TelemetrySnapshot): HTMLElement {
         onSelect: (selectedFreq) => {
           minTrigger.setAttribute('data-val', String(selectedFreq));
           if (minValLbl) minValLbl.innerText = `${selectedFreq} MHz`;
-          const badge = selectedFreq === 264 ? '<span class="badge-pill badge-boot">Default</span>' : '';
+          const badge = selectedFreq === 264 ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>' : '';
           if (minBadgeWrap) {
             minBadgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
           }
@@ -543,9 +543,9 @@ function renderGpuTuningCard(data: TelemetrySnapshot): HTMLElement {
           if (maxValLbl) maxValLbl.innerText = `${selectedFreq} MHz`;
           const badge =
             selectedFreq === hwMax
-              ? '<span class="badge-pill badge-ro">HW Max</span>'
+              ? '<m3e-badge size="large" class="m3e-tag-ro">HW Max</m3e-badge>'
               : selectedFreq === 937
-                ? '<span class="badge-pill badge-boot">Default</span>'
+                ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>'
                 : '';
           if (maxBadgeWrap) {
             maxBadgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
@@ -582,7 +582,7 @@ function updateGpuTuningCardValues(
     if (minTrig) minTrig.setAttribute('data-val', String(curMin));
     if (minValLbl) minValLbl.innerText = `${curMin} MHz`;
     if (minBadgeWrap) {
-      const badge = curMin === 264 ? '<span class="badge-pill badge-boot">Default</span>' : '';
+      const badge = curMin === 264 ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>' : '';
       minBadgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
     }
 
@@ -596,9 +596,9 @@ function updateGpuTuningCardValues(
     if (maxBadgeWrap) {
       const badge =
         curMax === hwMax
-          ? '<span class="badge-pill badge-ro">HW Max</span>'
+          ? '<m3e-badge size="large" class="m3e-tag-ro">HW Max</m3e-badge>'
           : curMax === 937
-            ? '<span class="badge-pill badge-boot">Default</span>'
+            ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>'
             : '';
       maxBadgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
     }
@@ -666,7 +666,7 @@ export async function renderIoView(userEnabledOverride: boolean | null = null): 
             I/O Scheduler
             <span slot="supporting-text" id="io-val-${blk.dev}">${activeSched}</span>
             <span slot="trailing" id="io-badge-${blk.dev}" style="display: inline-flex; align-items: center; gap: 6px;">
-              ${isDefault ? '<span class="badge-pill badge-boot">Default</span>' : ''}
+              ${isDefault ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>' : ''}
               <m3e-icon name="arrow_drop_down"></m3e-icon>
             </span>
           </m3e-list-action>
@@ -693,7 +693,7 @@ export async function renderIoView(userEnabledOverride: boolean | null = null): 
             if (badgeWrap) {
               const badge =
                 selectedSched === blk.defaultSched
-                  ? '<span class="badge-pill badge-boot">Default</span>'
+                  ? '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>'
                   : '';
               badgeWrap.innerHTML = `${badge}<m3e-icon name="arrow_drop_down"></m3e-icon>`;
             }
@@ -742,7 +742,7 @@ export async function renderNetView(userEnabledOverride: boolean | null = null):
         <m3e-list-option value="${algo}" ${isSelected ? 'selected' : ''}>
           ${algo}
           <span slot="supporting-text">${getAlgoDescription(algo)}</span>
-          ${isDefault ? '<span slot="trailing" class="badge-pill badge-boot">Default</span>' : ''}
+          ${isDefault ? '<m3e-badge slot="trailing" size="large" class="m3e-tag-boot">Default</m3e-badge>' : ''}
         </m3e-list-option>
       `;
     })
@@ -802,9 +802,9 @@ function openFrequencySheetDialog(opts: {
           (opts.title.includes('Max') && freq === 937));
 
       let badgeHtml = '';
-      if (isSweet) badgeHtml += '<span class="badge-pill badge-modified">★ Sweetclock</span>';
-      if (isDefault) badgeHtml += '<span class="badge-pill badge-boot">Default</span>';
-      if (isHwMax) badgeHtml += '<span class="badge-pill badge-ro">HW Max</span>';
+      if (isSweet) badgeHtml += '<m3e-badge size="large" class="m3e-tag-modified">★ Sweetclock</m3e-badge>';
+      if (isDefault) badgeHtml += '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>';
+      if (isHwMax) badgeHtml += '<m3e-badge size="large" class="m3e-tag-ro">HW Max</m3e-badge>';
 
       const freqLabel = opts.isGpu ? `${freq} MHz` : formatFreqMHz(freq);
 
@@ -858,9 +858,9 @@ function openGovernorSheetDialog(opts: {
       const isSelected = gov === opts.currentGov;
       let badgeHtml = '';
       if (opts.defaultGov && gov === opts.defaultGov) {
-        badgeHtml = '<span class="badge-pill badge-boot">Default</span>';
+        badgeHtml = '<m3e-badge size="large" class="m3e-tag-boot">Default</m3e-badge>';
       } else if (gov === 'schedutil') {
-        badgeHtml = '<span class="badge-pill badge-modified">Recommended</span>';
+        badgeHtml = '<m3e-badge size="large" class="m3e-tag-modified">Recommended</m3e-badge>';
       }
 
       return `

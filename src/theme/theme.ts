@@ -176,15 +176,15 @@ echo "overlay_600:$(cmd overlay lookup android android:color/system_accent1_600 
 }
 
 function updateMonetStatusUI(active: boolean, hex = ''): void {
-  const indicator = document.getElementById('monet-indicator');
+  const badge = document.getElementById('monet-indicator');
   const text = document.getElementById('monet-sync-text');
-  if (!indicator || !text) return;
+  if (!badge || !text) return;
 
   if (active) {
-    indicator.className = 'status-dot success';
+    badge.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success)');
     text.innerText = `Monet Sync (${hex.toUpperCase()})`;
   } else {
-    indicator.className = 'status-dot';
+    badge.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-outline)');
     text.innerText = 'Custom Seed';
   }
 }
@@ -304,31 +304,33 @@ export function setReduceEffects(reduce: boolean): void {
 }
 
 export function updateColorSelectionUI(selectedHex: string, isMonet = false): void {
-  const allDots = document.querySelectorAll<HTMLElement>('.color-dot');
-  const customIndicator = document.getElementById('custom-color-indicator');
+  const allBtns = document.querySelectorAll<M3eButtonElement>('.seed-swatch-btn');
+  const customBtn = document.getElementById('custom-color-indicator') as M3eButtonElement | null;
   const picker = document.getElementById('custom-color-picker') as HTMLInputElement | null;
 
-  allDots.forEach((dot) => dot.classList.remove('active'));
+  allBtns.forEach((btn) => {
+    btn.selected = false;
+  });
 
   if (isMonet) return;
 
   let matchedPreset = false;
   const normalizedSelected = selectedHex.toLowerCase();
 
-  allDots.forEach((dot) => {
-    if (dot.id === 'custom-color-indicator') return;
-    const dotColor = (dot.getAttribute('data-color') ?? '').toLowerCase();
+  allBtns.forEach((btn) => {
+    if (btn.id === 'custom-color-indicator') return;
+    const dotColor = (btn.getAttribute('data-color') ?? '').toLowerCase();
     if (dotColor === normalizedSelected) {
-      dot.classList.add('active');
+      btn.selected = true;
       matchedPreset = true;
     }
   });
 
-  if (customIndicator) {
-    customIndicator.style.backgroundColor = selectedHex;
+  if (customBtn) {
+    customBtn.style.setProperty('--m3e-filled-icon-button-container-color', selectedHex);
     if (picker) picker.value = selectedHex;
     if (!matchedPreset) {
-      customIndicator.classList.add('active');
+      customBtn.selected = true;
     }
   }
 }

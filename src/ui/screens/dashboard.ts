@@ -25,16 +25,35 @@ function enableSmoothProgress(el: M3eLinearProgressIndicatorElement | null): voi
   });
 }
 
+function getTempBadgeColors(temp: number): { bg: string; fg: string } {
+  if (temp >= 60) {
+    return {
+      bg: 'var(--md-sys-color-error-container)',
+      fg: 'var(--md-sys-color-on-error-container)'
+    };
+  }
+  if (temp >= 45) {
+    return {
+      bg: 'var(--md-sys-color-warning-container)',
+      fg: 'var(--md-sys-color-on-warning-container)'
+    };
+  }
+  return {
+    bg: 'var(--md-sys-color-success-container)',
+    fg: 'var(--md-sys-color-on-success-container)'
+  };
+}
+
 export function renderDashboard(data: TelemetrySnapshot): void {
   // 1. Service Status Chip
   const statusDot = document.getElementById('service-status-dot');
   const statusText = document.getElementById('service-status-text');
   if (statusDot && statusText) {
     if (data.serviceRunning) {
-      statusDot.className = 'status-dot success';
+      statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success)');
       statusText.innerText = 'Active';
     } else {
-      statusDot.className = 'status-dot error';
+      statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-error)');
       statusText.innerText = 'Stopped';
     }
   }
@@ -112,17 +131,18 @@ function renderCoresGrid(cores: CoreStats[]): void {
     const card = existingCards[idx];
     if (!card) return;
 
-    const tempBadge = card.querySelector<HTMLElement>('.temp-pill');
+    const tempBadge = card.querySelector<HTMLElement>('.core-temp-badge');
     if (tempBadge) {
       tempBadge.innerText = c.temp > 0 ? `${c.temp}°C` : '—';
-      let tempClass = 'temp-cold';
-      if (c.temp >= 45 && c.temp < 60) tempClass = 'temp-warm';
-      else if (c.temp >= 60) tempClass = 'temp-hot';
-      tempBadge.className = `temp-pill ${tempClass}`;
+      const { bg, fg } = getTempBadgeColors(c.temp);
+      tempBadge.style.setProperty('--m3e-badge-container-color', bg);
+      tempBadge.style.setProperty('--m3e-badge-color', fg);
     }
 
     const nameEl = card.querySelector<HTMLElement>('.core-name');
-    if (nameEl) nameEl.innerHTML = `CPU ${c.id} <span class="cluster-tag">${c.cluster}</span>`;
+    if (nameEl) {
+      nameEl.innerHTML = `CPU ${c.id} <m3e-badge size="large" class="cluster-badge">${c.cluster}</m3e-badge>`;
+    }
 
     const subEl = card.querySelector<HTMLElement>('.core-sub-compact');
     if (subEl) subEl.innerText = c.governor;
@@ -155,21 +175,18 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
   card.className = 'core-card';
   card.setAttribute('data-core-id', String(core.id));
 
-  let tempClass = 'temp-cold';
-  if (core.temp >= 45 && core.temp < 60) tempClass = 'temp-warm';
-  else if (core.temp >= 60) tempClass = 'temp-hot';
-
+  const { bg, fg } = getTempBadgeColors(core.temp);
   const usage = Math.max(0, Math.min(100, core.usage));
 
   card.innerHTML = `
     <div slot="content" class="core-card-inner">
       <div class="core-header-compact">
         <div class="core-title-col">
-          <span class="core-name">CPU ${core.id} <span class="cluster-tag">${core.cluster}</span></span>
+          <span class="core-name">CPU ${core.id} <m3e-badge size="large" class="cluster-badge">${core.cluster}</m3e-badge></span>
           <span class="core-sub-compact">${core.governor}</span>
         </div>
         <div class="core-metrics-col">
-          <span class="temp-pill ${tempClass}">${core.temp > 0 ? core.temp + '°C' : '—'}</span>
+          <m3e-badge size="large" class="core-temp-badge" style="--m3e-badge-container-color: ${bg}; --m3e-badge-color: ${fg};">${core.temp > 0 ? core.temp + '°C' : '—'}</m3e-badge>
           <span class="core-usage-lbl">${usage}%</span>
         </div>
       </div>
