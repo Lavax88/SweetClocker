@@ -5,6 +5,9 @@
   --top-inset: var(--window-inset-top, 0px);
   --bottom-inset: var(--window-inset-bottom, 0px);
 
+  /* Position M3E Snackbar above Bottom Navigation Bar */
+  --m3e-snackbar-margin: calc(96px + var(--bottom-inset));
+
   /* Typography Tokens */
   --font-family: 'Outfit', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'SF Mono', Consolas, 'Roboto Mono', monospace;
