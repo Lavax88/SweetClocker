@@ -1,3 +1,6 @@
+import type { M3eDialogElement } from '@m3e/web/dialog';
+import type { M3eButtonElement } from '@m3e/web/button';
+
 export interface ConfirmDialogOptions {
   title: string;
   message: string;
@@ -13,13 +16,17 @@ export function showConfirmDialog(options: ConfirmDialogOptions): Promise<boolea
   return new Promise((resolve) => {
     initConfirmDialog();
 
-    const backdrop = document.getElementById('m3-confirm-dialog-backdrop');
+    const dialog = document.getElementById('m3-confirm-dialog') as M3eDialogElement | null;
     const titleEl = document.getElementById('m3-confirm-dialog-title');
     const messageEl = document.getElementById('m3-confirm-dialog-message');
-    const confirmBtn = document.getElementById('m3-confirm-dialog-confirm-btn');
-    const cancelBtn = document.getElementById('m3-confirm-dialog-cancel-btn');
+    const confirmBtn = document.getElementById(
+      'm3-confirm-dialog-confirm-btn'
+    ) as M3eButtonElement | null;
+    const cancelBtn = document.getElementById(
+      'm3-confirm-dialog-cancel-btn'
+    ) as M3eButtonElement | null;
 
-    if (!backdrop || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
+    if (!dialog || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
       resolve(window.confirm(`${options.title}\n\n${options.message}`));
       return;
     }
@@ -29,14 +36,10 @@ export function showConfirmDialog(options: ConfirmDialogOptions): Promise<boolea
     confirmBtn.innerText = options.confirmLabel || 'Confirm';
     cancelBtn.innerText = options.cancelLabel || 'Cancel';
 
-    if (options.isDanger) {
-      confirmBtn.className = 'm3e-btn m3e-btn-danger';
-    } else {
-      confirmBtn.className = 'm3e-btn m3e-btn-primary';
-    }
+    confirmBtn.classList.toggle('danger-filled-btn', Boolean(options.isDanger));
 
     activeResolver = resolve;
-    backdrop.style.display = 'flex';
+    dialog.show();
   });
 }
 
@@ -44,12 +47,14 @@ export function initConfirmDialog(): void {
   if (isInitialized) return;
   isInitialized = true;
 
-  const backdrop = document.getElementById('m3-confirm-dialog-backdrop');
+  const dialog = document.getElementById('m3-confirm-dialog') as M3eDialogElement | null;
   const confirmBtn = document.getElementById('m3-confirm-dialog-confirm-btn');
   const cancelBtn = document.getElementById('m3-confirm-dialog-cancel-btn');
 
   const closeDialog = (result: boolean) => {
-    if (backdrop) backdrop.style.display = 'none';
+    if (dialog && dialog.open) {
+      dialog.hide(result ? 'confirm' : 'cancel');
+    }
     if (activeResolver) {
       const resolver = activeResolver;
       activeResolver = null;
@@ -59,7 +64,11 @@ export function initConfirmDialog(): void {
 
   confirmBtn?.addEventListener('click', () => closeDialog(true));
   cancelBtn?.addEventListener('click', () => closeDialog(false));
-  backdrop?.addEventListener('click', (e) => {
-    if (e.target === backdrop) closeDialog(false);
+  dialog?.addEventListener('closed', () => {
+    if (activeResolver) {
+      const resolver = activeResolver;
+      activeResolver = null;
+      resolver(false);
+    }
   });
 }

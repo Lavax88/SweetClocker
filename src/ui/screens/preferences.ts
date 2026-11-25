@@ -1,60 +1,80 @@
+import type { ContrastLevel, ThemeVariant } from '@m3e/web/theme';
+import type { M3eSegmentedButtonElement } from '@m3e/web/segmented-button';
+import type { M3eSelectElement } from '@m3e/web/select';
+import type { M3eSwitchElement } from '@m3e/web/switch';
 import {
   setThemeMode,
+  setThemeVariant,
+  setThemeContrast,
   setFontMode,
-  setNavBarStyle,
   setReduceEffects,
   setManualSeedColor,
   resetToMonet
 } from '../../theme/theme';
-import type { ThemeMode, FontMode, NavBarStyle } from '../../theme/types';
+import type { ThemeMode, FontMode } from '../../theme/types';
 import { setBypassMode } from '../../telemetry/sampler';
 import { toast } from '../../bridge/ksu';
 
 export function initPreferencesScreen(): void {
-  // Theme Mode buttons
-  const modeSegments = document.querySelectorAll<HTMLElement>('[data-theme-mode]');
-  modeSegments.forEach((seg) => {
-    seg.addEventListener('click', () => {
-      const mode = seg.getAttribute('data-theme-mode') as ThemeMode;
+  // Theme Mode segmented button
+  const modeSeg = document.getElementById('pref-theme-mode') as M3eSegmentedButtonElement | null;
+  if (modeSeg) {
+    modeSeg.addEventListener('change', () => {
+      const val = modeSeg.value;
+      const mode = (Array.isArray(val) ? val[0] : val) as ThemeMode | undefined;
       if (mode) {
         setThemeMode(mode);
         const label = mode === 'auto' ? 'Auto (System)' : mode.toUpperCase();
         toast(`Theme mode set to ${label}`);
       }
     });
-  });
+  }
 
-  // Font Mode buttons
-  const fontSegments = document.querySelectorAll<HTMLElement>('[data-font-mode]');
-  fontSegments.forEach((seg) => {
-    seg.addEventListener('click', () => {
-      const mode = seg.getAttribute('data-font-mode') as FontMode;
+  // Palette Variant select
+  const variantSelect = document.getElementById('pref-theme-variant') as M3eSelectElement | null;
+  if (variantSelect) {
+    variantSelect.addEventListener('change', () => {
+      const val = variantSelect.value;
+      const variant = (Array.isArray(val) ? val[0] : val) as ThemeVariant | undefined;
+      if (variant) {
+        setThemeVariant(variant);
+        toast(`Palette variant set to ${variant}`);
+      }
+    });
+  }
+
+  // Contrast Level segmented button
+  const contrastSeg = document.getElementById('pref-theme-contrast') as M3eSegmentedButtonElement | null;
+  if (contrastSeg) {
+    contrastSeg.addEventListener('change', () => {
+      const val = contrastSeg.value;
+      const contrast = (Array.isArray(val) ? val[0] : val) as ContrastLevel | undefined;
+      if (contrast) {
+        setThemeContrast(contrast);
+        toast(`Contrast set to ${contrast}`);
+      }
+    });
+  }
+
+  // Font Family segmented button
+  const fontSeg = document.getElementById('pref-font-mode') as M3eSegmentedButtonElement | null;
+  if (fontSeg) {
+    fontSeg.addEventListener('change', () => {
+      const val = fontSeg.value;
+      const mode = (Array.isArray(val) ? val[0] : val) as FontMode | undefined;
       if (mode) {
         setFontMode(mode);
         toast(`Font family set to ${mode === 'system' ? 'System Font' : 'Outfit (Default)'}`);
       }
     });
-  });
+  }
 
-  // Navigation Bar Style buttons
-  const navSegments = document.querySelectorAll<HTMLElement>('[data-nav-style]');
-  navSegments.forEach((seg) => {
-    seg.addEventListener('click', () => {
-      const style = seg.getAttribute('data-nav-style') as NavBarStyle;
-      if (style) {
-        setNavBarStyle(style);
-        toast(`Navigation bar set to ${style === 'floating' ? 'Floating' : 'Default'}`);
-      }
-    });
-  });
-
-  // Reduce Effects toggle
-  const reduceToggle = document.getElementById('reduce-effects-toggle') as HTMLInputElement | null;
+  // Reduce Visual Effects switch
+  const reduceToggle = document.getElementById('reduce-effects-toggle') as M3eSwitchElement | null;
   if (reduceToggle) {
-    reduceToggle.addEventListener('change', (e) => {
-      const isChecked = (e.target as HTMLInputElement).checked;
-      setReduceEffects(isChecked);
-      toast(`Effects ${isChecked ? 'reduced (blur disabled)' : 'enabled'}`);
+    reduceToggle.addEventListener('change', () => {
+      setReduceEffects(reduceToggle.checked);
+      toast(`Effects ${reduceToggle.checked ? 'reduced (standard motion)' : 'expressive'}`);
     });
   }
 
@@ -72,7 +92,6 @@ export function initPreferencesScreen(): void {
 
   const picker = document.getElementById('custom-color-picker') as HTMLInputElement | null;
   const pickerIndicator = document.getElementById('custom-color-indicator');
-
   if (picker && pickerIndicator) {
     const onColorChange = (e: Event) => {
       const val = (e.target as HTMLInputElement).value;
@@ -80,41 +99,25 @@ export function initPreferencesScreen(): void {
     };
     picker.addEventListener('input', onColorChange);
     picker.addEventListener('change', onColorChange);
-
-    pickerIndicator.addEventListener('click', (e) => {
-      if (e.target === pickerIndicator) {
-        picker.click();
-      }
-    });
   }
 
   const resetMonetBtn = document.getElementById('reset-monet-btn');
   if (resetMonetBtn) {
     resetMonetBtn.addEventListener('click', async () => {
       await resetToMonet();
+      toast('Synced with system Monet');
     });
   }
 
-  // Force Bypass buttons
-  const bypassOff = document.getElementById('bypass-off-btn');
-  const bypassOn = document.getElementById('bypass-on-btn');
-
-  if (bypassOff && bypassOn) {
-    bypassOff.addEventListener('click', async () => {
-      const ok = await setBypassMode(false);
+  // Force Bypass Override segmented button
+  const bypassSeg = document.getElementById('pref-bypass-mode') as M3eSegmentedButtonElement | null;
+  if (bypassSeg) {
+    bypassSeg.addEventListener('change', async () => {
+      const val = bypassSeg.value;
+      const enabled = (Array.isArray(val) ? val[0] : val) === 'true';
+      const ok = await setBypassMode(enabled);
       if (ok) {
-        bypassOff.classList.add('active');
-        bypassOn.classList.remove('active');
-        toast('Force bypass disabled');
-      }
-    });
-
-    bypassOn.addEventListener('click', async () => {
-      const ok = await setBypassMode(true);
-      if (ok) {
-        bypassOn.classList.add('active');
-        bypassOff.classList.remove('active');
-        toast('Force bypass enabled');
+        toast(`Force bypass ${enabled ? 'enabled' : 'disabled'}`);
       }
     });
   }

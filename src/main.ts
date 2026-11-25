@@ -1,9 +1,12 @@
+import './ui/m3e';
+import { registerAppIcons } from './ui/icons';
 import './styles/main.css';
 import './styles/components.css';
 import './styles/effects.css';
 import { initApp } from './ui/app';
 
 document.documentElement.classList.add('js');
+registerAppIcons();
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {

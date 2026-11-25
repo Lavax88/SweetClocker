@@ -1,3 +1,5 @@
+import type { M3eBottomSheetElement } from '@m3e/web/bottom-sheet';
+import type { M3eDialogElement } from '@m3e/web/dialog';
 import { initTheme } from '../theme/theme';
 import { exec, toast } from '../bridge/ksu';
 import { startSampler, stopSampler, sampleOnce } from '../telemetry/sampler';
@@ -10,32 +12,18 @@ import {
 } from './screens/tuning';
 import { initLogsScreen, updateLogsView } from './screens/logs';
 import { initPreferencesScreen } from './screens/preferences';
-import {
-  initGpuWarningDialog,
-  hideGpuWarningDialog,
-  initApplyBootDialog,
-  hideApplyBootDialog
-} from './components/dialog';
-import {
-  closePropEditSheet,
-  closePropImportDialog,
-  closePropExportSheet
-} from './screens/props';
-import { initFloatingNav, type FloatingNavController } from './components/floatingNav';
-import { initPageSwipe, slideToTab } from './components/pageSwipe';
+import { initGpuWarningDialog, initApplyBootDialog } from './components/dialog';
+import { initNavigation, syncNavigationState } from './components/navigation';
 
 export async function initApp(): Promise<void> {
-  // 1. Initialize Theme & Modes
+  // 1. Initialize M3E Theme & Modes
   await initTheme();
 
   // 2. Fetch Device Model metadata
   try {
     const { errno, stdout } = await exec('getprop ro.product.model');
-    const modelText = document.getElementById('device-model');
-    if (modelText && errno === 0 && stdout) {
-      const model = stdout.trim();
-      modelText.innerText = model;
-      store.set('deviceModel', model);
+    if (errno === 0 && stdout) {
+      store.set('deviceModel', stdout.trim());
     }
   } catch (err) {
     console.warn('Failed to query device model:', err);
@@ -44,10 +32,13 @@ export async function initApp(): Promise<void> {
   // 3. Initialize Component Listeners
   initGpuWarningDialog();
   initApplyBootDialog();
-  setupNavigation();
+  initNavigation((target) => selectTab(target));
   initPreferencesScreen();
   initLogsScreen();
   initTuningScreen();
+
+  // Ensure initial navigation & app-bar attachment
+  syncNavigationState(store.get('activeTab'));
 
   // 4. Refresh Button Listener
   const refreshBtn = document.getElementById('refresh-btn');
@@ -58,67 +49,39 @@ export async function initApp(): Promise<void> {
     });
   }
 
-  // 5. Android System Back Gesture (popstate)
+  // 5. Top App Bar Subview Back Button
+  const subviewBackBtn = document.getElementById('subview-back-btn');
+  if (subviewBackBtn) {
+    subviewBackBtn.addEventListener('click', () => {
+      if (history.state?.subview) {
+        history.back();
+      } else {
+        showTuningSubView('hub', false);
+      }
+    });
+  }
+
+  // 6. Android System Back Gesture (popstate)
   window.addEventListener('popstate', () => {
-    const freqBackdrop = document.getElementById('freq-sheet-backdrop');
-    const govBackdrop = document.getElementById('gov-sheet-backdrop');
-    const gpuWarningBackdrop = document.getElementById('gpu-warning-dialog-backdrop');
-    const applyBootBackdrop = document.getElementById('apply-boot-dialog-backdrop');
-
-    if (freqBackdrop?.classList.contains('active')) {
-      freqBackdrop.classList.remove('active');
-      return;
-    }
-    if (govBackdrop?.classList.contains('active')) {
-      govBackdrop.classList.remove('active');
-      return;
-    }
-    if (gpuWarningBackdrop?.classList.contains('active')) {
-      hideGpuWarningDialog();
-      return;
-    }
-    if (applyBootBackdrop?.classList.contains('active')) {
-      hideApplyBootDialog(null);
+    const openSheet = document.querySelector<M3eBottomSheetElement>('m3e-bottom-sheet[open]');
+    if (openSheet) {
+      openSheet.hide();
       return;
     }
 
-    const confirmBackdrop = document.getElementById('m3-confirm-dialog-backdrop');
-    if (confirmBackdrop && confirmBackdrop.style.display !== 'none') {
-      confirmBackdrop.style.display = 'none';
-      return;
-    }
-
-    const propEditBackdrop = document.getElementById('prop-edit-sheet-backdrop');
-    if (propEditBackdrop?.classList.contains('active')) {
-      closePropEditSheet();
-      return;
-    }
-
-    const propImportBackdrop = document.getElementById('prop-import-dialog-backdrop');
-    if (propImportBackdrop?.classList.contains('active')) {
-      closePropImportDialog();
-      return;
-    }
-
-    const propExportBackdrop = document.getElementById('prop-export-sheet-backdrop');
-    if (propExportBackdrop?.classList.contains('active')) {
-      closePropExportSheet();
+    const openDialog = document.querySelector<M3eDialogElement>('m3e-dialog[open]');
+    if (openDialog) {
+      openDialog.hide('cancel');
       return;
     }
 
     const currentSub = store.get('currentTuningSubView');
-    if (
-      currentSub === 'cpu-clocks' ||
-      currentSub === 'gpu-clocks' ||
-      currentSub === 'io-management' ||
-      currentSub === 'net-management' ||
-      currentSub === 'props-management'
-    ) {
+    if (currentSub !== 'hub') {
       showTuningSubView('hub', false);
     }
   });
 
-  // 6. Connect State Store to Dashboard & Tuning renderers
+  // 7. Connect State Store to Dashboard & Tuning renderers
   store.subscribe('telemetry', (data) => {
     if (!data) return;
     const activeTab = store.get('activeTab');
@@ -129,7 +92,7 @@ export async function initApp(): Promise<void> {
     }
   });
 
-  // 7. Start Telemetry Sampler with Polling Discipline
+  // 8. Start Telemetry Sampler with Polling Discipline
   startActiveTabPolling(store.get('activeTab'));
 }
 
@@ -139,7 +102,6 @@ function startActiveTabPolling(tab: AppTab): void {
       store.set('telemetry', snapshot);
     });
   } else {
-    // Polling discipline: stop sampling when on Logs or Preferences
     stopSampler();
   }
 
@@ -158,109 +120,46 @@ async function triggerImmediateUpdate(): Promise<void> {
   }
 }
 
-let floatingNavController: FloatingNavController | null = null;
-
-export function selectTab(target: AppTab, skipSlide = false): void {
+export function selectTab(target: AppTab): void {
   const currentTab = store.get('activeTab');
   if (target === currentTab) {
     if (target === 'page-tuning' && store.get('currentTuningSubView') !== 'hub') {
       showTuningSubView('hub', false);
     }
-    if (!skipSlide) slideToTab(target);
-    floatingNavController?.updatePosition(false);
+    syncNavigationState(target);
     return;
   }
 
-  // Clear any subview history state
   if (history.state?.subview) {
     try {
       history.replaceState(null, '');
-    } catch (e) {}
+    } catch (_) {}
   }
 
-  // 1. Immediately update visual classes
-  const navTabs = document.querySelectorAll<HTMLElement>('.nav-tab');
   const pages = document.querySelectorAll<HTMLElement>('.page-section');
-  const fabContainer = document.getElementById('tuning-fab-container');
-  const logsFab = document.getElementById('logs-fab-container');
-  const propsFab = document.getElementById('props-fab-container');
-  const propsScrim = document.getElementById('props-fab-scrim');
-
-  const hidePropsFab = () => {
-    propsFab?.classList.remove('fab-visible', 'speed-dial-open');
-    propsScrim?.classList.remove('visible');
-    const trigger = document.getElementById('props-fab-trigger');
-    if (trigger) trigger.setAttribute('aria-expanded', 'false');
-  };
-
-  navTabs.forEach((t) => {
-    const isTarget = t.getAttribute('data-target') === target;
-    t.classList.toggle('active', isTarget);
-  });
-
   pages.forEach((p) => {
     p.classList.toggle('active', p.id === target);
   });
 
-  if (!skipSlide) {
-    slideToTab(target);
-  }
+  const fabContainer = document.getElementById('tuning-fab-container');
+  const logsFab = document.getElementById('logs-fab-container');
+  const propsFab = document.getElementById('props-fab-container');
 
   if (target === 'page-tuning') {
     showTuningSubView('hub', false);
-    logsFab?.classList.remove('fab-visible');
-    hidePropsFab();
+    if (logsFab) logsFab.style.display = 'none';
+    if (propsFab) propsFab.style.display = 'none';
   } else if (target === 'page-logs') {
-    fabContainer?.classList.remove('fab-visible');
-    logsFab?.classList.add('fab-visible');
-    hidePropsFab();
+    if (fabContainer) fabContainer.style.display = 'none';
+    if (logsFab) logsFab.style.display = 'flex';
+    if (propsFab) propsFab.style.display = 'none';
   } else {
-    fabContainer?.classList.remove('fab-visible');
-    logsFab?.classList.remove('fab-visible');
-    hidePropsFab();
+    if (fabContainer) fabContainer.style.display = 'none';
+    if (logsFab) logsFab.style.display = 'none';
+    if (propsFab) propsFab.style.display = 'none';
   }
 
   store.set('activeTab', target);
-
-  // 2. Adjust polling discipline
+  syncNavigationState(target);
   startActiveTabPolling(target);
-
-  // 3. Update floating highlighter position smoothly
-  floatingNavController?.updatePosition(false);
-}
-
-function setupNavigation(): void {
-  const navTabs = document.querySelectorAll<HTMLElement>('.nav-tab');
-
-  navTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const target = tab.getAttribute('data-target') as AppTab | null;
-      if (target) selectTab(target);
-    });
-  });
-
-  floatingNavController = initFloatingNav((target) => {
-    selectTab(target);
-  });
-
-  initPageSwipe({
-    onSettle: (settledTab) => {
-      selectTab(settledTab, true);
-    },
-    onAnimateHighlighter: (targetTab) => {
-      floatingNavController?.animateToTab(targetTab);
-    },
-    onProgress: (fromTab, toTab, progress) => {
-      floatingNavController?.setProgress(fromTab, toTab, progress);
-    },
-    onOverscroll: (overscrollPx) => {
-      floatingNavController?.setOverscroll(overscrollPx);
-    },
-    onResetSprings: () => {
-      floatingNavController?.resetCapsuleSpring();
-    }
-  });
-
-  // Ensure track starts at active tab
-  slideToTab(store.get('activeTab'), true);
 }

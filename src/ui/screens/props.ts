@@ -1,3 +1,10 @@
+import type { M3eBottomSheetElement } from '@m3e/web/bottom-sheet';
+import type { M3eDialogElement } from '@m3e/web/dialog';
+import type { M3eFabMenuElement } from '@m3e/web/fab-menu';
+import type { M3eFilterChipSetElement } from '@m3e/web/chips';
+import type { M3eSelectionListElement } from '@m3e/web/list';
+import type { M3eCheckboxElement } from '@m3e/web/checkbox';
+import type { M3eSwitchElement } from '@m3e/web/switch';
 import { propsEngine, parsePropsText } from '../../telemetry/propsEngine';
 import type { SystemPropItem, PropImportDiffItem } from '../../telemetry/types';
 import { VirtualPropList } from '../components/virtualPropList';
@@ -31,7 +38,7 @@ export async function renderPropsView(forceRefresh = false): Promise<void> {
   if (!virtualPropList) {
     virtualPropList = new VirtualPropList({
       container,
-      itemHeight: 56,
+      itemHeight: 60,
       overscan: 6,
       onSelectProp: (prop) => {
         openPropEditSheet(prop);
@@ -55,33 +62,29 @@ export function updatePropsCountBadge(): void {
   if (!badge || !virtualPropList) return;
   const filtered = virtualPropList.getFilteredCount();
   const total = virtualPropList.getTotalCount();
-  if (filtered !== total) {
-    badge.innerText = `${filtered} / ${total} props`;
-  } else {
-    badge.innerText = `${total} props`;
-  }
+  badge.innerText = filtered !== total ? `${filtered} / ${total} props` : `${total} props`;
 }
 
 export function openPropEditSheet(prop?: SystemPropItem): void {
-  const backdrop = document.getElementById('prop-edit-sheet-backdrop');
+  const sheet = document.getElementById('prop-edit-sheet') as M3eBottomSheetElement | null;
   const title = document.getElementById('prop-edit-sheet-title');
   const subtitle = document.getElementById('prop-edit-sheet-subtitle');
   const keyInput = document.getElementById('prop-edit-key') as HTMLInputElement | null;
   const origVal = document.getElementById('prop-edit-orig-val');
   const liveVal = document.getElementById('prop-edit-live-val');
   const valInput = document.getElementById('prop-edit-value') as HTMLInputElement | null;
-  const bootSwitch = document.getElementById('prop-edit-boot-switch') as HTMLInputElement | null;
+  const bootSwitch = document.getElementById('prop-edit-boot-switch') as M3eSwitchElement | null;
   const resetBtn = document.getElementById('prop-edit-reset-btn');
   const deleteBtn = document.getElementById('prop-edit-delete-btn');
   const metaCard = document.getElementById('prop-edit-meta-card');
 
-  if (!backdrop) return;
+  if (!sheet) return;
 
   if (prop) {
     activeEditProp = prop;
     if (title) title.innerText = 'Edit Property';
     if (subtitle) subtitle.innerText = prop.key;
-    if (metaCard) metaCard.style.display = 'flex';
+    if (metaCard) metaCard.style.display = 'block';
     if (keyInput) {
       keyInput.value = prop.key;
       keyInput.readOnly = true;
@@ -117,26 +120,20 @@ export function openPropEditSheet(prop?: SystemPropItem): void {
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
 
-  backdrop.style.display = 'flex';
-  requestAnimationFrame(() => backdrop.classList.add('active'));
+  sheet.show(0);
 
   try {
     history.pushState({ modal: 'prop-edit' }, '');
-  } catch (e) {}
+  } catch (_) {}
 }
 
 export function closePropEditSheet(): void {
-  const backdrop = document.getElementById('prop-edit-sheet-backdrop');
-  if (backdrop) {
-    backdrop.classList.remove('active');
-    setTimeout(() => {
-      backdrop.style.display = 'none';
-    }, 250);
-  }
+  const sheet = document.getElementById('prop-edit-sheet') as M3eBottomSheetElement | null;
+  if (sheet && sheet.open) sheet.hide();
 }
 
 export function openPropImportDialog(): void {
-  const backdrop = document.getElementById('prop-import-dialog-backdrop');
+  const dialog = document.getElementById('prop-import-dialog') as M3eDialogElement | null;
   const fileInput = document.getElementById('prop-import-file-input') as HTMLInputElement | null;
   const fileName = document.getElementById('prop-import-filename');
   const fileNamePill = document.getElementById('prop-import-filename-pill');
@@ -152,23 +149,17 @@ export function openPropImportDialog(): void {
   if (diffTbody) diffTbody.innerHTML = '';
   parsedImportDiffs = [];
 
-  if (backdrop) {
-    backdrop.style.display = 'flex';
-    requestAnimationFrame(() => backdrop.classList.add('active'));
+  if (dialog) {
+    dialog.show();
     try {
       history.pushState({ modal: 'prop-import' }, '');
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
 export function closePropImportDialog(): void {
-  const backdrop = document.getElementById('prop-import-dialog-backdrop');
-  if (backdrop) {
-    backdrop.classList.remove('active');
-    setTimeout(() => {
-      backdrop.style.display = 'none';
-    }, 250);
-  }
+  const dialog = document.getElementById('prop-import-dialog') as M3eDialogElement | null;
+  if (dialog && dialog.open) dialog.hide('cancel');
 }
 
 export function updateImportDiffPreview(rawText: string): void {
@@ -200,8 +191,8 @@ export function updateImportDiffPreview(rawText: string): void {
     const status: 'add' | 'modify' | 'unchanged' = !currentMap.has(key)
       ? 'add'
       : currentVal !== newVal
-      ? 'modify'
-      : 'unchanged';
+        ? 'modify'
+        : 'unchanged';
 
     return {
       key,
@@ -217,24 +208,24 @@ export function updateImportDiffPreview(rawText: string): void {
     .map((diff, index) => {
       const tagClass =
         diff.status === 'add'
-          ? 'diff-tag diff-tag-new'
+          ? 'badge-custom'
           : diff.status === 'modify'
-          ? 'diff-tag diff-tag-change'
-          : 'diff-tag diff-tag-same';
+            ? 'badge-modified'
+            : 'badge-ro';
       const tagLabel = diff.status === 'add' ? 'NEW' : diff.status === 'modify' ? 'MOD' : 'SAME';
       return `
         <tr style="border-bottom: 1px solid var(--md-sys-color-outline-variant);">
           <td style="padding: 6px 8px; vertical-align: middle;">
-            <input type="checkbox" class="prop-import-item-chk" data-idx="${index}" ${diff.selected ? 'checked' : ''}>
+            <m3e-checkbox class="prop-import-item-chk" data-idx="${index}" ${diff.selected ? 'checked' : ''}></m3e-checkbox>
           </td>
           <td style="padding: 6px 8px; font-family: var(--font-mono); font-weight: 500; word-break: break-all;">
             ${escapeHtml(diff.key)}
-            <span class="${tagClass}" style="margin-left: 4px; font-size: 0.65rem; padding: 1px 4px; border-radius: 4px;">${tagLabel}</span>
+            <span class="badge-pill ${tagClass}" style="margin-left: 4px;">${tagLabel}</span>
           </td>
-          <td class="diff-before" style="padding: 6px 8px; font-family: var(--font-mono); color: var(--md-sys-color-on-surface-variant); word-break: break-all;">
+          <td style="padding: 6px 8px; font-family: var(--font-mono); color: var(--md-sys-color-on-surface-variant); word-break: break-all;">
             ${escapeHtml(diff.currentValue || '(none)')}
           </td>
-          <td class="diff-after" style="padding: 6px 8px; font-family: var(--font-mono); color: var(--md-sys-color-primary); font-weight: 600; word-break: break-all;">
+          <td style="padding: 6px 8px; font-family: var(--font-mono); color: var(--md-sys-color-primary); font-weight: 600; word-break: break-all;">
             ${escapeHtml(diff.newValue)}
           </td>
         </tr>
@@ -242,8 +233,7 @@ export function updateImportDiffPreview(rawText: string): void {
     })
     .join('');
 
-  // Wire individual item checkboxes
-  diffTbody.querySelectorAll<HTMLInputElement>('.prop-import-item-chk').forEach((chk) => {
+  diffTbody.querySelectorAll<M3eCheckboxElement>('.prop-import-item-chk').forEach((chk) => {
     chk.addEventListener('change', () => {
       const idx = parseInt(chk.getAttribute('data-idx') ?? '-1', 10);
       if (idx >= 0 && parsedImportDiffs[idx]) {
@@ -254,95 +244,53 @@ export function updateImportDiffPreview(rawText: string): void {
 }
 
 export function openPropExportSheet(): void {
-  const backdrop = document.getElementById('prop-export-sheet-backdrop');
-  if (backdrop) {
-    backdrop.style.display = 'flex';
-    requestAnimationFrame(() => backdrop.classList.add('active'));
+  const sheet = document.getElementById('prop-export-sheet') as M3eBottomSheetElement | null;
+  if (sheet) {
+    sheet.show(0);
     try {
       history.pushState({ modal: 'prop-export' }, '');
-    } catch (e) {}
+    } catch (_) {}
   }
 }
 
 export function closePropExportSheet(): void {
-  const backdrop = document.getElementById('prop-export-sheet-backdrop');
-  if (backdrop) {
-    backdrop.classList.remove('active');
-    setTimeout(() => {
-      backdrop.style.display = 'none';
-    }, 250);
-  }
+  const sheet = document.getElementById('prop-export-sheet') as M3eBottomSheetElement | null;
+  if (sheet && sheet.open) sheet.hide();
 }
 
 export function closePropsSpeedDial(): void {
-  const propsFabContainer = document.getElementById('props-fab-container');
-  const propsFabScrim = document.getElementById('props-fab-scrim');
-  const propsFabTrigger = document.getElementById('props-fab-trigger');
-
-  if (propsFabContainer) propsFabContainer.classList.remove('speed-dial-open');
-  if (propsFabScrim) propsFabScrim.classList.remove('visible');
-  if (propsFabTrigger) propsFabTrigger.setAttribute('aria-expanded', 'false');
-}
-
-export function togglePropsSpeedDial(): void {
-  const propsFabContainer = document.getElementById('props-fab-container');
-  const propsFabScrim = document.getElementById('props-fab-scrim');
-  const propsFabTrigger = document.getElementById('props-fab-trigger');
-
-  if (!propsFabContainer) return;
-  const willOpen = !propsFabContainer.classList.contains('speed-dial-open');
-  propsFabContainer.classList.toggle('speed-dial-open', willOpen);
-  if (propsFabScrim) propsFabScrim.classList.toggle('visible', willOpen);
-  if (propsFabTrigger) propsFabTrigger.setAttribute('aria-expanded', String(willOpen));
+  const menu = document.getElementById('props-fab-menu') as M3eFabMenuElement | null;
+  if (menu && menu.isOpen) {
+    menu.hide(false);
+  }
 }
 
 export function setupPropsListeners(): void {
-  // Speed Dial FAB Controls
-  const propsFabScrim = document.getElementById('props-fab-scrim');
-  const propsFabTrigger = document.getElementById('props-fab-trigger');
-
-  if (propsFabTrigger) {
-    propsFabTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      togglePropsSpeedDial();
-    });
-  }
-
-  if (propsFabScrim) {
-    propsFabScrim.addEventListener('click', () => {
-      closePropsSpeedDial();
-    });
-  }
-
   const fabAddProp = document.getElementById('fab-add-prop');
-  if (fabAddProp) {
-    fabAddProp.addEventListener('click', () => {
-      closePropsSpeedDial();
-      openPropEditSheet();
-    });
-  }
+  fabAddProp?.addEventListener('click', () => {
+    closePropsSpeedDial();
+    openPropEditSheet();
+  });
 
   const fabImportProps = document.getElementById('fab-import-props');
-  if (fabImportProps) {
-    fabImportProps.addEventListener('click', () => {
-      closePropsSpeedDial();
-      openPropImportDialog();
-    });
-  }
+  fabImportProps?.addEventListener('click', () => {
+    closePropsSpeedDial();
+    openPropImportDialog();
+  });
 
   const fabExportProps = document.getElementById('fab-export-props');
-  if (fabExportProps) {
-    fabExportProps.addEventListener('click', () => {
-      closePropsSpeedDial();
-      openPropExportSheet();
-    });
-  }
+  fabExportProps?.addEventListener('click', () => {
+    closePropsSpeedDial();
+    openPropExportSheet();
+  });
 
-  const handleResetProps = async () => {
+  const fabResetProps = document.getElementById('fab-reset-props');
+  fabResetProps?.addEventListener('click', async () => {
     closePropsSpeedDial();
     const confirmed = await showConfirmDialog({
       title: 'Reset All Properties?',
-      message: 'This will revert all modified and custom properties back to original system defaults and clear boot overrides.',
+      message:
+        'This will revert all modified and custom properties back to original system defaults and clear boot overrides.',
       confirmLabel: 'Reset All',
       cancelLabel: 'Cancel',
       isDanger: true
@@ -357,311 +305,194 @@ export function setupPropsListeners(): void {
     } else {
       toast('Failed to reset all properties');
     }
-  };
+  });
 
-  const fabResetProps = document.getElementById('fab-reset-props');
-  if (fabResetProps) {
-    fabResetProps.addEventListener('click', handleResetProps);
-  }
-
-  // Legacy/Fallback Action Bar Buttons
-  const btnAddProp = document.getElementById('btn-add-prop');
-  if (btnAddProp) {
-    btnAddProp.addEventListener('click', () => {
-      openPropEditSheet();
-    });
-  }
-
-  const btnImportProps = document.getElementById('btn-import-props');
-  if (btnImportProps) {
-    btnImportProps.addEventListener('click', () => {
-      openPropImportDialog();
-    });
-  }
-
-  const btnExportProps = document.getElementById('btn-export-props');
-  if (btnExportProps) {
-    btnExportProps.addEventListener('click', () => {
-      openPropExportSheet();
-    });
-  }
-
-  const btnResetProps = document.getElementById('btn-reset-props');
-  if (btnResetProps) {
-    btnResetProps.addEventListener('click', handleResetProps);
-  }
-
-  // Search input and clear button
+  // Search bar
+  const propSearchBar = document.getElementById('prop-search-bar');
   const propSearchInput = document.getElementById('prop-search-input') as HTMLInputElement | null;
-  const propSearchClear = document.getElementById('prop-search-clear');
   if (propSearchInput) {
     propSearchInput.addEventListener('input', () => {
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(() => {
-        const term = propSearchInput.value;
         if (virtualPropList) {
-          virtualPropList.setSearchTerm(term);
+          virtualPropList.setSearchTerm(propSearchInput.value);
           updatePropsCountBadge();
-        }
-        if (propSearchClear) {
-          propSearchClear.style.display = term ? 'block' : 'none';
         }
       }, 150);
     });
   }
 
-  if (propSearchClear && propSearchInput) {
-    propSearchClear.addEventListener('click', () => {
-      propSearchInput.value = '';
-      propSearchClear.style.display = 'none';
-      if (virtualPropList) {
-        virtualPropList.setSearchTerm('');
-        updatePropsCountBadge();
-      }
-      propSearchInput.focus();
-    });
-  }
+  propSearchBar?.addEventListener('clear', () => {
+    if (virtualPropList) {
+      virtualPropList.setSearchTerm('');
+      updatePropsCountBadge();
+    }
+  });
 
   // Filter chips
-  const filterChips = document.querySelectorAll<HTMLElement>('[data-prop-filter]');
-  filterChips.forEach((chip) => {
-    chip.addEventListener('click', () => {
-      filterChips.forEach((c) => c.classList.remove('active'));
-      chip.classList.add('active');
-      const mode = (chip.getAttribute('data-prop-filter') || 'all') as 'all' | 'modified' | 'boot';
-      if (virtualPropList) {
-        virtualPropList.setFilterMode(mode);
-        updatePropsCountBadge();
-      }
-    });
+  const filterChipSet = document.getElementById('prop-filter-chips') as M3eFilterChipSetElement | null;
+  filterChipSet?.addEventListener('change', () => {
+    const val = filterChipSet.value;
+    const mode = ((Array.isArray(val) ? val[0] : val) || 'all') as 'all' | 'modified' | 'boot';
+    if (virtualPropList) {
+      virtualPropList.setFilterMode(mode);
+      updatePropsCountBadge();
+    }
   });
 
   // Edit sheet listeners
-  const editBackdrop = document.getElementById('prop-edit-sheet-backdrop');
-  if (editBackdrop) {
-    editBackdrop.addEventListener('click', (e) => {
-      if (e.target === editBackdrop) closePropEditSheet();
-    });
-  }
+  document.getElementById('prop-edit-cancel-btn')?.addEventListener('click', closePropEditSheet);
 
-  const editCloseBtn = document.getElementById('prop-edit-sheet-close');
-  if (editCloseBtn) {
-    editCloseBtn.addEventListener('click', closePropEditSheet);
-  }
+  document.getElementById('prop-edit-save-btn')?.addEventListener('click', async () => {
+    const keyInput = document.getElementById('prop-edit-key') as HTMLInputElement | null;
+    const valInput = document.getElementById('prop-edit-value') as HTMLInputElement | null;
+    const bootSwitch = document.getElementById('prop-edit-boot-switch') as M3eSwitchElement | null;
 
-  const editCancelBtn = document.getElementById('prop-edit-cancel-btn');
-  if (editCancelBtn) {
-    editCancelBtn.addEventListener('click', closePropEditSheet);
-  }
+    const key = keyInput?.value.trim() ?? '';
+    const val = valInput?.value.trim() ?? '';
+    const boot = bootSwitch?.checked ?? false;
 
-  const savePropBtn = document.getElementById('prop-edit-save-btn');
-  if (savePropBtn) {
-    savePropBtn.addEventListener('click', async () => {
-      const keyInput = document.getElementById('prop-edit-key') as HTMLInputElement | null;
-      const valInput = document.getElementById('prop-edit-value') as HTMLInputElement | null;
-      const bootSwitch = document.getElementById('prop-edit-boot-switch') as HTMLInputElement | null;
+    if (!key) {
+      toast('Property key cannot be empty');
+      return;
+    }
 
-      const key = keyInput?.value.trim() ?? '';
-      const val = valInput?.value.trim() ?? '';
-      const boot = bootSwitch?.checked ?? false;
+    toast(`Applying ${key}...`);
+    const ok = await propsEngine.applyProp(key, val, boot);
+    if (ok) {
+      toast(`Property ${key} saved & applied!`);
+      closePropEditSheet();
+      await renderPropsView(false);
+    } else {
+      toast(`Failed to apply property ${key}`);
+    }
+  });
 
-      if (!key) {
-        toast('Property key cannot be empty');
-        return;
-      }
+  document.getElementById('prop-edit-reset-btn')?.addEventListener('click', async () => {
+    if (!activeEditProp) return;
+    const key = activeEditProp.key;
+    toast(`Resetting ${key}...`);
+    const ok = await propsEngine.resetProp(key);
+    if (ok) {
+      toast(`Property ${key} reset to default!`);
+      closePropEditSheet();
+      await renderPropsView(false);
+    } else {
+      toast(`Failed to reset ${key}`);
+    }
+  });
 
-      toast(`Applying ${key}...`);
-      const ok = await propsEngine.applyProp(key, val, boot);
-      if (ok) {
-        toast(`Property ${key} saved & applied!`);
-        closePropEditSheet();
-        await renderPropsView(false);
-      } else {
-        toast(`Failed to apply property ${key}`);
-      }
-    });
-  }
-
-  const resetPropBtn = document.getElementById('prop-edit-reset-btn');
-  if (resetPropBtn) {
-    resetPropBtn.addEventListener('click', async () => {
-      if (!activeEditProp) return;
-      const key = activeEditProp.key;
-      toast(`Resetting ${key}...`);
-      const ok = await propsEngine.resetProp(key);
-      if (ok) {
-        toast(`Property ${key} reset to default!`);
-        closePropEditSheet();
-        await renderPropsView(false);
-      } else {
-        toast(`Failed to reset ${key}`);
-      }
-    });
-  }
-
-  const deletePropBtn = document.getElementById('prop-edit-delete-btn');
-  if (deletePropBtn) {
-    deletePropBtn.addEventListener('click', async () => {
-      if (!activeEditProp) return;
-      const key = activeEditProp.key;
-      toast(`Deleting custom property ${key}...`);
-      const ok = await propsEngine.resetProp(key);
-      if (ok) {
-        toast(`Custom property ${key} deleted!`);
-        closePropEditSheet();
-        await renderPropsView(false);
-      } else {
-        toast(`Failed to delete ${key}`);
-      }
-    });
-  }
+  document.getElementById('prop-edit-delete-btn')?.addEventListener('click', async () => {
+    if (!activeEditProp) return;
+    const key = activeEditProp.key;
+    toast(`Deleting custom property ${key}...`);
+    const ok = await propsEngine.resetProp(key);
+    if (ok) {
+      toast(`Custom property ${key} deleted!`);
+      closePropEditSheet();
+      await renderPropsView(false);
+    } else {
+      toast(`Failed to delete ${key}`);
+    }
+  });
 
   // Import dialog listeners
-  const importBackdrop = document.getElementById('prop-import-dialog-backdrop');
-  if (importBackdrop) {
-    importBackdrop.addEventListener('click', (e) => {
-      if (e.target === importBackdrop) closePropImportDialog();
-    });
-  }
-
-  const importCancelBtn = document.getElementById('prop-import-cancel-btn');
-  if (importCancelBtn) {
-    importCancelBtn.addEventListener('click', closePropImportDialog);
-  }
+  document.getElementById('prop-import-cancel-btn')?.addEventListener('click', closePropImportDialog);
 
   const importFileInput = document.getElementById('prop-import-file-input') as HTMLInputElement | null;
+  document.getElementById('prop-import-choose-btn')?.addEventListener('click', () => {
+    importFileInput?.click();
+  });
+
   const importFilename = document.getElementById('prop-import-filename');
   const importTextarea = document.getElementById('prop-import-paste-textarea') as HTMLTextAreaElement | null;
 
-  if (importFileInput) {
-    importFileInput.addEventListener('change', () => {
-      const file = importFileInput.files?.[0];
-      if (file) {
-        if (importFilename) importFilename.innerText = file.name;
-        const filenamePill = document.getElementById('prop-import-filename-pill');
-        if (filenamePill) filenamePill.style.display = 'inline-flex';
-        const reader = new FileReader();
-        reader.onload = () => {
-          const text = (reader.result as string) || '';
-          if (importTextarea) importTextarea.value = text;
-          updateImportDiffPreview(text);
-        };
-        reader.readAsText(file);
-      }
+  importFileInput?.addEventListener('change', () => {
+    const file = importFileInput.files?.[0];
+    if (file) {
+      if (importFilename) importFilename.innerText = file.name;
+      const filenamePill = document.getElementById('prop-import-filename-pill');
+      if (filenamePill) filenamePill.style.display = 'inline-flex';
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = (reader.result as string) || '';
+        if (importTextarea) importTextarea.value = text;
+        updateImportDiffPreview(text);
+      };
+      reader.readAsText(file);
+    }
+  });
+
+  importTextarea?.addEventListener('input', () => {
+    if (textareaDebounceTimer) clearTimeout(textareaDebounceTimer);
+    textareaDebounceTimer = setTimeout(() => {
+      updateImportDiffPreview(importTextarea.value);
+    }, 200);
+  });
+
+  const selectAllChk = document.getElementById('prop-import-select-all') as M3eCheckboxElement | null;
+  selectAllChk?.addEventListener('change', () => {
+    const checked = selectAllChk.checked;
+    parsedImportDiffs.forEach((d) => (d.selected = checked));
+    document.querySelectorAll<M3eCheckboxElement>('.prop-import-item-chk').forEach((chk) => {
+      chk.checked = checked;
     });
-  }
+  });
 
-  if (importTextarea) {
-    importTextarea.addEventListener('input', () => {
-      if (textareaDebounceTimer) clearTimeout(textareaDebounceTimer);
-      textareaDebounceTimer = setTimeout(() => {
-        updateImportDiffPreview(importTextarea.value);
-      }, 200);
-    });
-  }
+  document.getElementById('prop-import-submit-btn')?.addEventListener('click', async () => {
+    if (parsedImportDiffs.length === 0 && importTextarea && importTextarea.value.trim()) {
+      updateImportDiffPreview(importTextarea.value);
+    }
 
-  const selectAllChk = document.getElementById('prop-import-select-all') as HTMLInputElement | null;
-  if (selectAllChk) {
-    selectAllChk.addEventListener('change', () => {
-      const checked = selectAllChk.checked;
-      parsedImportDiffs.forEach((d) => (d.selected = checked));
-      document.querySelectorAll<HTMLInputElement>('.prop-import-item-chk').forEach((chk) => {
-        chk.checked = checked;
-      });
-    });
-  }
+    const selectedDiffs = parsedImportDiffs.filter((d) => d.selected !== false);
+    if (selectedDiffs.length === 0) {
+      toast('No properties selected for import');
+      return;
+    }
 
-  const importSubmitBtn = document.getElementById('prop-import-submit-btn');
-  if (importSubmitBtn) {
-    importSubmitBtn.addEventListener('click', async () => {
-      if (parsedImportDiffs.length === 0 && importTextarea && importTextarea.value.trim()) {
-        updateImportDiffPreview(importTextarea.value);
-      }
+    const applyLiveChk = document.getElementById('prop-import-apply-live') as M3eSwitchElement | null;
+    const setBootChk = document.getElementById('prop-import-set-boot') as M3eSwitchElement | null;
+    const applyLive = applyLiveChk?.checked ?? true;
+    const setBoot = setBootChk?.checked ?? true;
 
-      const selectedDiffs = parsedImportDiffs.filter((d) => d.selected !== false);
-      if (selectedDiffs.length === 0) {
-        toast('No properties selected for import');
-        return;
-      }
-
-      const applyLiveChk = document.getElementById('prop-import-apply-live') as HTMLInputElement | null;
-      const setBootChk = document.getElementById('prop-import-set-boot') as HTMLInputElement | null;
-      const applyLive = applyLiveChk?.checked ?? true;
-      const setBoot = setBootChk?.checked ?? true;
-
-      toast(`Importing ${selectedDiffs.length} properties...`);
-      const ok = await propsEngine.importProps(selectedDiffs, setBoot, applyLive);
-      if (ok) {
-        toast(`Successfully imported ${selectedDiffs.length} properties!`);
-        closePropImportDialog();
-        await renderPropsView(false);
-      } else {
-        toast('Failed to import properties');
-      }
-    });
-  }
+    toast(`Importing ${selectedDiffs.length} properties...`);
+    const ok = await propsEngine.importProps(selectedDiffs, setBoot, applyLive);
+    if (ok) {
+      toast(`Successfully imported ${selectedDiffs.length} properties!`);
+      closePropImportDialog();
+      await renderPropsView(false);
+    } else {
+      toast('Failed to import properties');
+    }
+  });
 
   // Export sheet listeners
-  const exportBackdrop = document.getElementById('prop-export-sheet-backdrop');
-  if (exportBackdrop) {
-    exportBackdrop.addEventListener('click', (e) => {
-      if (e.target === exportBackdrop) closePropExportSheet();
-    });
-  }
-
-  const exportCloseBtn = document.getElementById('prop-export-sheet-close');
-  if (exportCloseBtn) {
-    exportCloseBtn.addEventListener('click', closePropExportSheet);
-  }
-
-  const exportCloseBottomBtn = document.getElementById('prop-export-close-btn');
-  if (exportCloseBottomBtn) {
-    exportCloseBottomBtn.addEventListener('click', closePropExportSheet);
-  }
-
-  // Export radio cards selection
-  const exportRadioList = document.getElementById('prop-export-radio-list');
-  if (exportRadioList) {
-    const cards = exportRadioList.querySelectorAll<HTMLElement>('.m3e-radio-card');
-    cards.forEach((card) => {
-      card.addEventListener('click', () => {
-        cards.forEach((c) => c.classList.remove('active'));
-        card.classList.add('active');
-      });
-    });
-  }
+  document.getElementById('prop-export-close-btn')?.addEventListener('click', closePropExportSheet);
 
   const getExportScope = (): boolean => {
-    const activeCard = document.querySelector<HTMLElement>(
-      '#prop-export-radio-list .m3e-radio-card.active'
-    );
-    return activeCard?.getAttribute('data-export-choice') === 'all';
+    const list = document.getElementById('prop-export-radio-list') as M3eSelectionListElement | null;
+    const val = list?.value;
+    return (Array.isArray(val) ? val[0] : val) === 'all';
   };
 
-  const exportDownloadBtn = document.getElementById('prop-export-download-btn');
-  if (exportDownloadBtn) {
-    exportDownloadBtn.addEventListener('click', () => {
-      const includeAll = getExportScope();
-      const text = propsEngine.exportProps(includeAll);
-      downloadTextFile('sweetclocker_props.prop', text);
-      toast('Properties downloaded as .prop file');
-      closePropExportSheet();
-    });
-  }
+  document.getElementById('prop-export-download-btn')?.addEventListener('click', () => {
+    const includeAll = getExportScope();
+    const text = propsEngine.exportProps(includeAll);
+    downloadTextFile('sweetclocker_props.prop', text);
+    toast('Properties downloaded as .prop file');
+    closePropExportSheet();
+  });
 
-  const exportCopyBtn = document.getElementById('prop-export-copy-btn');
-  if (exportCopyBtn) {
-    exportCopyBtn.addEventListener('click', async () => {
-      const includeAll = getExportScope();
-      const text = propsEngine.exportProps(includeAll);
-      try {
-        await navigator.clipboard.writeText(text);
-        toast('Properties copied to clipboard!');
-        closePropExportSheet();
-      } catch (err) {
-        console.error('Clipboard copy failed:', err);
-        toast('Failed to copy to clipboard');
-      }
-    });
-  }
+  document.getElementById('prop-export-copy-btn')?.addEventListener('click', async () => {
+    const includeAll = getExportScope();
+    const text = propsEngine.exportProps(includeAll);
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Properties copied to clipboard!');
+      closePropExportSheet();
+    } catch (err) {
+      console.error('Clipboard copy failed:', err);
+      toast('Failed to copy to clipboard');
+    }
+  });
 }

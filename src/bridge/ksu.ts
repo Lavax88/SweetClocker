@@ -1,6 +1,7 @@
 import type { ExecResult, ExecOptions, SpawnHandle } from './types';
 export type { ExecResult, ExecOptions, SpawnHandle };
 import { mockExec, mockSpawn } from '@bridge/mock';
+import { M3eSnackbar } from '@m3e/web/snackbar';
 
 let callbackCounter = 0;
 
@@ -119,47 +120,10 @@ export function spawn(command: string, onLine: (line: string) => void): SpawnHan
 }
 
 /**
- * Display a short Material 3 toast notification
+ * Display a short Material 3 Expressive snackbar notification
  */
 export function toast(message: string): void {
-  const existing = document.getElementById('sweetclocker-toast');
-  if (existing) existing.remove();
-
-  const toastEl = document.createElement('div');
-  toastEl.id = 'sweetclocker-toast';
-  toastEl.style.position = 'fixed';
-  toastEl.style.bottom = '84px';
-  toastEl.style.left = '50%';
-  toastEl.style.transform = 'translateX(-50%) translateY(12px)';
-  toastEl.style.backgroundColor = 'var(--md-sys-color-primary-container)';
-  toastEl.style.color = 'var(--md-sys-color-on-primary-container)';
-  toastEl.style.padding = '10px 20px';
-  toastEl.style.borderRadius = '9999px';
-  toastEl.style.fontSize = '0.85rem';
-  toastEl.style.fontWeight = '600';
-  toastEl.style.fontFamily = 'var(--font-family)';
-  toastEl.style.boxShadow = 'var(--md-elevation-3)';
-  toastEl.style.zIndex = '99999';
-  toastEl.style.opacity = '0';
-  toastEl.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-  toastEl.style.pointerEvents = 'none';
-  toastEl.style.whiteSpace = 'nowrap';
-  toastEl.innerText = message;
-
-  document.body.appendChild(toastEl);
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      toastEl.style.opacity = '1';
-      toastEl.style.transform = 'translateX(-50%) translateY(0)';
-    });
-  });
-
-  setTimeout(() => {
-    toastEl.style.opacity = '0';
-    toastEl.style.transform = 'translateX(-50%) translateY(8px)';
-    setTimeout(() => toastEl.remove(), 280);
-  }, 2200);
+  M3eSnackbar.open(message, { duration: 2200 });
 }
 
 /**

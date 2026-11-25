@@ -38,7 +38,7 @@ export class VirtualPropList {
 
   constructor(options: VirtualPropListOptions) {
     this.container = options.container;
-    this.itemHeight = options.itemHeight ?? 56;
+    this.itemHeight = options.itemHeight ?? 60;
     this.overscan = options.overscan ?? 6;
     this.onSelectProp = options.onSelectProp;
 
@@ -70,7 +70,6 @@ export class VirtualPropList {
       }
     });
 
-    // Delegated click listener for row selections
     this.content.addEventListener('click', (event) => {
       const row = (event.target as HTMLElement).closest<HTMLElement>('.prop-row');
       if (!row) return;
@@ -121,14 +120,12 @@ export class VirtualPropList {
   private applyFilter(): void {
     let result = this.allProps;
 
-    // Filter mode
     if (this.filterMode === 'modified') {
       result = result.filter((p) => p.isModified);
     } else if (this.filterMode === 'boot') {
       result = result.filter((p) => p.applyBoot);
     }
 
-    // Search term (matches either key or value)
     if (this.searchTerm) {
       result = result.filter(
         (p) =>
@@ -149,11 +146,12 @@ export class VirtualPropList {
     const total = this.filteredProps.length;
     if (total === 0) {
       this.content.style.transform = 'translateY(0px)';
-      const emptyMsg = this.searchTerm || this.filterMode !== 'all'
-        ? 'No properties match the current filter or search.'
-        : 'No system properties available.';
+      const emptyMsg =
+        this.searchTerm || this.filterMode !== 'all'
+          ? 'No properties match the current filter or search.'
+          : 'No system properties available.';
       this.content.innerHTML = `
-        <div style="padding: 32px 16px; text-align: center; color: var(--md-sys-color-on-surface-variant); font-size: 0.875rem;">
+        <div class="grid-placeholder">
           ${escapeHtml(emptyMsg)}
         </div>
       `;
@@ -180,29 +178,17 @@ export class VirtualPropList {
         const valTitle = escapeHtml(prop.value || '');
 
         let badges = '';
-        if (prop.isReadOnly) {
-          badges += '<span class="badge-pill badge-ro">RO</span>';
-        }
-        if (prop.isCustom) {
-          badges += '<span class="badge-pill badge-custom">Custom</span>';
-        }
-        if (prop.isModified) {
-          badges += '<span class="badge-pill badge-modified">Modified</span>';
-        }
-        if (prop.applyBoot) {
-          badges += '<span class="badge-pill badge-boot">Boot</span>';
-        }
+        if (prop.isReadOnly) badges += '<span class="badge-pill badge-ro">RO</span>';
+        if (prop.isCustom) badges += '<span class="badge-pill badge-custom">Custom</span>';
+        if (prop.isModified) badges += '<span class="badge-pill badge-modified">Modified</span>';
+        if (prop.applyBoot) badges += '<span class="badge-pill badge-boot">Boot</span>';
 
         return `
-          <div class="prop-row" data-prop-key="${escapeHtml(prop.key)}" style="height: ${this.itemHeight}px;">
-            <div class="prop-info">
-              <div class="prop-key">${highlightedKey}</div>
-              <div class="prop-value" title="${valTitle}">${escapedVal}</div>
-            </div>
-            <div class="prop-badges">
-              ${badges}
-            </div>
-          </div>
+          <m3e-list-action class="prop-row" data-prop-key="${escapeHtml(prop.key)}" style="height: ${this.itemHeight}px;">
+            ${highlightedKey}
+            <span slot="supporting-text" title="${valTitle}">${escapedVal}</span>
+            <div slot="trailing" class="prop-badges">${badges}</div>
+          </m3e-list-action>
         `;
       })
       .join('');

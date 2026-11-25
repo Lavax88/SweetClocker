@@ -1,50 +1,25 @@
+import type { M3eLinearProgressIndicatorElement } from '@m3e/web/progress-indicator';
 import type { TelemetrySnapshot, CoreStats } from '../../telemetry/types';
 import { formatFreq, formatFreqShort } from '../formatters';
 
 export function renderDashboard(data: TelemetrySnapshot): void {
-  // 1. Bypass & CPU Usage in Hero Card
-  const bypassStatus = document.getElementById('bypass-status');
-  if (bypassStatus) {
-    bypassStatus.innerText = data.bypassActive ? 'Yes (Active)' : 'No';
-  }
-
-  const totalCpuUsage = document.getElementById('total-cpu-usage');
-  if (totalCpuUsage) {
-    totalCpuUsage.innerText = `${data.totalLoad}%`;
-  }
-
-  const bypassOff = document.getElementById('bypass-off-btn');
-  const bypassOn = document.getElementById('bypass-on-btn');
-  if (bypassOff && bypassOn) {
-    if (data.bypassActive) {
-      bypassOn.classList.add('active');
-      bypassOff.classList.remove('active');
+  // 1. Service Status Chip
+  const statusDot = document.getElementById('service-status-dot');
+  const statusText = document.getElementById('service-status-text');
+  if (statusDot && statusText) {
+    if (data.serviceRunning) {
+      statusDot.className = 'status-dot success';
+      statusText.innerText = 'Active';
     } else {
-      bypassOff.classList.add('active');
-      bypassOn.classList.remove('active');
+      statusDot.className = 'status-dot error';
+      statusText.innerText = 'Stopped';
     }
   }
 
-  // 2. Service Status Badge
-  const svcBadge = document.getElementById('service-status');
-  if (svcBadge) {
-    const indicator = svcBadge.querySelector('.status-indicator');
-    const label = svcBadge.querySelector('.status-text') as HTMLElement | null;
-    if (indicator && label) {
-      if (data.serviceRunning) {
-        indicator.className = 'status-indicator success';
-        label.innerText = 'Active';
-      } else {
-        indicator.className = 'status-indicator error';
-        label.innerText = 'Stopped';
-      }
-    }
-  }
-
-  // 3. Render / Update Cores Grid
+  // 2. Render / Update Cores Grid
   renderCoresGrid(data.cores);
 
-  // 4. Update GPU Card
+  // 3. Update GPU Card
   if (data.gpu) {
     const gpuName = document.getElementById('gpu-card-name');
     if (gpuName && data.gpu.model) {
@@ -55,22 +30,24 @@ export function renderDashboard(data: TelemetrySnapshot): void {
     if (gpuTemp) {
       gpuTemp.innerText = data.gpu.temp > 0 ? `${data.gpu.temp}°C` : 'N/A';
       if (data.gpu.temp >= 70) {
-        gpuTemp.style.backgroundColor = 'var(--md-sys-color-error-container)';
-        gpuTemp.style.color = 'var(--md-sys-color-on-error-container)';
+        gpuTemp.style.setProperty('--m3e-outlined-chip-outline-color', 'var(--md-sys-color-error)');
+        gpuTemp.style.setProperty('--m3e-chip-label-text-color', 'var(--md-sys-color-error)');
       } else if (data.gpu.temp >= 55) {
-        gpuTemp.style.backgroundColor = 'var(--md-sys-color-warning-container)';
-        gpuTemp.style.color = 'var(--md-sys-color-on-warning-container)';
+        gpuTemp.style.setProperty('--m3e-outlined-chip-outline-color', 'var(--md-sys-color-warning)');
+        gpuTemp.style.setProperty('--m3e-chip-label-text-color', 'var(--md-sys-color-warning)');
       } else {
-        gpuTemp.style.backgroundColor = 'var(--md-sys-color-success-container)';
-        gpuTemp.style.color = 'var(--md-sys-color-on-success-container)';
+        gpuTemp.style.setProperty('--m3e-outlined-chip-outline-color', 'var(--md-sys-color-success)');
+        gpuTemp.style.setProperty('--m3e-chip-label-text-color', 'var(--md-sys-color-success)');
       }
     }
 
     const gpuUsage = document.getElementById('gpu-usage-value');
     if (gpuUsage) gpuUsage.innerText = `${data.gpu.usage}%`;
 
-    const gpuProgress = document.getElementById('gpu-progress-bar');
-    if (gpuProgress) gpuProgress.style.transform = `scaleX(${Math.max(0, Math.min(100, data.gpu.usage)) / 100})`;
+    const gpuProgress = document.getElementById('gpu-progress-bar') as M3eLinearProgressIndicatorElement | null;
+    if (gpuProgress) {
+      gpuProgress.value = Math.max(0, Math.min(100, data.gpu.usage));
+    }
 
     const gpuGov = document.getElementById('gpu-card-gov');
     if (gpuGov && data.gpu.governor) gpuGov.innerText = data.gpu.governor;
@@ -96,12 +73,11 @@ function renderCoresGrid(cores: CoreStats[]): void {
   const grid = document.getElementById('cores-grid');
   if (!grid) return;
 
-  const existingCards = grid.querySelectorAll<HTMLDivElement>('.core-card');
+  const existingCards = grid.querySelectorAll<HTMLElement>('.core-card');
   if (existingCards.length !== cores.length) {
     grid.innerHTML = '';
     for (const c of cores) {
-      const card = createCoreCardElement(c);
-      grid.appendChild(card);
+      grid.appendChild(createCoreCardElement(c));
     }
     return;
   }
@@ -110,23 +86,23 @@ function renderCoresGrid(cores: CoreStats[]): void {
     const card = existingCards[idx];
     if (!card) return;
 
-    const tempBadge = card.querySelector<HTMLElement>('.temp-badge');
+    const tempBadge = card.querySelector<HTMLElement>('.temp-pill');
     if (tempBadge) {
       tempBadge.innerText = c.temp > 0 ? `${c.temp}°C` : '—';
       let tempClass = 'temp-cold';
       if (c.temp >= 45 && c.temp < 60) tempClass = 'temp-warm';
       else if (c.temp >= 60) tempClass = 'temp-hot';
-      tempBadge.className = `temp-badge ${tempClass}`;
+      tempBadge.className = `temp-pill ${tempClass}`;
     }
 
     const nameEl = card.querySelector<HTMLElement>('.core-name');
-    if (nameEl) nameEl.innerHTML = `CPU ${c.id} <span class="cluster-name">${c.cluster}</span>`;
+    if (nameEl) nameEl.innerHTML = `CPU ${c.id} <span class="cluster-tag">${c.cluster}</span>`;
 
     const subEl = card.querySelector<HTMLElement>('.core-sub-compact');
     if (subEl) subEl.innerText = c.governor;
 
-    const fill = card.querySelector<HTMLElement>('.progress-bar-fill');
-    if (fill) fill.style.transform = `scaleX(${Math.max(0, Math.min(100, c.usage)) / 100})`;
+    const progress = card.querySelector<M3eLinearProgressIndicatorElement>('m3e-linear-progress-indicator');
+    if (progress) progress.value = Math.max(0, Math.min(100, c.usage));
 
     const usageLbl = card.querySelector<HTMLElement>('.core-usage-lbl');
     if (usageLbl) usageLbl.innerText = `${c.usage}%`;
@@ -142,35 +118,43 @@ function renderCoresGrid(cores: CoreStats[]): void {
   });
 }
 
-function createCoreCardElement(core: CoreStats): HTMLDivElement {
-  const card = document.createElement('div');
-  card.className = 'card card-elevated core-card';
+function createCoreCardElement(core: CoreStats): HTMLElement {
+  const card = document.createElement('m3e-card');
+  card.setAttribute('variant', 'elevated');
+  card.className = 'core-card';
   card.setAttribute('data-core-id', String(core.id));
 
   let tempClass = 'temp-cold';
   if (core.temp >= 45 && core.temp < 60) tempClass = 'temp-warm';
   else if (core.temp >= 60) tempClass = 'temp-hot';
 
+  const usage = Math.max(0, Math.min(100, core.usage));
+
   card.innerHTML = `
-    <div class="core-header-compact">
-      <div style="display: flex; flex-direction: column; min-width: 0;">
-        <span class="core-name">CPU ${core.id} <span class="cluster-name">${core.cluster}</span></span>
-        <span class="core-sub-compact">${core.governor}</span>
+    <div slot="content" class="core-card-inner">
+      <div class="core-header-compact">
+        <div class="core-title-col">
+          <span class="core-name">CPU ${core.id} <span class="cluster-tag">${core.cluster}</span></span>
+          <span class="core-sub-compact">${core.governor}</span>
+        </div>
+        <div class="core-metrics-col">
+          <span class="temp-pill ${tempClass}">${core.temp > 0 ? core.temp + '°C' : '—'}</span>
+          <span class="core-usage-lbl">${usage}%</span>
+        </div>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0;">
-        <span class="temp-badge ${tempClass}">${core.temp > 0 ? core.temp + '°C' : '—'}</span>
-        <span class="core-usage-lbl">${core.usage}%</span>
+
+      <m3e-linear-progress-indicator
+        mode="determinate"
+        max="100"
+        value="${usage}"
+        variant="flat"
+      ></m3e-linear-progress-indicator>
+
+      <div class="freq-compact-list">
+        <span class="min-freq-val">${formatFreqShort(core.minFreq)}</span>
+        <span class="cur-freq-val">${formatFreq(core.curFreq)}</span>
+        <span class="max-freq-val">${formatFreqShort(core.maxFreq)}</span>
       </div>
-    </div>
-    
-    <div class="progress-bar-track" style="margin-top: 2px;">
-      <div class="progress-bar-fill" style="transform: scaleX(${Math.max(0, Math.min(100, core.usage)) / 100});"></div>
-    </div>
-    
-    <div class="freq-compact-list" style="display: flex; justify-content: space-between;">
-      <span class="min-freq-val">${formatFreqShort(core.minFreq)}</span>
-      <span class="cur-freq-val">${formatFreq(core.curFreq)}</span>
-      <span class="max-freq-val">${formatFreqShort(core.maxFreq)}</span>
     </div>
   `;
 
