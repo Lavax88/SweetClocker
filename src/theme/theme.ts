@@ -161,7 +161,6 @@ echo "overlay_600:$(cmd overlay lookup android android:color/system_accent1_600 
       if (themeEl) themeEl.color = hex;
       syncMetaThemeColor();
       updateMonetStatusUI(true, hex);
-      updateColorSelectionUI(hex, true);
       persistSettings();
       return hex;
     }
@@ -303,38 +302,6 @@ export function setReduceEffects(reduce: boolean): void {
   persistSettings();
 }
 
-export function updateColorSelectionUI(selectedHex: string, isMonet = false): void {
-  const allBtns = document.querySelectorAll<M3eButtonElement>('.seed-swatch-btn');
-  const customBtn = document.getElementById('custom-color-indicator') as M3eButtonElement | null;
-  const picker = document.getElementById('custom-color-picker') as HTMLInputElement | null;
-
-  allBtns.forEach((btn) => {
-    btn.selected = false;
-  });
-
-  if (isMonet) return;
-
-  let matchedPreset = false;
-  const normalizedSelected = selectedHex.toLowerCase();
-
-  allBtns.forEach((btn) => {
-    if (btn.id === 'custom-color-indicator') return;
-    const dotColor = (btn.getAttribute('data-color') ?? '').toLowerCase();
-    if (dotColor === normalizedSelected) {
-      btn.selected = true;
-      matchedPreset = true;
-    }
-  });
-
-  if (customBtn) {
-    customBtn.style.setProperty('--m3e-filled-icon-button-container-color', selectedHex);
-    if (picker) picker.value = selectedHex;
-    if (!matchedPreset) {
-      customBtn.selected = true;
-    }
-  }
-}
-
 export function setManualSeedColor(hex: string): void {
   activeSeedColor = hex;
   isMonetActive = false;
@@ -342,7 +309,6 @@ export function setManualSeedColor(hex: string): void {
   if (themeEl) themeEl.color = hex;
   syncMetaThemeColor();
   updateMonetStatusUI(false);
-  updateColorSelectionUI(hex, false);
   persistSettings();
 }
 

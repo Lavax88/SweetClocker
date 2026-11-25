@@ -470,27 +470,6 @@
   width: 100%;
 }
 
-.color-options {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.custom-swatch-wrap {
-  position: relative;
-  display: inline-flex;
-}
-
-#custom-color-picker {
-  opacity: 0;
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-}
-
 .monet-row {
   display: flex;
   align-items: center;

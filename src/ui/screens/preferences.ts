@@ -9,7 +9,6 @@ import {
   setThemeContrast,
   setFontMode,
   setReduceEffects,
-  setManualSeedColor,
   resetToMonet,
   syncConnectedButtonGroup
 } from '../../theme/theme';
@@ -86,30 +85,6 @@ export function initPreferencesScreen(): void {
       setReduceEffects(reduceToggle.checked);
       toast(`Effects ${reduceToggle.checked ? 'reduced (standard motion)' : 'expressive'}`);
     });
-  }
-
-  // Accent Color swatches
-  const colorBtns = document.querySelectorAll<M3eButtonElement>(
-    '.seed-swatch-btn:not(#custom-color-indicator)'
-  );
-  colorBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const hex = btn.getAttribute('data-color');
-      if (hex) {
-        setManualSeedColor(hex);
-        toast('Theme accent updated');
-      }
-    });
-  });
-
-  const picker = document.getElementById('custom-color-picker') as HTMLInputElement | null;
-  if (picker) {
-    const onColorChange = (e: Event) => {
-      const val = (e.target as HTMLInputElement).value;
-      setManualSeedColor(val);
-    };
-    picker.addEventListener('input', onColorChange);
-    picker.addEventListener('change', onColorChange);
   }
 
   const resetMonetBtn = document.getElementById('reset-monet-btn');
