@@ -1,5 +1,5 @@
 import type { ContrastLevel, M3eThemeElement, ThemeVariant } from '@m3e/web/theme';
-import type { M3eSegmentedButtonElement } from '@m3e/web/segmented-button';
+import type { M3eButtonElement } from '@m3e/web/button';
 import type { M3eSelectionListElement } from '@m3e/web/list';
 import type { M3eSwitchElement } from '@m3e/web/switch';
 import type { ThemeMode, EffectiveThemeMode, FontMode, ThemeSettings } from './types';
@@ -189,12 +189,12 @@ function updateMonetStatusUI(active: boolean, hex = ''): void {
   }
 }
 
-function syncSegmentedSelection(containerId: string, value: string): void {
-  const segBtn = document.getElementById(containerId) as M3eSegmentedButtonElement | null;
-  if (!segBtn) return;
-  for (const seg of segBtn.segments) {
-    seg.checked = seg.value === value;
-  }
+export function syncConnectedButtonGroup(groupId: string, value: string): void {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  group.querySelectorAll<M3eButtonElement>('m3e-button').forEach((btn) => {
+    btn.selected = btn.getAttribute('value') === value;
+  });
 }
 
 export function setThemeMode(mode: ThemeMode): void {
@@ -216,7 +216,7 @@ export function setThemeMode(mode: ThemeMode): void {
     if (themeEl) themeEl.scheme = mode === 'auto' ? 'auto' : 'dark';
   }
 
-  syncSegmentedSelection('pref-theme-mode', mode);
+  syncConnectedButtonGroup('pref-theme-mode', mode);
   syncMetaThemeColor();
   persistSettings();
 }
@@ -264,7 +264,7 @@ export function setThemeContrast(contrast: ContrastLevel): void {
   const themeEl = getThemeElement();
   if (themeEl) themeEl.contrast = contrast;
 
-  syncSegmentedSelection('pref-theme-contrast', contrast);
+  syncConnectedButtonGroup('pref-theme-contrast', contrast);
   persistSettings();
 }
 
@@ -283,7 +283,7 @@ export function setFontMode(font: FontMode): void {
     );
   }
 
-  syncSegmentedSelection('pref-font-mode', font);
+  syncConnectedButtonGroup('pref-font-mode', font);
   persistSettings();
 }
 

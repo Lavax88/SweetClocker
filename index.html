@@ -275,12 +275,12 @@
 
                 <div class="setting-group">
                   <label class="setting-label">Theme Mode</label>
-                  <m3e-segmented-button id="pref-theme-mode" hide-selection-indicator>
-                    <m3e-button-segment value="auto" checked>Auto</m3e-button-segment>
-                    <m3e-button-segment value="dark">Dark</m3e-button-segment>
-                    <m3e-button-segment value="light">Light</m3e-button-segment>
-                    <m3e-button-segment value="amoled">AMOLED</m3e-button-segment>
-                  </m3e-segmented-button>
+                  <m3e-button-group id="pref-theme-mode" variant="connected" class="pref-connected-group">
+                    <m3e-button variant="tonal" toggle value="auto" selected>Auto</m3e-button>
+                    <m3e-button variant="tonal" toggle value="dark">Dark</m3e-button>
+                    <m3e-button variant="tonal" toggle value="light">Light</m3e-button>
+                    <m3e-button variant="tonal" toggle value="amoled">AMOLED</m3e-button>
+                  </m3e-button-group>
                 </div>
 
                 <div class="setting-group">
@@ -295,19 +295,19 @@
 
                 <div class="setting-group">
                   <label class="setting-label">Contrast Level</label>
-                  <m3e-segmented-button id="pref-theme-contrast" hide-selection-indicator>
-                    <m3e-button-segment value="standard" checked>Standard</m3e-button-segment>
-                    <m3e-button-segment value="medium">Medium</m3e-button-segment>
-                    <m3e-button-segment value="high">High</m3e-button-segment>
-                  </m3e-segmented-button>
+                  <m3e-button-group id="pref-theme-contrast" variant="connected" class="pref-connected-group">
+                    <m3e-button variant="tonal" toggle value="standard" selected>Standard</m3e-button>
+                    <m3e-button variant="tonal" toggle value="medium">Medium</m3e-button>
+                    <m3e-button variant="tonal" toggle value="high">High</m3e-button>
+                  </m3e-button-group>
                 </div>
 
                 <div class="setting-group">
                   <label class="setting-label">Font Family</label>
-                  <m3e-segmented-button id="pref-font-mode" hide-selection-indicator>
-                    <m3e-button-segment value="outfit" checked>Outfit (Default)</m3e-button-segment>
-                    <m3e-button-segment value="system">System Font</m3e-button-segment>
-                  </m3e-segmented-button>
+                  <m3e-button-group id="pref-font-mode" variant="connected" class="pref-connected-group">
+                    <m3e-button variant="tonal" toggle value="outfit" selected>Outfit (Default)</m3e-button>
+                    <m3e-button variant="tonal" toggle value="system">System Font</m3e-button>
+                  </m3e-button-group>
                 </div>
 
                 <div class="switch-row">
@@ -349,10 +349,10 @@
                 <div class="setting-group">
                   <label class="setting-label">Force Bypass Override</label>
                   <p class="hero-desc">Bypass SoC hardware verification check and enforce clock limits anyway.</p>
-                  <m3e-segmented-button id="pref-bypass-mode" hide-selection-indicator>
-                    <m3e-button-segment value="false" checked>Disabled</m3e-button-segment>
-                    <m3e-button-segment value="true">Enabled</m3e-button-segment>
-                  </m3e-segmented-button>
+                  <m3e-button-group id="pref-bypass-mode" variant="connected" class="pref-connected-group">
+                    <m3e-button variant="tonal" toggle value="false" selected>Disabled</m3e-button>
+                    <m3e-button variant="tonal" toggle value="true">Enabled</m3e-button>
+                  </m3e-button-group>
                 </div>
               </div>
             </m3e-card>

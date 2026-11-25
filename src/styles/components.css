@@ -500,7 +500,15 @@
   color: var(--md-sys-color-on-surface);
 }
 
-.setting-group m3e-segmented-button,
+.pref-connected-group {
+  width: 100%;
+  display: flex;
+}
+
+.pref-connected-group m3e-button {
+  flex: 1;
+}
+
 .setting-group m3e-form-field {
   width: 100%;
 }
