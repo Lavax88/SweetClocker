@@ -149,14 +149,13 @@ export function selectTab(target: AppTab): void {
     showTuningSubView('hub', false);
     if (logsFab) logsFab.style.display = 'none';
     if (propsFab) propsFab.style.display = 'none';
-  } else if (target === 'page-logs') {
-    if (fabContainer) fabContainer.style.display = 'none';
-    if (logsFab) logsFab.style.display = 'flex';
-    if (propsFab) propsFab.style.display = 'none';
   } else {
+    if (store.get('currentTuningSubView') !== 'hub') {
+      showTuningSubView('hub', false);
+    }
     if (fabContainer) fabContainer.style.display = 'none';
-    if (logsFab) logsFab.style.display = 'none';
     if (propsFab) propsFab.style.display = 'none';
+    if (logsFab) logsFab.style.display = target === 'page-logs' ? 'flex' : 'none';
   }
 
   store.set('activeTab', target);
