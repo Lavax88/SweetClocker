@@ -12,9 +12,53 @@ export const TAB_ORDER: AppTab[] = [
   'page-preferences'
 ];
 
+const navItemSheet = new CSSStyleSheet();
+navItemSheet.replaceSync(`
+  .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .base {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 360ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .label {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(4px);
+    transition: max-height 360ms cubic-bezier(0.2, 0, 0, 1),
+                opacity 320ms cubic-bezier(0.2, 0, 0, 1),
+                transform 360ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  :host([selected]) .label {
+    max-height: 20px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+`);
+
+function enhanceNavItems(): void {
+  customElements.whenDefined('m3e-nav-item').then(() => {
+    document.querySelectorAll<M3eNavItemElement>('m3e-nav-item').forEach((item) => {
+      const sr = item.shadowRoot;
+      if (sr && !sr.adoptedStyleSheets.includes(navItemSheet)) {
+        sr.adoptedStyleSheets = [...sr.adoptedStyleSheets, navItemSheet];
+      }
+    });
+  });
+}
+
 export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
   const navBar = document.getElementById('main-nav-bar') as M3eNavBarElement | null;
   const pager = document.getElementById('main-pager') as M3eSlideElement | null;
+
+  enhanceNavItems();
 
   if (navBar) {
     navBar.addEventListener('change', () => {
