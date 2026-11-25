@@ -1,5 +1,14 @@
 /* components.css - Layout grids, M3E component sizing, log viewer & virtualized list styles */
 
+/* Blur app background when any modal bottom sheet or dialog is open */
+.app-layout {
+  transition: filter 260ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .app-layout {
+  filter: blur(8px) brightness(0.88);
+}
+
 /* Dashboard CPU Cores Grid */
 .cores-grid {
   display: grid;

@@ -15,9 +15,34 @@ import { initPreferencesScreen } from './screens/preferences';
 import { initGpuWarningDialog, initApplyBootDialog } from './components/dialog';
 import { initNavigation, syncNavigationState } from './components/navigation';
 
+const overlayBackdropSheet = new CSSStyleSheet();
+overlayBackdropSheet.replaceSync(`
+  :host([modal]:popover-open)::backdrop,
+  .base[open]::backdrop {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+`);
+
+function enhanceOverlayBackdropBlur(): void {
+  const applyTo = (tag: string) => {
+    customElements.whenDefined(tag).then(() => {
+      document.querySelectorAll<HTMLElement>(tag).forEach((el) => {
+        const sr = el.shadowRoot;
+        if (sr && !sr.adoptedStyleSheets.includes(overlayBackdropSheet)) {
+          sr.adoptedStyleSheets = [...sr.adoptedStyleSheets, overlayBackdropSheet];
+        }
+      });
+    });
+  };
+  applyTo('m3e-bottom-sheet');
+  applyTo('m3e-dialog');
+}
+
 export async function initApp(): Promise<void> {
   // 1. Initialize M3E Theme & Modes
   await initTheme();
+  enhanceOverlayBackdropBlur();
 
   // 2. Fetch Device Model metadata
   try {
