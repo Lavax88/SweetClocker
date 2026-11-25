@@ -1,6 +1,6 @@
 import type { ContrastLevel, M3eThemeElement, ThemeVariant } from '@m3e/web/theme';
 import type { M3eSegmentedButtonElement } from '@m3e/web/segmented-button';
-import type { M3eSelectElement } from '@m3e/web/select';
+import type { M3eSelectionListElement } from '@m3e/web/list';
 import type { M3eSwitchElement } from '@m3e/web/switch';
 import type { ThemeMode, EffectiveThemeMode, FontMode, ThemeSettings } from './types';
 import { exec } from '../bridge/ksu';
@@ -221,14 +221,41 @@ export function setThemeMode(mode: ThemeMode): void {
   persistSettings();
 }
 
+const VARIANT_LABELS: Record<ThemeVariant, string> = {
+  expressive: 'Expressive',
+  'tonal-spot': 'Tonal Spot',
+  vibrant: 'Vibrant',
+  fidelity: 'Fidelity',
+  content: 'Content',
+  monochrome: 'Monochrome',
+  neutral: 'Neutral',
+  rainbow: 'Rainbow',
+  'fruit-salad': 'Fruit Salad'
+};
+
 export function setThemeVariant(variant: ThemeVariant): void {
   activeThemeVariant = variant;
   const themeEl = getThemeElement();
-  if (themeEl) themeEl.variant = variant;
+  if (themeEl) {
+    themeEl.variant = variant;
+    themeEl.setAttribute('variant', variant);
+  }
 
-  const selectEl = document.getElementById('pref-theme-variant') as M3eSelectElement | null;
-  if (selectEl) selectEl.value = variant;
+  const valLabel = document.getElementById('pref-theme-variant-val');
+  if (valLabel) {
+    valLabel.innerText = VARIANT_LABELS[variant] ?? variant;
+  }
 
+  const list = document.getElementById('variant-sheet-options') as M3eSelectionListElement | null;
+  if (list) {
+    list.querySelectorAll<HTMLElement>('m3e-list-option').forEach((opt) => {
+      const isMatch = opt.getAttribute('value') === variant;
+      (opt as HTMLElement & { selected: boolean }).selected = isMatch;
+      opt.toggleAttribute('selected', isMatch);
+    });
+  }
+
+  syncMetaThemeColor();
   persistSettings();
 }
 

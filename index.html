@@ -284,20 +284,13 @@
                 </div>
 
                 <div class="setting-group">
-                  <m3e-form-field variant="outlined">
-                    <label slot="label" for="pref-theme-variant">Palette Variant</label>
-                    <m3e-select id="pref-theme-variant" value="expressive">
-                      <m3e-option value="expressive">Expressive</m3e-option>
-                      <m3e-option value="tonal-spot">Tonal Spot (Default M3)</m3e-option>
-                      <m3e-option value="vibrant">Vibrant</m3e-option>
-                      <m3e-option value="fidelity">Fidelity</m3e-option>
-                      <m3e-option value="content">Content</m3e-option>
-                      <m3e-option value="monochrome">Monochrome</m3e-option>
-                      <m3e-option value="neutral">Neutral</m3e-option>
-                      <m3e-option value="rainbow">Rainbow</m3e-option>
-                      <m3e-option value="fruit-salad">Fruit Salad</m3e-option>
-                    </m3e-select>
-                  </m3e-form-field>
+                  <m3e-action-list variant="segmented">
+                    <m3e-list-action id="pref-theme-variant-trigger">
+                      Palette Variant
+                      <span slot="supporting-text" id="pref-theme-variant-val">Expressive</span>
+                      <m3e-icon slot="trailing" name="arrow_drop_down"></m3e-icon>
+                    </m3e-list-action>
+                  </m3e-action-list>
                 </div>
 
                 <div class="setting-group">
@@ -471,6 +464,52 @@
         </m3e-nav-item>
       </m3e-nav-bar>
     </div>
+
+    <!-- M3E Palette Variant Selector Bottom Sheet -->
+    <m3e-bottom-sheet id="variant-sheet" modal handle hideable>
+      <m3e-heading slot="header" variant="title" size="large">Palette Variant</m3e-heading>
+      <div class="sheet-body-stack">
+        <span class="sheet-subtitle">Material 3 Expressive dynamic color algorithm</span>
+        <m3e-selection-list id="variant-sheet-options" variant="segmented">
+          <m3e-list-option value="expressive" selected>
+            Expressive
+            <span slot="supporting-text">Playful, detached accent harmonies (Default)</span>
+          </m3e-list-option>
+          <m3e-list-option value="tonal-spot">
+            Tonal Spot
+            <span slot="supporting-text">Classic Material 3 balanced tonal palette</span>
+          </m3e-list-option>
+          <m3e-list-option value="vibrant">
+            Vibrant
+            <span slot="supporting-text">High-chroma accents with vivid contrast</span>
+          </m3e-list-option>
+          <m3e-list-option value="fidelity">
+            Fidelity
+            <span slot="supporting-text">Stays closely faithful to the seed color</span>
+          </m3e-list-option>
+          <m3e-list-option value="content">
+            Content
+            <span slot="supporting-text">Balanced surface tones matched to content</span>
+          </m3e-list-option>
+          <m3e-list-option value="monochrome">
+            Monochrome
+            <span slot="supporting-text">Pure grayscale Material 3 palette</span>
+          </m3e-list-option>
+          <m3e-list-option value="neutral">
+            Neutral
+            <span slot="supporting-text">Subtle, near-neutral surface &amp; accent tones</span>
+          </m3e-list-option>
+          <m3e-list-option value="rainbow">
+            Rainbow
+            <span slot="supporting-text">Multi-hue chromatic accents across roles</span>
+          </m3e-list-option>
+          <m3e-list-option value="fruit-salad">
+            Fruit Salad
+            <span slot="supporting-text">Two-tone playful complementary palette</span>
+          </m3e-list-option>
+        </m3e-selection-list>
+      </div>
+    </m3e-bottom-sheet>
 
     <!-- M3E Frequency Selector Bottom Sheet -->
     <m3e-bottom-sheet id="freq-sheet" modal handle hideable>
