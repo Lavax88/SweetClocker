@@ -105,7 +105,7 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
           const target = input.target as HTMLElement | null;
           if (!target) return true;
           if (store.get('currentTuningSubView') !== 'hub') return false;
-          if (target.closest('m3e-bottom-sheet, m3e-dialog, input, textarea, m3e-slider')) {
+          if (target.closest('m3e-bottom-sheet, m3e-dialog, m3e-swipe-reveal, input, textarea, m3e-slider')) {
             return false;
           }
           return true;

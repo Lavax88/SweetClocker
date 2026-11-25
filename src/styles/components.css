@@ -377,16 +377,19 @@
   height: calc(100vh - 380px);
   min-height: 240px;
   border-radius: 16px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  background-color: var(--md-sys-color-surface-container-low);
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
+}
+
+.props-segmented-list {
+  overflow: visible;
+  --m3e-segmented-list-segment-gap: 2px;
 }
 
 .prop-row {
   width: 100%;
-  --m3e-list-item-height: 60px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  --m3e-list-item-height: 66px;
 }
 
 .prop-row mark {

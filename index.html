@@ -581,34 +581,23 @@
           <input type="text" id="prop-edit-key" class="mono-input" placeholder="e.g. ro.build.display.id" autocomplete="off" spellcheck="false">
         </m3e-form-field>
 
-        <m3e-card variant="outlined" id="prop-edit-meta-card">
-          <div slot="content" class="prop-meta-grid">
-            <div class="prop-meta-col">
-              <span class="prop-meta-label">Factory Default</span>
-              <span class="prop-meta-val" id="prop-edit-orig-val">--</span>
-            </div>
-            <m3e-divider vertical></m3e-divider>
-            <div class="prop-meta-col">
-              <span class="prop-meta-label">Live Value</span>
-              <span class="prop-meta-val live" id="prop-edit-live-val">--</span>
-            </div>
-          </div>
-        </m3e-card>
-
         <m3e-form-field variant="outlined">
           <label slot="label" for="prop-edit-value">Target Value</label>
           <input type="text" id="prop-edit-value" class="mono-input" placeholder="Enter new property value" autocomplete="off" spellcheck="false">
         </m3e-form-field>
 
-        <m3e-card variant="filled">
-          <div slot="content" class="switch-row">
-            <div class="switch-info">
-              <span class="switch-title">Apply on Boot</span>
-              <span class="switch-desc">Save to module system.prop for persistent early boot injection</span>
-            </div>
-            <m3e-switch id="prop-edit-boot-switch" icons="both" checked></m3e-switch>
-          </div>
-        </m3e-card>
+        <m3e-list variant="segmented" id="prop-edit-segmented-list">
+          <m3e-list-item id="prop-edit-meta-card">
+            Factory Default
+            <span slot="supporting-text" class="mono-input" id="prop-edit-orig-val">--</span>
+            <span slot="trailing" class="mono-input" id="prop-edit-live-val" style="color: var(--md-sys-color-primary); font-weight: 600;">--</span>
+          </m3e-list-item>
+          <m3e-list-item>
+            Apply on Boot
+            <span slot="supporting-text">Save to module system.prop for persistent early boot injection</span>
+            <m3e-switch slot="trailing" id="prop-edit-boot-switch" icons="both" checked></m3e-switch>
+          </m3e-list-item>
+        </m3e-list>
 
         <div class="m3e-edit-actions">
           <div class="m3e-edit-secondary-group">
@@ -657,17 +646,7 @@
               <m3e-chip id="prop-import-count-badge" variant="outlined">0 items</m3e-chip>
             </div>
             <div class="diff-table-wrapper">
-              <table class="prop-import-table" id="prop-import-diff-table">
-                <thead>
-                  <tr>
-                    <th style="width: 36px;"></th>
-                    <th>Property</th>
-                    <th>Current</th>
-                    <th>New</th>
-                  </tr>
-                </thead>
-                <tbody id="prop-import-diff-tbody"></tbody>
-              </table>
+              <m3e-list id="prop-import-diff-list" variant="segmented"></m3e-list>
             </div>
           </div>
         </m3e-card>

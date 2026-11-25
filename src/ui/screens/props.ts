@@ -38,10 +38,20 @@ export async function renderPropsView(forceRefresh = false): Promise<void> {
   if (!virtualPropList) {
     virtualPropList = new VirtualPropList({
       container,
-      itemHeight: 60,
+      itemHeight: 68,
       overscan: 6,
       onSelectProp: (prop) => {
         openPropEditSheet(prop);
+      },
+      onResetProp: async (prop) => {
+        toast(`Resetting ${prop.key}...`);
+        const ok = await propsEngine.resetProp(prop.key);
+        if (ok) {
+          toast(`Property ${prop.key} reset to default!`);
+          await renderPropsView(false);
+        } else {
+          toast(`Failed to reset ${prop.key}`);
+        }
       }
     });
   }
@@ -84,14 +94,14 @@ export function openPropEditSheet(prop?: SystemPropItem): void {
     activeEditProp = prop;
     if (title) title.innerText = 'Edit Property';
     if (subtitle) subtitle.innerText = prop.key;
-    if (metaCard) metaCard.style.display = 'block';
+    if (metaCard) metaCard.style.display = '';
     if (keyInput) {
       keyInput.value = prop.key;
       keyInput.readOnly = true;
       keyInput.disabled = true;
     }
     if (origVal) origVal.innerText = prop.defaultValue || '(none)';
-    if (liveVal) liveVal.innerText = prop.value || '(empty)';
+    if (liveVal) liveVal.innerText = `Live: ${prop.value || '(empty)'}`;
     if (valInput) valInput.value = prop.customValue !== null ? prop.customValue : prop.value;
     if (bootSwitch) bootSwitch.checked = prop.applyBoot;
 
@@ -139,14 +149,14 @@ export function openPropImportDialog(): void {
   const fileNamePill = document.getElementById('prop-import-filename-pill');
   const textarea = document.getElementById('prop-import-paste-textarea') as HTMLTextAreaElement | null;
   const diffContainer = document.getElementById('prop-import-diff-container');
-  const diffTbody = document.getElementById('prop-import-diff-tbody');
+  const diffList = document.getElementById('prop-import-diff-list');
 
   if (fileInput) fileInput.value = '';
   if (fileName) fileName.innerText = '';
   if (fileNamePill) fileNamePill.style.display = 'none';
   if (textarea) textarea.value = '';
   if (diffContainer) diffContainer.style.display = 'none';
-  if (diffTbody) diffTbody.innerHTML = '';
+  if (diffList) diffList.innerHTML = '';
   parsedImportDiffs = [];
 
   if (dialog) {
@@ -164,15 +174,15 @@ export function closePropImportDialog(): void {
 
 export function updateImportDiffPreview(rawText: string): void {
   const diffContainer = document.getElementById('prop-import-diff-container');
-  const diffTbody = document.getElementById('prop-import-diff-tbody');
-  if (!diffContainer || !diffTbody) return;
+  const diffList = document.getElementById('prop-import-diff-list');
+  if (!diffContainer || !diffList) return;
 
   const parsed = parsePropsText(rawText);
   const keys = Object.keys(parsed);
 
   if (keys.length === 0) {
     diffContainer.style.display = 'none';
-    diffTbody.innerHTML = '';
+    diffList.innerHTML = '';
     parsedImportDiffs = [];
     return;
   }
@@ -204,36 +214,27 @@ export function updateImportDiffPreview(rawText: string): void {
   });
 
   diffContainer.style.display = 'block';
-  diffTbody.innerHTML = parsedImportDiffs
+  diffList.innerHTML = parsedImportDiffs
     .map((diff, index) => {
       const tagClass =
         diff.status === 'add'
-          ? 'badge-custom'
+          ? 'm3e-tag-custom'
           : diff.status === 'modify'
-            ? 'badge-modified'
-            : 'badge-ro';
+            ? 'm3e-tag-modified'
+            : 'm3e-tag-ro';
       const tagLabel = diff.status === 'add' ? 'NEW' : diff.status === 'modify' ? 'MOD' : 'SAME';
       return `
-        <tr style="border-bottom: 1px solid var(--md-sys-color-outline-variant);">
-          <td style="padding: 6px 8px; vertical-align: middle;">
-            <m3e-checkbox class="prop-import-item-chk" data-idx="${index}" ${diff.selected ? 'checked' : ''}></m3e-checkbox>
-          </td>
-          <td style="padding: 6px 8px; font-family: var(--font-mono); font-weight: 500; word-break: break-all;">
-            ${escapeHtml(diff.key)}
-            <span class="badge-pill ${tagClass}" style="margin-left: 4px;">${tagLabel}</span>
-          </td>
-          <td style="padding: 6px 8px; font-family: var(--font-mono); color: var(--md-sys-color-on-surface-variant); word-break: break-all;">
-            ${escapeHtml(diff.currentValue || '(none)')}
-          </td>
-          <td style="padding: 6px 8px; font-family: var(--font-mono); color: var(--md-sys-color-primary); font-weight: 600; word-break: break-all;">
-            ${escapeHtml(diff.newValue)}
-          </td>
-        </tr>
+        <m3e-list-item>
+          <m3e-checkbox slot="leading" class="prop-import-item-chk" data-idx="${index}" ${diff.selected ? 'checked' : ''}></m3e-checkbox>
+          <span class="mono-input">${escapeHtml(diff.key)}</span>
+          <span slot="supporting-text" class="mono-input">${escapeHtml(diff.currentValue || '(none)')} → ${escapeHtml(diff.newValue)}</span>
+          <m3e-badge slot="trailing" size="large" class="${tagClass}">${tagLabel}</m3e-badge>
+        </m3e-list-item>
       `;
     })
     .join('');
 
-  diffTbody.querySelectorAll<M3eCheckboxElement>('.prop-import-item-chk').forEach((chk) => {
+  diffList.querySelectorAll<M3eCheckboxElement>('.prop-import-item-chk').forEach((chk) => {
     chk.addEventListener('change', () => {
       const idx = parseInt(chk.getAttribute('data-idx') ?? '-1', 10);
       if (idx >= 0 && parsedImportDiffs[idx]) {

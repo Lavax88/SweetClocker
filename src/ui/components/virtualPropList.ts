@@ -6,6 +6,7 @@ export interface VirtualPropListOptions {
   itemHeight?: number;
   overscan?: number;
   onSelectProp: (prop: SystemPropItem) => void;
+  onResetProp?: (prop: SystemPropItem) => void;
 }
 
 function escapeRegExp(str: string): string {
@@ -26,6 +27,7 @@ export class VirtualPropList {
   private itemHeight: number;
   private overscan: number;
   private onSelectProp: (prop: SystemPropItem) => void;
+  private onResetProp?: (prop: SystemPropItem) => void;
 
   private allProps: SystemPropItem[] = [];
   private filteredProps: SystemPropItem[] = [];
@@ -38,9 +40,10 @@ export class VirtualPropList {
 
   constructor(options: VirtualPropListOptions) {
     this.container = options.container;
-    this.itemHeight = options.itemHeight ?? 60;
+    this.itemHeight = options.itemHeight ?? 68;
     this.overscan = options.overscan ?? 6;
     this.onSelectProp = options.onSelectProp;
+    this.onResetProp = options.onResetProp;
 
     this.container.innerHTML = '';
     this.container.style.position = 'relative';
@@ -71,7 +74,29 @@ export class VirtualPropList {
     });
 
     this.content.addEventListener('click', (event) => {
-      const row = (event.target as HTMLElement).closest<HTMLElement>('.prop-row');
+      const target = event.target as HTMLElement;
+
+      const resetBtn = target.closest<HTMLElement>('.prop-swipe-reset');
+      if (resetBtn) {
+        event.stopPropagation();
+        const key = resetBtn.getAttribute('data-prop-key');
+        const prop = key ? this.filteredProps.find((p) => p.key === key) : undefined;
+        if (prop && this.onResetProp) {
+          this.onResetProp(prop);
+        }
+        return;
+      }
+
+      const editBtn = target.closest<HTMLElement>('.prop-swipe-edit');
+      if (editBtn) {
+        event.stopPropagation();
+        const key = editBtn.getAttribute('data-prop-key');
+        const prop = key ? this.filteredProps.find((p) => p.key === key) : undefined;
+        if (prop) this.onSelectProp(prop);
+        return;
+      }
+
+      const row = target.closest<HTMLElement>('.prop-row');
       if (!row) return;
 
       const propKey = row.getAttribute('data-prop-key');
@@ -171,28 +196,56 @@ export class VirtualPropList {
 
     this.content.style.transform = `translateY(${offsetY}px)`;
 
-    const html = visibleItems
+    const itemsHtml = visibleItems
       .map((prop) => {
+        const escapedKey = escapeHtml(prop.key);
         const highlightedKey = highlightMatch(prop.key, this.searchTerm);
         const escapedVal = escapeHtml(prop.value || '(empty)');
         const valTitle = escapeHtml(prop.value || '');
 
         let badges = '';
-        if (prop.isReadOnly) badges += '<span class="badge-pill badge-ro">RO</span>';
-        if (prop.isCustom) badges += '<span class="badge-pill badge-custom">Custom</span>';
-        if (prop.isModified) badges += '<span class="badge-pill badge-modified">Modified</span>';
-        if (prop.applyBoot) badges += '<span class="badge-pill badge-boot">Boot</span>';
+        if (prop.isReadOnly) {
+          badges += '<m3e-badge size="large" class="m3e-tag-ro">RO</m3e-badge>';
+        }
+        if (prop.isCustom) {
+          badges += '<m3e-badge size="large" class="m3e-tag-custom">Custom</m3e-badge>';
+        }
+        if (prop.isModified) {
+          badges += '<m3e-badge size="large" class="m3e-tag-modified">Modified</m3e-badge>';
+        }
+        if (prop.applyBoot) {
+          badges += '<m3e-badge size="large" class="m3e-tag-boot">Boot</m3e-badge>';
+        }
+
+        const resetAction =
+          prop.isModified || prop.applyBoot
+            ? `<m3e-icon-button slot="trailing" class="prop-swipe-reset" data-prop-key="${escapedKey}" variant="filled" aria-label="Reset property">
+                 <m3e-icon name="restart_alt"></m3e-icon>
+               </m3e-icon-button>`
+            : '';
 
         return `
-          <m3e-list-action class="prop-row" data-prop-key="${escapeHtml(prop.key)}" style="height: ${this.itemHeight}px;">
-            ${highlightedKey}
-            <span slot="supporting-text" title="${valTitle}">${escapedVal}</span>
-            <div slot="trailing" class="prop-badges">${badges}</div>
-          </m3e-list-action>
+          <m3e-swipe-reveal style="height: ${this.itemHeight - 2}px;">
+            <m3e-list-action class="prop-row" data-prop-key="${escapedKey}" style="height: ${this.itemHeight - 2}px;">
+              ${highlightedKey}
+              <span slot="supporting-text" title="${valTitle}">${escapedVal}</span>
+              <div slot="trailing" class="prop-badges">${badges}</div>
+            </m3e-list-action>
+            <m3e-icon-button slot="trailing" class="prop-swipe-edit" data-prop-key="${escapedKey}" variant="tonal" aria-label="Edit property">
+              <m3e-icon name="tune"></m3e-icon>
+            </m3e-icon-button>
+            ${resetAction}
+          </m3e-swipe-reveal>
         `;
       })
       .join('');
 
-    this.content.innerHTML = html;
+    this.content.innerHTML = `
+      <m3e-swipe-reveal-group>
+        <m3e-list variant="segmented" class="props-segmented-list">
+          ${itemsHtml}
+        </m3e-list>
+      </m3e-swipe-reveal-group>
+    `;
   }
 }

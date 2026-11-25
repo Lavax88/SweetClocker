@@ -27,4 +27,5 @@ import '@m3e/web/search';
 import '@m3e/web/segmented-button';
 import '@m3e/web/select';
 import '@m3e/web/snackbar';
+import '@m3e/web/swipe-reveal';
 import '@m3e/web/switch';
