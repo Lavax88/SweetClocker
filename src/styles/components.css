@@ -364,8 +364,15 @@
 #prop-edit-segmented-list,
 #prop-import-diff-list {
   overflow: visible;
-  --m3e-segmented-list-segment-gap: 3px;
+  --m3e-segmented-list-segment-gap: 6px;
   --m3e-segmented-list-item-container-color: var(--md-sys-color-surface-container-high);
+  --m3e-segmented-list-item-container-shape: 14px;
+  --m3e-list-item-container-shape: 14px;
+}
+
+.props-segmented-list m3e-swipe-reveal {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 /* Tuning Hub Segmented Card List & Shaped Icons */

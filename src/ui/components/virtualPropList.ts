@@ -36,12 +36,21 @@ export class VirtualPropList {
 
   private spacer: HTMLDivElement;
   private content: HTMLDivElement;
+  private swipeGroup: HTMLElement;
+  private listEl: HTMLElement;
   private isTicking = false;
+  private lastStartIndex = -1;
+  private lastEndIndex = -1;
+  private readonly rowGap = 6;
+
+  private get stride(): number {
+    return this.itemHeight + this.rowGap;
+  }
 
   constructor(options: VirtualPropListOptions) {
     this.container = options.container;
-    this.itemHeight = options.itemHeight ?? 68;
-    this.overscan = options.overscan ?? 6;
+    this.itemHeight = options.itemHeight ?? 66;
+    this.overscan = options.overscan ?? 8;
     this.onSelectProp = options.onSelectProp;
     this.onResetProp = options.onResetProp;
 
@@ -60,6 +69,13 @@ export class VirtualPropList {
     this.content.style.left = '0';
     this.content.style.right = '0';
 
+    this.swipeGroup = document.createElement('m3e-swipe-reveal-group');
+    this.listEl = document.createElement('m3e-list');
+    this.listEl.setAttribute('variant', 'segmented');
+    this.listEl.className = 'props-segmented-list';
+    this.swipeGroup.appendChild(this.listEl);
+    this.content.appendChild(this.swipeGroup);
+
     this.container.appendChild(this.spacer);
     this.container.appendChild(this.content);
 
@@ -67,7 +83,7 @@ export class VirtualPropList {
       if (!this.isTicking) {
         this.isTicking = true;
         requestAnimationFrame(() => {
-          this.render();
+          this.render(false);
           this.isTicking = false;
         });
       }
@@ -160,14 +176,16 @@ export class VirtualPropList {
     }
 
     this.filteredProps = result;
+    this.lastStartIndex = -1;
+    this.lastEndIndex = -1;
 
-    const totalHeight = this.filteredProps.length * this.itemHeight;
+    const totalHeight = result.length > 0 ? result.length * this.stride - this.rowGap : 0;
     this.spacer.style.height = `${totalHeight}px`;
 
-    this.render();
+    this.render(true);
   }
 
-  private render(): void {
+  private render(force = false): void {
     const total = this.filteredProps.length;
     if (total === 0) {
       this.content.style.transform = 'translateY(0px)';
@@ -175,7 +193,7 @@ export class VirtualPropList {
         this.searchTerm || this.filterMode !== 'all'
           ? 'No properties match the current filter or search.'
           : 'No system properties available.';
-      this.content.innerHTML = `
+      this.listEl.innerHTML = `
         <div class="grid-placeholder">
           ${escapeHtml(emptyMsg)}
         </div>
@@ -186,13 +204,25 @@ export class VirtualPropList {
     const scrollTop = this.container.scrollTop;
     const clientHeight = this.container.clientHeight || 400;
 
-    let startIndex = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.overscan);
-    let endIndex = Math.min(total, Math.ceil((scrollTop + clientHeight) / this.itemHeight) + this.overscan);
+    const rawStart = Math.floor(scrollTop / this.stride);
+    const rawEnd = Math.ceil((scrollTop + clientHeight) / this.stride);
+    const startIndex = Math.max(0, rawStart - this.overscan);
+    const endIndex = Math.min(total, Math.max(startIndex, rawEnd + this.overscan));
 
-    if (endIndex < startIndex) endIndex = startIndex;
+    if (
+      !force &&
+      this.lastStartIndex >= 0 &&
+      rawStart >= this.lastStartIndex &&
+      rawEnd <= this.lastEndIndex
+    ) {
+      return;
+    }
+
+    this.lastStartIndex = startIndex;
+    this.lastEndIndex = endIndex;
 
     const visibleItems = this.filteredProps.slice(startIndex, endIndex);
-    const offsetY = startIndex * this.itemHeight;
+    const offsetY = startIndex * this.stride;
 
     this.content.style.transform = `translateY(${offsetY}px)`;
 
@@ -225,8 +255,8 @@ export class VirtualPropList {
             : '';
 
         return `
-          <m3e-swipe-reveal style="height: ${this.itemHeight - 2}px;">
-            <m3e-list-action class="prop-row" data-prop-key="${escapedKey}" style="height: ${this.itemHeight - 2}px;">
+          <m3e-swipe-reveal style="height: ${this.itemHeight}px;">
+            <m3e-list-action class="prop-row" data-prop-key="${escapedKey}" style="height: ${this.itemHeight}px;">
               ${highlightedKey}
               <span slot="supporting-text" title="${valTitle}">${escapedVal}</span>
               <div slot="trailing" class="prop-badges">${badges}</div>
@@ -240,12 +270,6 @@ export class VirtualPropList {
       })
       .join('');
 
-    this.content.innerHTML = `
-      <m3e-swipe-reveal-group>
-        <m3e-list variant="segmented" class="props-segmented-list">
-          ${itemsHtml}
-        </m3e-list>
-      </m3e-swipe-reveal-group>
-    `;
+    this.listEl.innerHTML = itemsHtml;
   }
 }
