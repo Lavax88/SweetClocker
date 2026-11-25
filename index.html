@@ -99,31 +99,41 @@
             <div id="tuning-hub-view" class="tuning-subview active">
               <m3e-action-list variant="segmented" class="tune-list">
                 <m3e-list-action data-tune-feature="performance-profile">
-                  <m3e-icon slot="leading" name="cpu"></m3e-icon>
+                  <m3e-shape slot="leading" class="tune-shape-icon tune-shape-cpu" name="4-sided-cookie">
+                    <m3e-icon name="cpu"></m3e-icon>
+                  </m3e-shape>
                   CPU Configuration
                   <span slot="supporting-text">Cluster frequency limits &amp; governors</span>
                   <m3e-icon slot="trailing" name="chevron_right"></m3e-icon>
                 </m3e-list-action>
                 <m3e-list-action data-tune-feature="gpu-clocks">
-                  <m3e-icon slot="leading" name="gpu"></m3e-icon>
+                  <m3e-shape slot="leading" class="tune-shape-icon tune-shape-gpu" name="sunny">
+                    <m3e-icon name="gpu"></m3e-icon>
+                  </m3e-shape>
                   GPU Configuration
                   <span slot="supporting-text">GPU frequency limits &amp; governor</span>
                   <m3e-icon slot="trailing" name="chevron_right"></m3e-icon>
                 </m3e-list-action>
                 <m3e-list-action data-tune-feature="io-management">
-                  <m3e-icon slot="leading" name="io"></m3e-icon>
+                  <m3e-shape slot="leading" class="tune-shape-icon tune-shape-io" name="flower">
+                    <m3e-icon name="io"></m3e-icon>
+                  </m3e-shape>
                   I/O Management
                   <span slot="supporting-text">Block device I/O schedulers</span>
                   <m3e-icon slot="trailing" name="chevron_right"></m3e-icon>
                 </m3e-list-action>
                 <m3e-list-action data-tune-feature="network-management">
-                  <m3e-icon slot="leading" name="network"></m3e-icon>
+                  <m3e-shape slot="leading" class="tune-shape-icon tune-shape-net" name="gem">
+                    <m3e-icon name="network"></m3e-icon>
+                  </m3e-shape>
                   Network Configuration
                   <span slot="supporting-text">TCP congestion control</span>
                   <m3e-icon slot="trailing" name="chevron_right"></m3e-icon>
                 </m3e-list-action>
                 <m3e-list-action data-tune-feature="props-management">
-                  <m3e-icon slot="leading" name="props"></m3e-icon>
+                  <m3e-shape slot="leading" class="tune-shape-icon tune-shape-props" name="pentagon">
+                    <m3e-icon name="props"></m3e-icon>
+                  </m3e-shape>
                   System Properties
                   <span slot="supporting-text">Android getprop, resetprop &amp; boot props</span>
                   <m3e-icon slot="trailing" name="chevron_right"></m3e-icon>

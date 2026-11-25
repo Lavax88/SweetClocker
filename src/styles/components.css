@@ -368,6 +368,49 @@
   --m3e-segmented-list-item-container-color: var(--md-sys-color-surface-container-high);
 }
 
+/* Tuning Hub Segmented Card List & Shaped Icons */
+.tune-list {
+  --m3e-segmented-list-segment-gap: 4px;
+  --m3e-segmented-list-item-container-color: var(--md-sys-color-surface-container);
+  --m3e-list-item-height: 76px;
+}
+
+.tune-shape-icon {
+  --m3e-shape-size: 44px;
+  --m3e-shape-container-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  flex-shrink: 0;
+}
+
+.tune-shape-icon m3e-icon {
+  --m3e-icon-size: 22px;
+}
+
+.tune-shape-cpu {
+  --m3e-shape-container-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.tune-shape-gpu {
+  --m3e-shape-container-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.tune-shape-io {
+  --m3e-shape-container-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.tune-shape-net {
+  --m3e-shape-container-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.tune-shape-props {
+  --m3e-shape-container-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
 .prop-row {
   width: 100%;
   --m3e-list-item-height: 66px;
