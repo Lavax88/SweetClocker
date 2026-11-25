@@ -33,8 +33,10 @@ export function showConfirmDialog(options: ConfirmDialogOptions): Promise<boolea
 
     titleEl.innerText = options.title;
     messageEl.innerText = options.message;
-    confirmBtn.innerText = options.confirmLabel || 'Confirm';
-    cancelBtn.innerText = options.cancelLabel || 'Cancel';
+    const confirmAction = confirmBtn.querySelector<HTMLElement>('m3e-dialog-action');
+    if (confirmAction) confirmAction.innerText = options.confirmLabel || 'Confirm';
+    const cancelAction = cancelBtn.querySelector<HTMLElement>('m3e-dialog-action');
+    if (cancelAction) cancelAction.innerText = options.cancelLabel || 'Cancel';
 
     confirmBtn.classList.toggle('danger-filled-btn', Boolean(options.isDanger));
 
@@ -48,27 +50,12 @@ export function initConfirmDialog(): void {
   isInitialized = true;
 
   const dialog = document.getElementById('m3-confirm-dialog') as M3eDialogElement | null;
-  const confirmBtn = document.getElementById('m3-confirm-dialog-confirm-btn');
-  const cancelBtn = document.getElementById('m3-confirm-dialog-cancel-btn');
 
-  const closeDialog = (result: boolean) => {
-    if (dialog && dialog.open) {
-      dialog.hide(result ? 'confirm' : 'cancel');
-    }
-    if (activeResolver) {
-      const resolver = activeResolver;
-      activeResolver = null;
-      resolver(result);
-    }
-  };
-
-  confirmBtn?.addEventListener('click', () => closeDialog(true));
-  cancelBtn?.addEventListener('click', () => closeDialog(false));
   dialog?.addEventListener('closed', () => {
     if (activeResolver) {
       const resolver = activeResolver;
       activeResolver = null;
-      resolver(false);
+      resolver(dialog.returnValue === 'confirm');
     }
   });
 }

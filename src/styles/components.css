@@ -314,31 +314,6 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
   text-align: right;
 }
 
-.switch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.switch-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.switch-title {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-}
-
-.switch-desc {
-  font-size: 0.78rem;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
 .code-pill {
   font-family: var(--font-mono);
   font-size: 0.78em;
@@ -448,11 +423,33 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
   --m3e-list-item-height: 66px;
 }
 
-.prop-row mark {
-  background-color: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-  border-radius: 3px;
-  padding: 0 2px;
+.prop-row m3e-text-highlight {
+  --m3e-text-highlight-container-color: var(--md-sys-color-primary-container);
+  --m3e-text-highlight-color: var(--md-sys-color-on-primary-container);
+}
+
+.skeleton-core-card {
+  display: block;
+  width: 100%;
+  height: 112px;
+}
+
+.skeleton-tuning-card {
+  display: block;
+  width: 100%;
+  height: 220px;
+}
+
+.skeleton-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skeleton-prop-row {
+  display: block;
+  width: 100%;
+  height: 68px;
 }
 
 .prop-badges {
@@ -682,9 +679,8 @@ m3e-bottom-sheet m3e-button {
 }
 
 .prop-import-scroll {
+  display: block;
   max-height: 60vh;
-  overflow-y: auto;
-  padding-right: 4px;
 }
 
 .upload-zone-inner {
@@ -710,13 +706,6 @@ m3e-bottom-sheet m3e-button {
 }
 
 .diff-table-wrapper {
+  display: block;
   max-height: 180px;
-  overflow-y: auto;
-}
-
-.import-options-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
 }

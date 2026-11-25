@@ -9,19 +9,6 @@ export interface VirtualPropListOptions {
   onResetProp?: (prop: SystemPropItem) => void;
 }
 
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function highlightMatch(text: string, query: string): string {
-  if (!query) {
-    return escapeHtml(text);
-  }
-  const escapedText = escapeHtml(text);
-  const regex = new RegExp(`(${escapeRegExp(escapeHtml(query))})`, 'gi');
-  return escapedText.replace(regex, '<mark>$1</mark>');
-}
-
 export class VirtualPropList {
   private container: HTMLElement;
   private itemHeight: number;
@@ -229,7 +216,7 @@ export class VirtualPropList {
     const itemsHtml = visibleItems
       .map((prop) => {
         const escapedKey = escapeHtml(prop.key);
-        const highlightedKey = highlightMatch(prop.key, this.searchTerm);
+        const escapedSearchTerm = escapeHtml(this.searchTerm);
         const escapedVal = escapeHtml(prop.value || '(empty)');
         const valTitle = escapeHtml(prop.value || '');
 
@@ -257,7 +244,7 @@ export class VirtualPropList {
         return `
           <m3e-swipe-reveal style="height: ${this.itemHeight}px;">
             <m3e-list-action class="prop-row" data-prop-key="${escapedKey}" style="height: ${this.itemHeight}px;">
-              ${highlightedKey}
+              <m3e-text-highlight term="${escapedSearchTerm}">${escapedKey}</m3e-text-highlight>
               <span slot="supporting-text" title="${valTitle}">${escapedVal}</span>
               <div slot="trailing" class="prop-badges">${badges}</div>
             </m3e-list-action>

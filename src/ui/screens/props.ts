@@ -215,7 +215,7 @@ export function updateImportDiffPreview(rawText: string): void {
 
   diffContainer.style.display = 'block';
   diffList.innerHTML = parsedImportDiffs
-    .map((diff, index) => {
+    .map((diff) => {
       const tagClass =
         diff.status === 'add'
           ? 'm3e-tag-custom'
@@ -224,24 +224,19 @@ export function updateImportDiffPreview(rawText: string): void {
             : 'm3e-tag-ro';
       const tagLabel = diff.status === 'add' ? 'NEW' : diff.status === 'modify' ? 'MOD' : 'SAME';
       return `
-        <m3e-list-item>
-          <m3e-checkbox slot="leading" class="prop-import-item-chk" data-idx="${index}" ${diff.selected ? 'checked' : ''}></m3e-checkbox>
+        <m3e-list-option value="${escapeHtml(diff.key)}" ${diff.selected ? 'selected' : ''}>
           <span class="mono-input">${escapeHtml(diff.key)}</span>
           <span slot="supporting-text" class="mono-input">${escapeHtml(diff.currentValue || '(none)')} → ${escapeHtml(diff.newValue)}</span>
           <m3e-badge slot="trailing" size="large" class="${tagClass}">${tagLabel}</m3e-badge>
-        </m3e-list-item>
+        </m3e-list-option>
       `;
     })
     .join('');
 
-  diffList.querySelectorAll<M3eCheckboxElement>('.prop-import-item-chk').forEach((chk) => {
-    chk.addEventListener('change', () => {
-      const idx = parseInt(chk.getAttribute('data-idx') ?? '-1', 10);
-      if (idx >= 0 && parsedImportDiffs[idx]) {
-        parsedImportDiffs[idx].selected = chk.checked;
-      }
-    });
-  });
+  const selectAllChk = document.getElementById('prop-import-select-all') as M3eCheckboxElement | null;
+  if (selectAllChk) {
+    selectAllChk.checked = parsedImportDiffs.every((d) => d.selected);
+  }
 }
 
 export function openPropExportSheet(): void {
@@ -342,8 +337,6 @@ export function setupPropsListeners(): void {
   });
 
   // Edit sheet listeners
-  document.getElementById('prop-edit-cancel-btn')?.addEventListener('click', closePropEditSheet);
-
   document.getElementById('prop-edit-save-btn')?.addEventListener('click', async () => {
     const keyInput = document.getElementById('prop-edit-key') as HTMLInputElement | null;
     const valInput = document.getElementById('prop-edit-value') as HTMLInputElement | null;
@@ -398,8 +391,6 @@ export function setupPropsListeners(): void {
   });
 
   // Import dialog listeners
-  document.getElementById('prop-import-cancel-btn')?.addEventListener('click', closePropImportDialog);
-
   const importFileInput = document.getElementById('prop-import-file-input') as HTMLInputElement | null;
   document.getElementById('prop-import-choose-btn')?.addEventListener('click', () => {
     importFileInput?.click();
@@ -432,11 +423,25 @@ export function setupPropsListeners(): void {
   });
 
   const selectAllChk = document.getElementById('prop-import-select-all') as M3eCheckboxElement | null;
+  const diffListEl = document.getElementById('prop-import-diff-list') as M3eSelectionListElement | null;
+
+  diffListEl?.addEventListener('change', () => {
+    diffListEl.options.forEach((opt, idx) => {
+      if (parsedImportDiffs[idx]) {
+        parsedImportDiffs[idx].selected = opt.selected;
+      }
+    });
+    if (selectAllChk) {
+      selectAllChk.checked =
+        parsedImportDiffs.length > 0 && parsedImportDiffs.every((d) => d.selected);
+    }
+  });
+
   selectAllChk?.addEventListener('change', () => {
     const checked = selectAllChk.checked;
     parsedImportDiffs.forEach((d) => (d.selected = checked));
-    document.querySelectorAll<M3eCheckboxElement>('.prop-import-item-chk').forEach((chk) => {
-      chk.checked = checked;
+    diffListEl?.options.forEach((opt) => {
+      opt.selected = checked;
     });
   });
 
@@ -468,8 +473,6 @@ export function setupPropsListeners(): void {
   });
 
   // Export sheet listeners
-  document.getElementById('prop-export-close-btn')?.addEventListener('click', closePropExportSheet);
-
   const getExportScope = (): boolean => {
     const list = document.getElementById('prop-export-radio-list') as M3eSelectionListElement | null;
     const val = list?.value;

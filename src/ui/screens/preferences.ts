@@ -8,8 +8,7 @@ import {
   setThemeVariant,
   setThemeContrast,
   setFontMode,
-  setReduceEffects,
-  syncConnectedButtonGroup
+  setReduceEffects
 } from '../../theme/theme';
 import type { ThemeMode, FontMode } from '../../theme/types';
 import { setBypassMode } from '../../telemetry/sampler';
@@ -19,14 +18,20 @@ function bindConnectedGroup(groupId: string, onSelect: (value: string) => void):
   const group = document.getElementById(groupId);
   if (!group) return;
 
-  group.querySelectorAll<M3eButtonElement>('m3e-button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const val = btn.getAttribute('value');
-      if (val !== null) {
-        syncConnectedButtonGroup(groupId, val);
-        onSelect(val);
-      }
-    });
+  group.addEventListener('change', (event) => {
+    const btn = event.target as M3eButtonElement | null;
+    if (!btn || btn.tagName !== 'M3E-BUTTON') return;
+
+    // Prevent deselecting the active button in a single-select connected group
+    if (!btn.selected) {
+      btn.selected = true;
+      return;
+    }
+
+    const val = btn.getAttribute('value');
+    if (val !== null) {
+      onSelect(val);
+    }
   });
 }
 

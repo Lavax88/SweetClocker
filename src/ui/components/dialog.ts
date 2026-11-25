@@ -97,17 +97,14 @@ export function hideApplyBootDialog(result: boolean | null = null): void {
 
 export function initApplyBootDialog(): void {
   const dialog = document.getElementById('apply-boot-dialog') as M3eDialogElement | null;
-  const nowBtn = document.getElementById('apply-boot-dialog-now');
-  const bootBtn = document.getElementById('apply-boot-dialog-boot');
-
-  nowBtn?.addEventListener('click', () => hideApplyBootDialog(false));
-  bootBtn?.addEventListener('click', () => hideApplyBootDialog(true));
 
   dialog?.addEventListener('closed', () => {
     if (applyBootResolve) {
       const res = applyBootResolve;
       applyBootResolve = null;
-      res(null);
+      const result =
+        dialog.returnValue === 'boot' ? true : dialog.returnValue === 'now' ? false : null;
+      res(result);
     }
   });
 }

@@ -44,7 +44,10 @@
           <section id="page-dashboard" class="page-section active">
             <m3e-heading variant="title" size="medium" emphasized>CPU Frequency &amp; Thermals</m3e-heading>
             <div class="cores-grid" id="cores-grid">
-              <div class="grid-placeholder">Loading CPU configurations…</div>
+              <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
+              <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
+              <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
+              <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
             </div>
 
             <m3e-heading variant="title" size="medium" emphasized>GPU Frequency &amp; Thermals</m3e-heading>
@@ -152,7 +155,8 @@
                 </div>
               </m3e-card>
               <div class="tuning-grid" id="tuning-grid">
-                <div class="grid-placeholder">Loading cluster frequency controls…</div>
+                <m3e-skeleton shape="rounded" class="skeleton-tuning-card"></m3e-skeleton>
+                <m3e-skeleton shape="rounded" class="skeleton-tuning-card"></m3e-skeleton>
               </div>
             </div>
 
@@ -179,7 +183,7 @@
               </m3e-callout>
 
               <div class="tuning-grid" id="gpu-tuning-grid">
-                <div class="grid-placeholder">Loading GPU configuration controls…</div>
+                <m3e-skeleton shape="rounded" class="skeleton-tuning-card"></m3e-skeleton>
               </div>
             </div>
 
@@ -191,13 +195,13 @@
                     <m3e-heading variant="title" size="medium" emphasized>I/O Management</m3e-heading>
                     <p class="hero-desc">Configure storage block device I/O schedulers</p>
                   </div>
-                  <div class="switch-row">
-                    <div class="switch-info">
-                      <span class="switch-title">Enable I/O Management</span>
-                      <span class="switch-desc">Enable block device discovery &amp; scheduler controls</span>
-                    </div>
-                    <m3e-switch id="io-enable-toggle" icons="both"></m3e-switch>
-                  </div>
+                  <m3e-list variant="segmented">
+                    <m3e-list-item>
+                      Enable I/O Management
+                      <span slot="supporting-text">Enable block device discovery &amp; scheduler controls</span>
+                      <m3e-switch slot="trailing" id="io-enable-toggle" icons="both"></m3e-switch>
+                    </m3e-list-item>
+                  </m3e-list>
                 </div>
               </m3e-card>
               <div class="tuning-grid" id="io-tuning-grid">
@@ -213,13 +217,13 @@
                     <m3e-heading variant="title" size="medium" emphasized>Network Configuration</m3e-heading>
                     <p class="hero-desc">Configure kernel TCP congestion control algorithms</p>
                   </div>
-                  <div class="switch-row">
-                    <div class="switch-info">
-                      <span class="switch-title">Enable Network Tuning</span>
-                      <span class="switch-desc">Enable TCP congestion control customization</span>
-                    </div>
-                    <m3e-switch id="net-enable-toggle" icons="both"></m3e-switch>
-                  </div>
+                  <m3e-list variant="segmented">
+                    <m3e-list-item>
+                      Enable Network Tuning
+                      <span slot="supporting-text">Enable TCP congestion control customization</span>
+                      <m3e-switch slot="trailing" id="net-enable-toggle" icons="both"></m3e-switch>
+                    </m3e-list-item>
+                  </m3e-list>
                 </div>
               </m3e-card>
               <div class="tuning-grid" id="net-tuning-grid">
@@ -251,7 +255,12 @@
               </m3e-card>
 
               <div id="props-list-container" class="props-list-container">
-                <div class="grid-placeholder">Loading system properties…</div>
+                <div class="skeleton-list-stack">
+                  <m3e-skeleton shape="rounded" class="skeleton-prop-row"></m3e-skeleton>
+                  <m3e-skeleton shape="rounded" class="skeleton-prop-row"></m3e-skeleton>
+                  <m3e-skeleton shape="rounded" class="skeleton-prop-row"></m3e-skeleton>
+                  <m3e-skeleton shape="rounded" class="skeleton-prop-row"></m3e-skeleton>
+                </div>
               </div>
             </div>
           </section>
@@ -320,13 +329,13 @@
                   </m3e-button-group>
                 </div>
 
-                <div class="switch-row">
-                  <div class="switch-info">
-                    <span class="switch-title">Reduce Visual Effects</span>
-                    <span class="switch-desc">Use standard motion and disable blur for smoother performance</span>
-                  </div>
-                  <m3e-switch id="reduce-effects-toggle" icons="both"></m3e-switch>
-                </div>
+                <m3e-list variant="segmented">
+                  <m3e-list-item>
+                    Reduce Visual Effects
+                    <span slot="supporting-text">Use standard motion and disable blur for smoother performance</span>
+                    <m3e-switch slot="trailing" id="reduce-effects-toggle" icons="both"></m3e-switch>
+                  </m3e-list-item>
+                </m3e-list>
 
                 <m3e-divider></m3e-divider>
 
@@ -520,8 +529,12 @@
         Do you want to re-apply this configuration on system boot, or only apply it for the current session?
       </p>
       <div slot="actions" class="dialog-actions-end">
-        <m3e-button variant="tonal" id="apply-boot-dialog-now">Only for now</m3e-button>
-        <m3e-button variant="filled" id="apply-boot-dialog-boot">Apply on Boot</m3e-button>
+        <m3e-button variant="tonal" id="apply-boot-dialog-now">
+          <m3e-dialog-action return-value="now">Only for now</m3e-dialog-action>
+        </m3e-button>
+        <m3e-button variant="filled" id="apply-boot-dialog-boot">
+          <m3e-dialog-action return-value="boot">Apply on Boot</m3e-dialog-action>
+        </m3e-button>
       </div>
     </m3e-dialog>
 
@@ -549,8 +562,12 @@
       <span slot="header" id="m3-confirm-dialog-title">Confirm Action</span>
       <p id="m3-confirm-dialog-message" class="dialog-body-text">Are you sure you want to proceed?</p>
       <div slot="actions" class="dialog-actions-end">
-        <m3e-button variant="outlined" id="m3-confirm-dialog-cancel-btn">Cancel</m3e-button>
-        <m3e-button variant="filled" id="m3-confirm-dialog-confirm-btn">Confirm</m3e-button>
+        <m3e-button variant="outlined" id="m3-confirm-dialog-cancel-btn">
+          <m3e-dialog-action return-value="cancel">Cancel</m3e-dialog-action>
+        </m3e-button>
+        <m3e-button variant="filled" id="m3-confirm-dialog-confirm-btn">
+          <m3e-dialog-action return-value="confirm">Confirm</m3e-dialog-action>
+        </m3e-button>
       </div>
     </m3e-dialog>
 
@@ -587,7 +604,9 @@
           <div class="m3e-edit-secondary-group">
             <m3e-button variant="outlined" class="danger-btn" id="prop-edit-reset-btn">Reset</m3e-button>
             <m3e-button variant="outlined" class="danger-btn" id="prop-edit-delete-btn" style="display: none;">Delete</m3e-button>
-            <m3e-button variant="outlined" id="prop-edit-cancel-btn">Cancel</m3e-button>
+            <m3e-button variant="outlined" id="prop-edit-cancel-btn">
+              <m3e-bottom-sheet-action>Cancel</m3e-bottom-sheet-action>
+            </m3e-button>
           </div>
           <m3e-button variant="filled" id="prop-edit-save-btn">
             <m3e-icon slot="icon" name="check"></m3e-icon>
@@ -600,64 +619,62 @@
     <!-- Prop Import Dialog -->
     <m3e-dialog id="prop-import-dialog" dismissible>
       <span slot="header">Import Properties</span>
-      <div class="dialog-body-stack prop-import-scroll">
-        <p class="sheet-subtitle">Upload a .prop configuration file or paste key=value tweaks</p>
+      <m3e-scroll-container class="prop-import-scroll" thin>
+        <div class="dialog-body-stack">
+          <p class="sheet-subtitle">Upload a .prop configuration file or paste key=value tweaks</p>
 
-        <m3e-card variant="outlined" id="prop-import-upload-zone">
-          <div slot="content" class="upload-zone-inner">
-            <label for="prop-import-file-input" class="upload-trigger-label">
-              <m3e-button variant="tonal" id="prop-import-choose-btn" type="button">
-                <m3e-icon slot="icon" name="upload"></m3e-icon>
-                Choose .prop File
-              </m3e-button>
-              <input type="file" id="prop-import-file-input" accept=".prop,.txt" style="display: none;">
-            </label>
-            <m3e-chip id="prop-import-filename-pill" variant="outlined" style="display: none;">
-              <span id="prop-import-filename">filename.prop</span>
-            </m3e-chip>
-          </div>
-        </m3e-card>
-
-        <m3e-form-field variant="outlined">
-          <label slot="label" for="prop-import-paste-textarea">Paste .prop content</label>
-          <textarea id="prop-import-paste-textarea" class="mono-input" rows="4" spellcheck="false"></textarea>
-        </m3e-form-field>
-
-        <m3e-card variant="outlined" id="prop-import-diff-container" style="display: none;">
-          <div slot="content" class="diff-card-inner">
-            <div class="diff-card-header">
-              <m3e-checkbox id="prop-import-select-all" checked>Detected Properties</m3e-checkbox>
-              <m3e-chip id="prop-import-count-badge" variant="outlined">0 items</m3e-chip>
+          <m3e-card variant="outlined" id="prop-import-upload-zone">
+            <div slot="content" class="upload-zone-inner">
+              <label for="prop-import-file-input" class="upload-trigger-label">
+                <m3e-button variant="tonal" id="prop-import-choose-btn" type="button">
+                  <m3e-icon slot="icon" name="upload"></m3e-icon>
+                  Choose .prop File
+                </m3e-button>
+                <input type="file" id="prop-import-file-input" accept=".prop,.txt" style="display: none;">
+              </label>
+              <m3e-chip id="prop-import-filename-pill" variant="outlined" style="display: none;">
+                <span id="prop-import-filename">filename.prop</span>
+              </m3e-chip>
             </div>
-            <div class="diff-table-wrapper">
-              <m3e-list id="prop-import-diff-list" variant="segmented"></m3e-list>
-            </div>
-          </div>
-        </m3e-card>
+          </m3e-card>
 
-        <m3e-card variant="filled">
-          <div slot="content" class="import-options-stack">
-            <div class="switch-row">
-              <div class="switch-info">
-                <span class="switch-title">Apply Live</span>
-                <span class="switch-desc">Set runtime values immediately via resetprop</span>
+          <m3e-form-field variant="outlined">
+            <label slot="label" for="prop-import-paste-textarea">Paste .prop content</label>
+            <textarea id="prop-import-paste-textarea" class="mono-input" rows="3" spellcheck="false"></textarea>
+            <m3e-textarea-autosize for="prop-import-paste-textarea" min-rows="3" max-rows="8"></m3e-textarea-autosize>
+          </m3e-form-field>
+
+          <m3e-card variant="outlined" id="prop-import-diff-container" style="display: none;">
+            <div slot="content" class="diff-card-inner">
+              <div class="diff-card-header">
+                <m3e-checkbox id="prop-import-select-all" checked>Detected Properties</m3e-checkbox>
+                <m3e-chip id="prop-import-count-badge" variant="outlined">0 items</m3e-chip>
               </div>
-              <m3e-switch id="prop-import-apply-live" icons="both" checked></m3e-switch>
+              <m3e-scroll-container class="diff-table-wrapper" thin>
+                <m3e-selection-list id="prop-import-diff-list" multi variant="segmented"></m3e-selection-list>
+              </m3e-scroll-container>
             </div>
-            <m3e-divider></m3e-divider>
-            <div class="switch-row">
-              <div class="switch-info">
-                <span class="switch-title">Save to Boot</span>
-                <span class="switch-desc">Persist in module system.prop on reboot</span>
-              </div>
-              <m3e-switch id="prop-import-set-boot" icons="both" checked></m3e-switch>
-            </div>
-          </div>
-        </m3e-card>
-      </div>
+          </m3e-card>
+
+          <m3e-list variant="segmented">
+            <m3e-list-item>
+              Apply Live
+              <span slot="supporting-text">Set runtime values immediately via resetprop</span>
+              <m3e-switch slot="trailing" id="prop-import-apply-live" icons="both" checked></m3e-switch>
+            </m3e-list-item>
+            <m3e-list-item>
+              Save to Boot
+              <span slot="supporting-text">Persist in module system.prop on reboot</span>
+              <m3e-switch slot="trailing" id="prop-import-set-boot" icons="both" checked></m3e-switch>
+            </m3e-list-item>
+          </m3e-list>
+        </div>
+      </m3e-scroll-container>
 
       <div slot="actions" class="dialog-actions-end">
-        <m3e-button variant="outlined" id="prop-import-cancel-btn">Cancel</m3e-button>
+        <m3e-button variant="outlined" id="prop-import-cancel-btn">
+          <m3e-dialog-action return-value="cancel">Cancel</m3e-dialog-action>
+        </m3e-button>
         <m3e-button variant="filled" id="prop-import-submit-btn">
           <m3e-icon slot="icon" name="upload"></m3e-icon>
           Import Selected
@@ -699,7 +716,9 @@
               Download .prop
             </m3e-button>
           </div>
-          <m3e-button variant="outlined" class="m3e-export-cancel-btn" id="prop-export-close-btn">Cancel</m3e-button>
+          <m3e-button variant="outlined" class="m3e-export-cancel-btn" id="prop-export-close-btn">
+            <m3e-bottom-sheet-action>Cancel</m3e-bottom-sheet-action>
+          </m3e-button>
         </div>
       </div>
     </m3e-bottom-sheet>
