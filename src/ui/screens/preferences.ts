@@ -9,7 +9,6 @@ import {
   setThemeContrast,
   setFontMode,
   setReduceEffects,
-  resetToMonet,
   syncConnectedButtonGroup
 } from '../../theme/theme';
 import type { ThemeMode, FontMode } from '../../theme/types';
@@ -84,14 +83,6 @@ export function initPreferencesScreen(): void {
     reduceToggle.addEventListener('change', () => {
       setReduceEffects(reduceToggle.checked);
       toast(`Effects ${reduceToggle.checked ? 'reduced (standard motion)' : 'expressive'}`);
-    });
-  }
-
-  const resetMonetBtn = document.getElementById('reset-monet-btn');
-  if (resetMonetBtn) {
-    resetMonetBtn.addEventListener('click', async () => {
-      await resetToMonet();
-      toast('Synced with system Monet');
     });
   }
 

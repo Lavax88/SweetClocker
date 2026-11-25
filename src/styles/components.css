@@ -524,14 +524,6 @@
   width: 100%;
 }
 
-.monet-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .credit-trailing-actions {
   display: flex;
   align-items: center;

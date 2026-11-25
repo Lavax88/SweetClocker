@@ -160,7 +160,6 @@ echo "overlay_600:$(cmd overlay lookup android android:color/system_accent1_600 
       const themeEl = getThemeElement();
       if (themeEl) themeEl.color = hex;
       syncMetaThemeColor();
-      updateMonetStatusUI(true, hex);
       persistSettings();
       return hex;
     }
@@ -169,23 +168,8 @@ echo "overlay_600:$(cmd overlay lookup android android:color/system_accent1_600 
   }
 
   isMonetActive = false;
-  updateMonetStatusUI(false);
   persistSettings();
   return null;
-}
-
-function updateMonetStatusUI(active: boolean, hex = ''): void {
-  const badge = document.getElementById('monet-indicator');
-  const text = document.getElementById('monet-sync-text');
-  if (!badge || !text) return;
-
-  if (active) {
-    badge.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success)');
-    text.innerText = `Monet Sync (${hex.toUpperCase()})`;
-  } else {
-    badge.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-outline)');
-    text.innerText = 'Custom Seed';
-  }
 }
 
 export function syncConnectedButtonGroup(groupId: string, value: string): void {
@@ -308,15 +292,7 @@ export function setManualSeedColor(hex: string): void {
   const themeEl = getThemeElement();
   if (themeEl) themeEl.color = hex;
   syncMetaThemeColor();
-  updateMonetStatusUI(false);
   persistSettings();
-}
-
-export async function resetToMonet(): Promise<void> {
-  const monet = await detectMonetColor();
-  if (!monet) {
-    setManualSeedColor(DEFAULT_SEED);
-  }
 }
 
 export async function initTheme(): Promise<void> {
