@@ -2,6 +2,29 @@ import type { M3eLinearProgressIndicatorElement } from '@m3e/web/progress-indica
 import type { TelemetrySnapshot, CoreStats } from '../../telemetry/types';
 import { formatFreq, formatFreqShort } from '../formatters';
 
+const smoothProgressSheet = new CSSStyleSheet();
+smoothProgressSheet.replaceSync(`
+  :host(:is(:state(--determinate), :--determinate)) .primary {
+    transition: width 480ms cubic-bezier(0.2, 0, 0, 1);
+    will-change: width;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :host(:is(:state(--determinate), :--determinate)) .primary {
+      transition: none;
+    }
+  }
+`);
+
+function enableSmoothProgress(el: M3eLinearProgressIndicatorElement | null): void {
+  if (!el) return;
+  customElements.whenDefined('m3e-linear-progress-indicator').then(() => {
+    const sr = el.shadowRoot;
+    if (sr && !sr.adoptedStyleSheets.includes(smoothProgressSheet)) {
+      sr.adoptedStyleSheets = [...sr.adoptedStyleSheets, smoothProgressSheet];
+    }
+  });
+}
+
 export function renderDashboard(data: TelemetrySnapshot): void {
   // 1. Service Status Chip
   const statusDot = document.getElementById('service-status-dot');
@@ -44,8 +67,11 @@ export function renderDashboard(data: TelemetrySnapshot): void {
     const gpuUsage = document.getElementById('gpu-usage-value');
     if (gpuUsage) gpuUsage.innerText = `${data.gpu.usage}%`;
 
-    const gpuProgress = document.getElementById('gpu-progress-bar') as M3eLinearProgressIndicatorElement | null;
+    const gpuProgress = document.getElementById(
+      'gpu-progress-bar'
+    ) as M3eLinearProgressIndicatorElement | null;
     if (gpuProgress) {
+      enableSmoothProgress(gpuProgress);
       gpuProgress.value = Math.max(0, Math.min(100, data.gpu.usage));
     }
 
@@ -101,8 +127,13 @@ function renderCoresGrid(cores: CoreStats[]): void {
     const subEl = card.querySelector<HTMLElement>('.core-sub-compact');
     if (subEl) subEl.innerText = c.governor;
 
-    const progress = card.querySelector<M3eLinearProgressIndicatorElement>('m3e-linear-progress-indicator');
-    if (progress) progress.value = Math.max(0, Math.min(100, c.usage));
+    const progress = card.querySelector<M3eLinearProgressIndicatorElement>(
+      'm3e-linear-progress-indicator'
+    );
+    if (progress) {
+      enableSmoothProgress(progress);
+      progress.value = Math.max(0, Math.min(100, c.usage));
+    }
 
     const usageLbl = card.querySelector<HTMLElement>('.core-usage-lbl');
     if (usageLbl) usageLbl.innerText = `${c.usage}%`;
@@ -157,6 +188,11 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
       </div>
     </div>
   `;
+
+  const progress = card.querySelector<M3eLinearProgressIndicatorElement>(
+    'm3e-linear-progress-indicator'
+  );
+  enableSmoothProgress(progress);
 
   return card;
 }
