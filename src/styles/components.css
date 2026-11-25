@@ -383,6 +383,14 @@
 }
 
 .tune-shape-icon m3e-icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   --m3e-icon-size: 22px;
 }
 
