@@ -541,8 +541,9 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
   flex: 1;
 }
 
-.setting-group m3e-form-field {
+m3e-form-field {
   width: 100%;
+  --m3e-form-field-width: 100%;
 }
 
 .credit-trailing-actions {
