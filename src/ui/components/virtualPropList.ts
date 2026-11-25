@@ -41,7 +41,7 @@ export class VirtualPropList {
   private isTicking = false;
   private lastStartIndex = -1;
   private lastEndIndex = -1;
-  private readonly rowGap = 6;
+  private readonly rowGap = 4;
 
   private get stride(): number {
     return this.itemHeight + this.rowGap;

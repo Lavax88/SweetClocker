@@ -364,15 +364,23 @@
 #prop-edit-segmented-list,
 #prop-import-diff-list {
   overflow: visible;
-  --m3e-segmented-list-segment-gap: 6px;
+  --m3e-segmented-list-segment-gap: 4px;
   --m3e-segmented-list-item-container-color: var(--md-sys-color-surface-container-high);
-  --m3e-segmented-list-item-container-shape: 14px;
-  --m3e-list-item-container-shape: 14px;
 }
 
 .props-segmented-list m3e-swipe-reveal {
-  border-radius: 14px;
+  border-radius: 4px;
   overflow: hidden;
+}
+
+.props-segmented-list m3e-swipe-reveal:first-child {
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.props-segmented-list m3e-swipe-reveal:last-child {
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
 }
 
 /* Tuning Hub Segmented Card List & Shaped Icons */
