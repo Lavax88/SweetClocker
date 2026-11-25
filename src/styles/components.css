@@ -360,9 +360,12 @@
   position: relative;
 }
 
-.props-segmented-list {
+.props-segmented-list,
+#prop-edit-segmented-list,
+#prop-import-diff-list {
   overflow: visible;
-  --m3e-segmented-list-segment-gap: 2px;
+  --m3e-segmented-list-segment-gap: 3px;
+  --m3e-segmented-list-item-container-color: var(--md-sys-color-surface-container-high);
 }
 
 .prop-row {
