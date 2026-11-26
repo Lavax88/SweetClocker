@@ -76,16 +76,9 @@ export function renderDashboard(data: TelemetrySnapshot): void {
     const gpuTemp = document.getElementById('gpu-temp-badge');
     if (gpuTemp) {
       gpuTemp.innerText = data.gpu.temp > 0 ? `${data.gpu.temp}°C` : 'N/A';
-      if (data.gpu.temp >= 70) {
-        gpuTemp.style.setProperty('--m3e-outlined-chip-outline-color', 'var(--md-sys-color-error)');
-        gpuTemp.style.setProperty('--m3e-chip-label-text-color', 'var(--md-sys-color-error)');
-      } else if (data.gpu.temp >= 55) {
-        gpuTemp.style.setProperty('--m3e-outlined-chip-outline-color', 'var(--md-sys-color-warning)');
-        gpuTemp.style.setProperty('--m3e-chip-label-text-color', 'var(--md-sys-color-warning)');
-      } else {
-        gpuTemp.style.setProperty('--m3e-outlined-chip-outline-color', 'var(--md-sys-color-success)');
-        gpuTemp.style.setProperty('--m3e-chip-label-text-color', 'var(--md-sys-color-success)');
-      }
+      const { bg, fg } = getTempBadgeColors(data.gpu.temp);
+      gpuTemp.style.setProperty('--m3e-badge-container-color', bg);
+      gpuTemp.style.setProperty('--m3e-badge-color', fg);
     }
 
     const gpuUsage = document.getElementById('gpu-usage-value');
@@ -207,7 +200,6 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
         <span class="cur-freq-val">${formatFreq(core.curFreq)}</span>
         <span class="max-freq-val">${formatFreqShort(core.maxFreq)}</span>
       </div>
-      <div class="core-sub-compact">${core.governor}</div>
     </div>
   `;
 

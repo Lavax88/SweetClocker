@@ -41,8 +41,8 @@ function enhanceOverlayBackdropBlur(): void {
 
 const appBarInsetSheet = new CSSStyleSheet();
 appBarInsetSheet.replaceSync(`
-  .wrapper {
-    padding-top: var(--top-inset);
+  :host(:has(.wrapper.on-scroll)) {
+    background-color: var(--m3e-app-bar-container-color-on-scroll, var(--md-sys-color-surface-container));
   }
 `);
 

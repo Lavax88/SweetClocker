@@ -68,6 +68,9 @@ m3e-theme {
 }
 
 #main-app-bar {
+  padding-top: var(--top-inset);
+  background-color: var(--m3e-app-bar-container-color, var(--md-sys-color-surface));
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1);
   flex-shrink: 0;
   z-index: 10;
 }

@@ -41,7 +41,7 @@
         <m3e-slide id="main-pager" selected-index="0">
           <!-- PAGE 1: DASHBOARD -->
           <section id="page-dashboard" class="page-section active">
-            <m3e-heading variant="title" size="medium" emphasized>CPU Frequency &amp; Thermals</m3e-heading>
+            <m3e-heading variant="title" size="small" emphasized>CPU Frequency &amp; Thermals</m3e-heading>
             <div class="cores-grid" id="cores-grid">
               <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
               <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
@@ -49,7 +49,7 @@
               <m3e-skeleton shape="rounded" class="skeleton-core-card"></m3e-skeleton>
             </div>
 
-            <m3e-heading variant="title" size="medium" emphasized>GPU Frequency &amp; Thermals</m3e-heading>
+            <m3e-heading variant="title" size="small" emphasized>GPU Frequency &amp; Thermals</m3e-heading>
             <m3e-card variant="elevated" id="gpu-card" class="gpu-card">
               <div slot="content" class="gpu-card-inner">
                 <div class="gpu-card-header">
@@ -60,35 +60,32 @@
                       <span class="gpu-sub-compact" id="gpu-card-gov">--</span>
                     </div>
                   </div>
-                  <m3e-chip id="gpu-temp-badge" variant="outlined">--°C</m3e-chip>
+                  <div class="gpu-header-metrics">
+                    <span class="gpu-usage-value" id="gpu-usage-value">0%</span>
+                    <m3e-badge size="small" id="gpu-temp-badge">--°C</m3e-badge>
+                  </div>
                 </div>
 
-                <div class="gpu-usage-section">
-                  <div class="gpu-usage-meta">
-                    <span class="gpu-usage-value" id="gpu-usage-value">0%</span>
-                    <span class="gpu-usage-label">GPU Load</span>
-                  </div>
-                  <m3e-linear-progress-indicator
-                    id="gpu-progress-bar"
-                    mode="determinate"
-                    max="100"
-                    value="0"
-                    variant="flat"
-                  ></m3e-linear-progress-indicator>
-                </div>
+                <m3e-linear-progress-indicator
+                  id="gpu-progress-bar"
+                  mode="determinate"
+                  max="100"
+                  value="0.5"
+                  variant="flat"
+                ></m3e-linear-progress-indicator>
 
                 <div class="gpu-freq-meta-row">
                   <div class="gpu-freq-col">
                     <span class="gpu-freq-limits" id="gpu-freq-min">-- MHz</span>
-                    <span class="gpu-freq-label">Min clock</span>
+                    <span class="gpu-freq-label">Min</span>
                   </div>
                   <div class="gpu-freq-col center">
                     <span class="gpu-freq-now" id="gpu-freq-now">-- MHz</span>
-                    <span class="gpu-freq-label">Current clock</span>
+                    <span class="gpu-freq-label">Current</span>
                   </div>
                   <div class="gpu-freq-col end">
                     <span class="gpu-freq-limits" id="gpu-freq-max">-- MHz</span>
-                    <span class="gpu-freq-label">Max clock</span>
+                    <span class="gpu-freq-label">Max</span>
                   </div>
                 </div>
               </div>
