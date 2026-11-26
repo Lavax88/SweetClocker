@@ -19,6 +19,58 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 @media (max-width: 600px) {
   .cores-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .core-card-inner {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .core-name {
+    font-size: 0.82rem;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .gpu-card-inner {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .hero-card [slot="content"],
+  .hero-switch-stack,
+  .props-hero-content,
+  .tuning-card-inner,
+  .prefs-card-content {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .tune-list {
+    --m3e-list-item-height: 62px;
+  }
+
+  .tune-shape-icon {
+    --m3e-shape-size: 36px;
+  }
+
+  .tune-shape-icon m3e-icon {
+    width: 18px;
+    height: 18px;
+    --m3e-icon-size: 18px;
+  }
+
+  .pref-connected-group m3e-button {
+    --m3e-button-small-container-height: 36px;
+    --m3e-button-small-leading-space: 8px;
+    --m3e-button-small-trailing-space: 8px;
+    --m3e-button-small-label-text-font-size: 0.78rem;
+  }
+
+  .fab-slot {
+    right: 12px;
+    bottom: calc(70px + var(--bottom-inset));
     gap: 10px;
   }
 }

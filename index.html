@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./src/styles/main.css">
 </head>
 <body>
-  <m3e-theme id="app-theme" color="#6750A4" scheme="auto" variant="expressive" contrast="standard" motion="expressive">
+  <m3e-theme id="app-theme" color="#6750A4" scheme="auto" variant="tonal-spot" contrast="standard" motion="expressive">
     <div class="app-layout">
       <!-- Top App Bar -->
       <m3e-app-bar id="main-app-bar" centered scroll-behavior="elevate">
@@ -306,7 +306,7 @@
                   <m3e-action-list variant="segmented">
                     <m3e-list-action id="pref-theme-variant-trigger">
                       Palette Variant
-                      <span slot="supporting-text" id="pref-theme-variant-val">Expressive</span>
+                      <span slot="supporting-text" id="pref-theme-variant-val">Tonal Spot</span>
                       <m3e-icon slot="trailing" name="arrow_drop_down"></m3e-icon>
                     </m3e-list-action>
                   </m3e-action-list>
@@ -464,13 +464,13 @@
       <div class="sheet-body-stack">
         <span class="sheet-subtitle">Material 3 Expressive dynamic color algorithm</span>
         <m3e-selection-list id="variant-sheet-options" variant="segmented">
-          <m3e-list-option value="expressive" selected>
+          <m3e-list-option value="expressive">
             Expressive
-            <span slot="supporting-text">Playful, detached accent harmonies (Default)</span>
+            <span slot="supporting-text">Playful, detached accent harmonies</span>
           </m3e-list-option>
-          <m3e-list-option value="tonal-spot">
+          <m3e-list-option value="tonal-spot" selected>
             Tonal Spot
-            <span slot="supporting-text">Classic Material 3 balanced tonal palette</span>
+            <span slot="supporting-text">Classic Material 3 balanced tonal palette (Default)</span>
           </m3e-list-option>
           <m3e-list-option value="vibrant">
             Vibrant

@@ -129,6 +129,19 @@ m3e-theme {
 #main-nav-bar {
   flex-shrink: 0;
   padding-bottom: var(--bottom-inset);
+  --m3e-nav-bar-height: 58px;
+  --m3e-nav-bar-vertical-item-width: 0px;
+  --m3e-nav-item-icon-size: 20px;
+  --m3e-nav-item-label-text-font-size: 0.72rem;
+  --m3e-nav-item-label-text-line-height: 1rem;
+  --m3e-vertical-nav-item-active-indicator-width: 52px;
+  --m3e-vertical-nav-item-active-indicator-height: 28px;
+  --m3e-nav-item-spacing: 2px;
+}
+
+#main-nav-bar m3e-nav-item {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .grid-placeholder {
@@ -139,8 +152,29 @@ m3e-theme {
 }
 
 @media (max-width: 600px) {
+  #main-app-bar {
+    --m3e-app-bar-height: 52px;
+  }
+
+  .app-bar-brand {
+    font-size: 1rem;
+    gap: 4px;
+  }
+
+  #service-status {
+    --m3e-chip-container-height: 26px;
+    --m3e-chip-label-text-font-size: 0.72rem;
+    --m3e-chip-leading-space: 8px;
+    --m3e-chip-trailing-space: 10px;
+  }
+
+  #refresh-btn {
+    --m3e-icon-button-small-container-size: 36px;
+    --m3e-icon-button-small-icon-size: 20px;
+  }
+
   .page-section {
-    padding: 12px 12px 92px 12px;
-    gap: 12px;
+    padding: 10px 10px 80px 10px;
+    gap: 10px;
   }
 }

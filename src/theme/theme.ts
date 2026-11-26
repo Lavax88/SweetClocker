@@ -9,7 +9,7 @@ const STORAGE_KEY = 'sweetclocker_theme_settings_v3';
 const DEFAULT_SEED = '#6750A4';
 
 let activeThemeMode: ThemeMode = 'auto';
-let activeThemeVariant: ThemeVariant = 'expressive';
+let activeThemeVariant: ThemeVariant = 'tonal-spot';
 let activeThemeContrast: ContrastLevel = 'standard';
 let activeFontMode: FontMode = 'outfit';
 let activeSeedColor: string = DEFAULT_SEED;
@@ -311,7 +311,7 @@ export async function initTheme(): Promise<void> {
 
   setReduceEffects(initialReduceEffects);
   setThemeMode(stored.mode ?? 'auto');
-  setThemeVariant(stored.variant ?? 'expressive');
+  setThemeVariant(stored.variant ?? 'tonal-spot');
   setThemeContrast(stored.contrast ?? 'standard');
   setFontMode(stored.font ?? 'outfit');
 
