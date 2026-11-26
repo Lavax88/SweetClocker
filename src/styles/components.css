@@ -590,10 +590,24 @@ m3e-form-field {
   --m3e-form-field-width: 100%;
 }
 
+.credits-list {
+  --m3e-list-item-padding-inline: 10px;
+  --m3e-list-item-leading-space: 10px;
+  --m3e-list-item-trailing-space: 8px;
+  --m3e-list-item-between-space: 10px;
+}
+
+.credit-supporting {
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
 .credit-trailing-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+  --m3e-icon-button-small-container-size: 36px;
+  --m3e-icon-button-small-icon-size: 18px;
 }
 
 /* FAB Positioning */
