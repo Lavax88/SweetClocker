@@ -11,7 +11,7 @@ export function initLogsScreen(): void {
   if (container) {
     virtualList = new VirtualLogList({
       container,
-      itemHeight: 18,
+      itemHeight: 20,
       overscan: 10
     });
   }

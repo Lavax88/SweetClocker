@@ -512,26 +512,33 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 }
 
 /* Logs Screen */
+#page-logs {
+  overflow: hidden;
+  padding-bottom: 12px;
+}
+
 .logs-container-card {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .logs-card-inner {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 12px;
   height: 100%;
-  min-height: 360px;
+  min-height: 0;
 }
 
 .logs-header {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .logs-actions {
@@ -543,16 +550,21 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 
 .log-viewer {
   flex: 1;
-  min-height: 240px;
-  max-height: calc(100vh - 300px);
-  overflow-y: auto;
+  min-height: 0;
+  overflow: auto;
   border-radius: 12px;
   background-color: var(--log-viewer-bg);
   color: var(--log-viewer-text);
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  line-height: 1.4;
-  padding: 10px;
+  line-height: 20px;
+  padding: 10px 10px 76px 10px;
+}
+
+.virtual-log-content > div {
+  white-space: nowrap;
+  height: 20px;
+  line-height: 20px;
 }
 
 .log-line {

@@ -17,12 +17,17 @@ smoothProgressSheet.replaceSync(`
 
 function enableSmoothProgress(el: M3eLinearProgressIndicatorElement | null): void {
   if (!el) return;
-  customElements.whenDefined('m3e-linear-progress-indicator').then(() => {
+  const attach = () => {
     const sr = el.shadowRoot;
     if (sr && !sr.adoptedStyleSheets.includes(smoothProgressSheet)) {
       sr.adoptedStyleSheets = [...sr.adoptedStyleSheets, smoothProgressSheet];
     }
-  });
+  };
+  if (el.shadowRoot) {
+    attach();
+  } else {
+    customElements.whenDefined('m3e-linear-progress-indicator').then(attach);
+  }
 }
 
 function getTempBadgeColors(temp: number): { bg: string; fg: string } {
@@ -91,7 +96,8 @@ export function renderDashboard(data: TelemetrySnapshot): void {
     ) as M3eLinearProgressIndicatorElement | null;
     if (gpuProgress) {
       enableSmoothProgress(gpuProgress);
-      gpuProgress.value = Math.max(0, Math.min(100, data.gpu.usage));
+      // Keep value >= 0.5 so m3e-linear-progress-indicator does not remove .primary at 0% and skip CSS width transitions
+      gpuProgress.value = Math.max(0.5, Math.min(100, data.gpu.usage));
     }
 
     const gpuGov = document.getElementById('gpu-card-gov');
@@ -152,7 +158,7 @@ function renderCoresGrid(cores: CoreStats[]): void {
     );
     if (progress) {
       enableSmoothProgress(progress);
-      progress.value = Math.max(0, Math.min(100, c.usage));
+      progress.value = Math.max(0.5, Math.min(100, c.usage));
     }
 
     const usageLbl = card.querySelector<HTMLElement>('.core-usage-lbl');
@@ -177,6 +183,7 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
 
   const { bg, fg } = getTempBadgeColors(core.temp);
   const usage = Math.max(0, Math.min(100, core.usage));
+  const barUsage = Math.max(0.5, usage);
 
   card.innerHTML = `
     <div slot="content" class="core-card-inner">
@@ -194,7 +201,7 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
       <m3e-linear-progress-indicator
         mode="determinate"
         max="100"
-        value="${usage}"
+        value="${barUsage}"
         variant="flat"
       ></m3e-linear-progress-indicator>
 
