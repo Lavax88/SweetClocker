@@ -12,7 +12,7 @@ import {
 } from '../../theme/theme';
 import type { ThemeMode, FontMode } from '../../theme/types';
 import { setBypassMode } from '../../telemetry/sampler';
-import { toast } from '../../bridge/ksu';
+import { openUrl, toast } from '../../bridge/ksu';
 
 function bindConnectedGroup(groupId: string, onSelect: (value: string) => void): void {
   const group = document.getElementById(groupId);
@@ -98,5 +98,17 @@ export function initPreferencesScreen(): void {
     if (ok) {
       toast(`Force bypass ${enabled ? 'enabled' : 'disabled'}`);
     }
+  });
+
+  // Author & Credits external links (open in default Android browser/app instead of WebView)
+  document.querySelectorAll<HTMLElement>('.credits-list [data-external-url]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const url = btn.getAttribute('data-external-url');
+      if (url) {
+        openUrl(url);
+      }
+    });
   });
 }
