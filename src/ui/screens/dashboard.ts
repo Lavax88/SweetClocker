@@ -30,36 +30,40 @@ function enableSmoothProgress(el: M3eLinearProgressIndicatorElement | null): voi
   }
 }
 
-function getTempBadgeColors(temp: number): { bg: string; fg: string } {
+function getTempBadgeColors(temp: number): { bg: string; fg: string; text: string } {
   if (temp >= 60) {
     return {
       bg: 'var(--md-sys-color-error-container)',
-      fg: 'var(--md-sys-color-on-error-container)'
+      fg: 'var(--md-sys-color-on-error-container)',
+      text: 'var(--md-sys-color-error)'
     };
   }
   if (temp >= 45) {
     return {
       bg: 'var(--md-sys-color-warning-container)',
-      fg: 'var(--md-sys-color-on-warning-container)'
+      fg: 'var(--md-sys-color-on-warning-container)',
+      text: 'var(--md-sys-color-warning)'
     };
   }
   return {
     bg: 'var(--md-sys-color-success-container)',
-    fg: 'var(--md-sys-color-on-success-container)'
+    fg: 'var(--md-sys-color-on-success-container)',
+    text: 'var(--md-sys-color-success)'
   };
 }
 
 export function renderDashboard(data: TelemetrySnapshot): void {
-  // 1. Service Status Bubble
-  const statusDot = document.getElementById('service-status-dot');
-  const statusText = document.getElementById('service-status-text');
-  if (statusDot && statusText) {
+  // 1. Service Status Badge
+  const statusBadge = document.getElementById('service-status');
+  if (statusBadge) {
     if (data.serviceRunning) {
-      statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success)');
-      statusText.innerText = 'Active';
+      statusBadge.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success-container)');
+      statusBadge.style.setProperty('--m3e-badge-color', 'var(--md-sys-color-on-success-container)');
+      statusBadge.innerText = 'Active';
     } else {
-      statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-error)');
-      statusText.innerText = 'Inactive';
+      statusBadge.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-error-container)');
+      statusBadge.style.setProperty('--m3e-badge-color', 'var(--md-sys-color-on-error-container)');
+      statusBadge.innerText = 'Inactive';
     }
   }
 
@@ -130,12 +134,11 @@ function renderCoresGrid(cores: CoreStats[]): void {
     const card = existingCards[idx];
     if (!card) return;
 
-    const tempBadge = card.querySelector<HTMLElement>('.core-temp-badge');
-    if (tempBadge) {
-      tempBadge.innerText = c.temp > 0 ? `${c.temp}°C` : '—';
-      const { bg, fg } = getTempBadgeColors(c.temp);
-      tempBadge.style.setProperty('--m3e-badge-container-color', bg);
-      tempBadge.style.setProperty('--m3e-badge-color', fg);
+    const tempLbl = card.querySelector<HTMLElement>('.core-temp-lbl');
+    if (tempLbl) {
+      tempLbl.innerText = c.temp > 0 ? `${c.temp}°C` : '—';
+      const { text } = getTempBadgeColors(c.temp);
+      tempLbl.style.color = text;
     }
 
     const nameEl = card.querySelector<HTMLElement>('.core-name');
@@ -154,9 +157,6 @@ function renderCoresGrid(cores: CoreStats[]): void {
       progress.value = Math.max(0.5, Math.min(100, c.usage));
     }
 
-    const usageLbl = card.querySelector<HTMLElement>('.core-usage-lbl');
-    if (usageLbl) usageLbl.innerText = `${c.usage}%`;
-
     const minFreqVal = card.querySelector<HTMLElement>('.min-freq-val');
     if (minFreqVal) minFreqVal.innerText = formatFreqShort(c.minFreq);
 
@@ -174,18 +174,18 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
   card.className = 'core-card';
   card.setAttribute('data-core-id', String(core.id));
 
-  const { bg, fg } = getTempBadgeColors(core.temp);
+  const { text } = getTempBadgeColors(core.temp);
   const usage = Math.max(0, Math.min(100, core.usage));
   const barUsage = Math.max(0.5, usage);
 
   card.innerHTML = `
     <div slot="content" class="core-card-inner">
       <div class="core-header-compact">
-        <span class="core-name">CPU ${core.id} <m3e-badge size="small" class="cluster-badge">${core.cluster}</m3e-badge></span>
-        <div class="core-metrics-row">
-          <span class="core-usage-lbl">${usage}%</span>
-          <m3e-badge size="small" class="core-temp-badge" style="--m3e-badge-container-color: ${bg}; --m3e-badge-color: ${fg};">${core.temp > 0 ? core.temp + '°C' : '—'}</m3e-badge>
+        <div class="core-title-col">
+          <span class="core-name">CPU ${core.id} <m3e-badge size="small" class="cluster-badge">${core.cluster}</m3e-badge></span>
+          <span class="core-sub-compact">${core.governor}</span>
         </div>
+        <span class="core-temp-lbl" style="color: ${text};">${core.temp > 0 ? core.temp + '°C' : '—'}</span>
       </div>
 
       <m3e-linear-progress-indicator
@@ -200,7 +200,6 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
         <span class="cur-freq-val">${formatFreq(core.curFreq)}</span>
         <span class="max-freq-val">${formatFreqShort(core.maxFreq)}</span>
       </div>
-      <div class="core-sub-compact">${core.governor}</div>
     </div>
   `;
 

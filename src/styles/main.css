@@ -93,13 +93,6 @@ m3e-theme {
   gap: 4px;
 }
 
-#service-status {
-  --m3e-chip-container-height: 26px;
-  --m3e-chip-label-text-font-size: 0.72rem;
-  --m3e-chip-leading-space: 8px;
-  --m3e-chip-trailing-space: 10px;
-}
-
 #refresh-btn {
   margin-inline-start: auto;
 }

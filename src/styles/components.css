@@ -145,17 +145,11 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
   text-overflow: ellipsis;
 }
 
-.core-metrics-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.core-temp-lbl {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
-}
-
-.core-usage-lbl {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--md-sys-color-primary);
 }
 
 .freq-compact-list {
