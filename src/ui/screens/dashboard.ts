@@ -50,16 +50,16 @@ function getTempBadgeColors(temp: number): { bg: string; fg: string } {
 }
 
 export function renderDashboard(data: TelemetrySnapshot): void {
-  // 1. Service Status Indicator
-  const statusBtn = document.getElementById('service-status');
+  // 1. Service Status Bubble
   const statusDot = document.getElementById('service-status-dot');
-  if (statusDot) {
+  const statusText = document.getElementById('service-status-text');
+  if (statusDot && statusText) {
     if (data.serviceRunning) {
       statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success)');
-      statusBtn?.setAttribute('aria-label', 'Service Active');
+      statusText.innerText = 'Active';
     } else {
       statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-error)');
-      statusBtn?.setAttribute('aria-label', 'Service Stopped');
+      statusText.innerText = 'Inactive';
     }
   }
 
@@ -200,6 +200,7 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
         <span class="cur-freq-val">${formatFreq(core.curFreq)}</span>
         <span class="max-freq-val">${formatFreqShort(core.maxFreq)}</span>
       </div>
+      <div class="core-sub-compact">${core.governor}</div>
     </div>
   `;
 

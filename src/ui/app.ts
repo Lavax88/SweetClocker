@@ -83,11 +83,11 @@ export async function initApp(): Promise<void> {
   // Ensure initial navigation & app-bar attachment
   syncNavigationState(store.get('activeTab'));
 
-  // Service status indicator tap feedback
+  // Service status bubble tap feedback
   const statusBtn = document.getElementById('service-status');
   statusBtn?.addEventListener('click', () => {
     const running = store.get('telemetry')?.serviceRunning;
-    toast(running ? 'SweetClocker service is active' : 'SweetClocker service is stopped');
+    toast(running ? 'SweetClocker service is active' : 'SweetClocker service is inactive');
   });
 
   // 4. Refresh Button Listener

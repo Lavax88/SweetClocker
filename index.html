@@ -21,9 +21,10 @@
           <m3e-icon-button id="subview-back-btn" style="display: none;" aria-label="Back to Tuning Hub">
             <m3e-icon name="arrow_back"></m3e-icon>
           </m3e-icon-button>
-          <m3e-icon-button id="service-status" aria-label="Service status: Loading">
-            <m3e-badge size="small" id="service-status-dot"></m3e-badge>
-          </m3e-icon-button>
+          <m3e-chip id="service-status" variant="outlined">
+            <m3e-badge slot="icon" size="small" id="service-status-dot"></m3e-badge>
+            <span id="service-status-text">Loading…</span>
+          </m3e-chip>
         </div>
 
         <span slot="title" id="app-bar-title" class="app-bar-brand">
