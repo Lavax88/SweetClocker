@@ -110,9 +110,9 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
       }),
       {
         directions: ['left', 'right'],
-        minDisplacement: 36,
-        minVelocity: 0.25,
-        directionThreshold: 18,
+        minDisplacement: 32,
+        minVelocity: 0.08,
+        directionThreshold: 12,
         inputFilter: (input) => {
           const target = input.target as HTMLElement | null;
           if (!target) return true;
