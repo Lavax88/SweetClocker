@@ -95,15 +95,25 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
   let activeEl: HTMLElement | null = null;
   let prevEl: HTMLElement | null = null;
   let nextEl: HTMLElement | null = null;
+  let snapTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const clearSnapTimer = () => {
+    if (snapTimer !== null) {
+      clearTimeout(snapTimer);
+      snapTimer = null;
+    }
+  };
 
   const resetDragStyles = (animateBack = false) => {
+    clearSnapTimer();
     const els = [activeEl, prevEl, nextEl].filter((el): el is HTMLElement => Boolean(el));
-    if (animateBack) {
+    if (animateBack && els.length > 0) {
       els.forEach((el) => {
         el.style.transition = 'transform 220ms cubic-bezier(0.2, 0, 0, 1)';
         el.style.transform = 'translateX(0px)';
       });
-      setTimeout(() => {
+      snapTimer = setTimeout(() => {
+        snapTimer = null;
         pager.style.removeProperty('--m3e-slide-animation-duration');
         els.forEach((el) => {
           el.style.removeProperty('transition');
@@ -137,6 +147,7 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
           const idx = TAB_ORDER.indexOf(currentTab);
           if (idx === -1) return;
 
+          clearSnapTimer();
           isDragging = true;
           startX = detail.clientX;
           lastDx = 0;
@@ -196,7 +207,7 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
         }
       }),
       {
-        activationMode: 'move',
+        activationMode: 'press',
         minDisplacement: 8,
         lockAxis: 'auto',
         axisThreshold: 8,
