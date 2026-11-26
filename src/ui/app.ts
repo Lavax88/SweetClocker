@@ -39,10 +39,28 @@ function enhanceOverlayBackdropBlur(): void {
   applyTo('m3e-dialog');
 }
 
+const appBarInsetSheet = new CSSStyleSheet();
+appBarInsetSheet.replaceSync(`
+  .wrapper {
+    padding-top: var(--top-inset);
+  }
+`);
+
+function enhanceAppBarInset(): void {
+  customElements.whenDefined('m3e-app-bar').then(() => {
+    const appBar = document.getElementById('main-app-bar');
+    const sr = appBar?.shadowRoot;
+    if (sr && !sr.adoptedStyleSheets.includes(appBarInsetSheet)) {
+      sr.adoptedStyleSheets = [...sr.adoptedStyleSheets, appBarInsetSheet];
+    }
+  });
+}
+
 export async function initApp(): Promise<void> {
   // 1. Initialize M3E Theme & Modes
   await initTheme();
   enhanceOverlayBackdropBlur();
+  enhanceAppBarInset();
 
   // 2. Fetch Device Model metadata
   try {
@@ -64,6 +82,13 @@ export async function initApp(): Promise<void> {
 
   // Ensure initial navigation & app-bar attachment
   syncNavigationState(store.get('activeTab'));
+
+  // Service status indicator tap feedback
+  const statusBtn = document.getElementById('service-status');
+  statusBtn?.addEventListener('click', () => {
+    const running = store.get('telemetry')?.serviceRunning;
+    toast(running ? 'SweetClocker service is active' : 'SweetClocker service is stopped');
+  });
 
   // 4. Refresh Button Listener
   const refreshBtn = document.getElementById('refresh-btn');

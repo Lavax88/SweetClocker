@@ -21,10 +21,9 @@
           <m3e-icon-button id="subview-back-btn" style="display: none;" aria-label="Back to Tuning Hub">
             <m3e-icon name="arrow_back"></m3e-icon>
           </m3e-icon-button>
-          <m3e-chip id="service-status" variant="outlined">
-            <m3e-badge slot="icon" size="small" id="service-status-dot"></m3e-badge>
-            <span id="service-status-text">Loading…</span>
-          </m3e-chip>
+          <m3e-icon-button id="service-status" aria-label="Service status: Loading">
+            <m3e-badge size="small" id="service-status-dot"></m3e-badge>
+          </m3e-icon-button>
         </div>
 
         <span slot="title" id="app-bar-title" class="app-bar-brand">
@@ -146,14 +145,6 @@
 
             <!-- CPU CONFIGURATION SUBVIEW -->
             <div id="tuning-cpu-clocks-view" class="tuning-subview" style="display: none;">
-              <m3e-card variant="elevated" class="hero-card">
-                <div slot="content">
-                  <m3e-heading variant="title" size="medium" emphasized>CPU Configuration</m3e-heading>
-                  <p class="hero-desc">
-                    Set custom min/max frequencies and governor for each cluster. Frequency and governor changes are locked against performance daemons.
-                  </p>
-                </div>
-              </m3e-card>
               <div class="tuning-grid" id="tuning-grid">
                 <m3e-skeleton shape="rounded" class="skeleton-tuning-card"></m3e-skeleton>
                 <m3e-skeleton shape="rounded" class="skeleton-tuning-card"></m3e-skeleton>
@@ -162,15 +153,6 @@
 
             <!-- GPU CONFIGURATION SUBVIEW -->
             <div id="tuning-gpu-clocks-view" class="tuning-subview" style="display: none;">
-              <m3e-card variant="elevated" class="hero-card">
-                <div slot="content">
-                  <m3e-heading variant="title" size="medium" emphasized>GPU Configuration</m3e-heading>
-                  <p class="hero-desc">
-                    Configure minimum and maximum frequency limits and governor for the GPU.
-                  </p>
-                </div>
-              </m3e-card>
-
               <m3e-callout variant="error" id="gpu-thermal-warning-card" class="warning-callout">
                 <m3e-icon slot="icon" name="warning"></m3e-icon>
                 <span slot="label">Thermal Limit Warning (49°C)</span>
@@ -189,21 +171,13 @@
 
             <!-- I/O MANAGEMENT SUBVIEW -->
             <div id="tuning-io-view" class="tuning-subview" style="display: none;">
-              <m3e-card variant="elevated" class="hero-card">
-                <div slot="content" class="hero-switch-stack">
-                  <div>
-                    <m3e-heading variant="title" size="medium" emphasized>I/O Management</m3e-heading>
-                    <p class="hero-desc">Configure storage block device I/O schedulers</p>
-                  </div>
-                  <m3e-list variant="segmented">
-                    <m3e-list-item>
-                      Enable I/O Management
-                      <span slot="supporting-text">Enable block device discovery &amp; scheduler controls</span>
-                      <m3e-switch slot="trailing" id="io-enable-toggle" icons="both"></m3e-switch>
-                    </m3e-list-item>
-                  </m3e-list>
-                </div>
-              </m3e-card>
+              <m3e-list variant="segmented">
+                <m3e-list-item>
+                  Enable I/O Management
+                  <span slot="supporting-text">Enable block device discovery &amp; scheduler controls</span>
+                  <m3e-switch slot="trailing" id="io-enable-toggle" icons="both"></m3e-switch>
+                </m3e-list-item>
+              </m3e-list>
               <div class="tuning-grid" id="io-tuning-grid">
                 <div class="grid-placeholder">Enable I/O Management to inspect block devices…</div>
               </div>
@@ -211,21 +185,13 @@
 
             <!-- NETWORK CONFIGURATION SUBVIEW -->
             <div id="tuning-net-view" class="tuning-subview" style="display: none;">
-              <m3e-card variant="elevated" class="hero-card">
-                <div slot="content" class="hero-switch-stack">
-                  <div>
-                    <m3e-heading variant="title" size="medium" emphasized>Network Configuration</m3e-heading>
-                    <p class="hero-desc">Configure kernel TCP congestion control algorithms</p>
-                  </div>
-                  <m3e-list variant="segmented">
-                    <m3e-list-item>
-                      Enable Network Tuning
-                      <span slot="supporting-text">Enable TCP congestion control customization</span>
-                      <m3e-switch slot="trailing" id="net-enable-toggle" icons="both"></m3e-switch>
-                    </m3e-list-item>
-                  </m3e-list>
-                </div>
-              </m3e-card>
+              <m3e-list variant="segmented">
+                <m3e-list-item>
+                  Enable Network Tuning
+                  <span slot="supporting-text">Enable TCP congestion control customization</span>
+                  <m3e-switch slot="trailing" id="net-enable-toggle" icons="both"></m3e-switch>
+                </m3e-list-item>
+              </m3e-list>
               <div class="tuning-grid" id="net-tuning-grid">
                 <div class="grid-placeholder">Enable Network Tuning to inspect congestion controls…</div>
               </div>
@@ -233,26 +199,20 @@
 
             <!-- SYSTEM PROPERTIES SUBVIEW -->
             <div id="tuning-props-subview" class="tuning-subview" style="display: none;">
-              <m3e-card variant="elevated" class="hero-card">
-                <div slot="content" class="props-hero-content">
-                  <div class="props-hero-header">
-                    <m3e-heading variant="title" size="medium" emphasized>System Properties</m3e-heading>
-                    <m3e-chip id="props-count-badge" variant="outlined">0 props</m3e-chip>
-                  </div>
-                  <p class="hero-desc">
-                    Inspect, override runtime props (resetprop) &amp; configure early boot persistence (system.prop).
-                  </p>
-                  <m3e-search-bar id="prop-search-bar" clearable>
-                    <m3e-icon slot="leading" name="search"></m3e-icon>
-                    <input slot="input" type="text" id="prop-search-input" placeholder="Search property name or value…">
-                  </m3e-search-bar>
+              <div class="props-controls-bar">
+                <m3e-search-bar id="prop-search-bar" clearable>
+                  <m3e-icon slot="leading" name="search"></m3e-icon>
+                  <input slot="input" type="text" id="prop-search-input" placeholder="Search property name or value…">
+                </m3e-search-bar>
+                <div class="props-filter-row">
                   <m3e-filter-chip-set id="prop-filter-chips">
                     <m3e-filter-chip value="all" selected>All Props</m3e-filter-chip>
                     <m3e-filter-chip value="modified">Modified</m3e-filter-chip>
                     <m3e-filter-chip value="boot">Boot Config</m3e-filter-chip>
                   </m3e-filter-chip-set>
+                  <m3e-chip id="props-count-badge" variant="outlined">0 props</m3e-chip>
                 </div>
-              </m3e-card>
+              </div>
 
               <div id="props-list-container" class="props-list-container">
                 <div class="skeleton-list-stack">
@@ -267,23 +227,19 @@
 
           <!-- PAGE 3: LOGS -->
           <section id="page-logs" class="page-section">
-            <m3e-card variant="outlined" class="logs-container-card">
-              <div slot="content" class="logs-card-inner">
-                <div class="logs-header">
-                  <m3e-search-bar id="log-search-bar" clearable>
-                    <m3e-icon slot="leading" name="search"></m3e-icon>
-                    <input slot="input" type="text" id="log-search" placeholder="Filter logs…">
-                  </m3e-search-bar>
-                  <div class="logs-actions">
-                    <m3e-button variant="outlined" size="small" id="clear-log-btn">Clear Log File</m3e-button>
-                    <m3e-chip id="log-size-info" variant="outlined">Size: 0 B</m3e-chip>
-                  </div>
-                </div>
-                <div class="log-viewer" id="log-viewer">
-                  <pre class="log-pre" id="log-pre">Reading /data/local/tmp/sweetclocker.log…</pre>
-                </div>
+            <div class="logs-header">
+              <m3e-search-bar id="log-search-bar" clearable>
+                <m3e-icon slot="leading" name="search"></m3e-icon>
+                <input slot="input" type="text" id="log-search" placeholder="Filter logs…">
+              </m3e-search-bar>
+              <div class="logs-actions">
+                <m3e-button variant="outlined" size="small" id="clear-log-btn">Clear Log File</m3e-button>
+                <m3e-chip id="log-size-info" variant="outlined">Size: 0 B</m3e-chip>
               </div>
-            </m3e-card>
+            </div>
+            <div class="log-viewer" id="log-viewer">
+              <pre class="log-pre" id="log-pre">Reading /data/local/tmp/sweetclocker.log…</pre>
+            </div>
           </section>
 
           <!-- PAGE 4: PREFERENCES -->

@@ -19,23 +19,23 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 @media (max-width: 600px) {
   .cores-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .core-card-inner {
-    padding: 10px 12px;
     gap: 6px;
   }
 
+  .core-card-inner {
+    padding: 8px 10px;
+    gap: 5px;
+  }
+
   .core-name {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     gap: 4px;
     flex-wrap: nowrap;
   }
 
   .gpu-card-inner {
-    padding: 12px;
-    gap: 10px;
+    padding: 10px 12px;
+    gap: 8px;
   }
 
   .hero-card [slot="content"],
@@ -145,10 +145,9 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
   text-overflow: ellipsis;
 }
 
-.core-metrics-col {
+.core-metrics-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 4px;
   flex-shrink: 0;
 }
@@ -375,11 +374,18 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 }
 
 /* System Properties */
-.props-hero-header {
+.props-controls-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.props-filter-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 #prop-search-bar,
@@ -388,7 +394,7 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 }
 
 .props-list-container {
-  height: calc(100vh - 380px);
+  height: calc(100vh - 280px);
   min-height: 240px;
   border-radius: 16px;
   overflow-y: auto;
@@ -514,30 +520,13 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 /* Logs Screen */
 #page-logs {
   overflow: hidden;
-  padding-bottom: 12px;
-}
-
-.logs-container-card {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.logs-card-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  height: 100%;
-  min-height: 0;
+  padding-bottom: 10px;
 }
 
 .logs-header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -551,25 +540,27 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
 .log-viewer {
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  border-radius: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
   background-color: var(--log-viewer-bg);
   color: var(--log-viewer-text);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  line-height: 20px;
-  padding: 10px 10px 76px 10px;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  padding: 12px 12px 84px 12px;
 }
 
-.virtual-log-content > div {
-  white-space: nowrap;
-  height: 20px;
-  line-height: 20px;
+.virtual-log-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .log-line {
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
 }
 .log-line-error { color: var(--log-line-err); }
 .log-line-warn { color: var(--log-line-warn); }

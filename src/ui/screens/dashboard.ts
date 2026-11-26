@@ -50,16 +50,16 @@ function getTempBadgeColors(temp: number): { bg: string; fg: string } {
 }
 
 export function renderDashboard(data: TelemetrySnapshot): void {
-  // 1. Service Status Chip
+  // 1. Service Status Indicator
+  const statusBtn = document.getElementById('service-status');
   const statusDot = document.getElementById('service-status-dot');
-  const statusText = document.getElementById('service-status-text');
-  if (statusDot && statusText) {
+  if (statusDot) {
     if (data.serviceRunning) {
       statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-success)');
-      statusText.innerText = 'Active';
+      statusBtn?.setAttribute('aria-label', 'Service Active');
     } else {
       statusDot.style.setProperty('--m3e-badge-container-color', 'var(--md-sys-color-error)');
-      statusText.innerText = 'Stopped';
+      statusBtn?.setAttribute('aria-label', 'Service Stopped');
     }
   }
 
@@ -147,7 +147,7 @@ function renderCoresGrid(cores: CoreStats[]): void {
 
     const nameEl = card.querySelector<HTMLElement>('.core-name');
     if (nameEl) {
-      nameEl.innerHTML = `CPU ${c.id} <m3e-badge size="large" class="cluster-badge">${c.cluster}</m3e-badge>`;
+      nameEl.innerHTML = `CPU ${c.id} <m3e-badge size="small" class="cluster-badge">${c.cluster}</m3e-badge>`;
     }
 
     const subEl = card.querySelector<HTMLElement>('.core-sub-compact');
@@ -188,13 +188,10 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
   card.innerHTML = `
     <div slot="content" class="core-card-inner">
       <div class="core-header-compact">
-        <div class="core-title-col">
-          <span class="core-name">CPU ${core.id} <m3e-badge size="large" class="cluster-badge">${core.cluster}</m3e-badge></span>
-          <span class="core-sub-compact">${core.governor}</span>
-        </div>
-        <div class="core-metrics-col">
-          <m3e-badge size="large" class="core-temp-badge" style="--m3e-badge-container-color: ${bg}; --m3e-badge-color: ${fg};">${core.temp > 0 ? core.temp + '°C' : '—'}</m3e-badge>
+        <span class="core-name">CPU ${core.id} <m3e-badge size="small" class="cluster-badge">${core.cluster}</m3e-badge></span>
+        <div class="core-metrics-row">
           <span class="core-usage-lbl">${usage}%</span>
+          <m3e-badge size="small" class="core-temp-badge" style="--m3e-badge-container-color: ${bg}; --m3e-badge-color: ${fg};">${core.temp > 0 ? core.temp + '°C' : '—'}</m3e-badge>
         </div>
       </div>
 
@@ -210,6 +207,7 @@ function createCoreCardElement(core: CoreStats): HTMLElement {
         <span class="cur-freq-val">${formatFreq(core.curFreq)}</span>
         <span class="max-freq-val">${formatFreqShort(core.maxFreq)}</span>
       </div>
+      <div class="core-sub-compact">${core.governor}</div>
     </div>
   `;
 
