@@ -104,31 +104,41 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
     }
   };
 
-  const resetDragStyles = (animateBack = false) => {
+  const finishDragTransition = (els: HTMLElement[], startOffsetPx: number | null) => {
     clearSnapTimer();
-    const els = [activeEl, prevEl, nextEl].filter((el): el is HTMLElement => Boolean(el));
-    if (animateBack && els.length > 0) {
+    if (els.length === 0) {
+      pager.style.removeProperty('--m3e-slide-animation-duration');
+      activeEl = null;
+      prevEl = null;
+      nextEl = null;
+      return;
+    }
+
+    if (startOffsetPx !== null) {
       els.forEach((el) => {
-        el.style.transition = 'transform 220ms cubic-bezier(0.2, 0, 0, 1)';
-        el.style.transform = 'translateX(0px)';
+        el.style.visibility = 'visible';
+        el.style.transition = 'none';
+        el.style.transform = `translateX(${startOffsetPx}px)`;
       });
-      snapTimer = setTimeout(() => {
-        snapTimer = null;
-        pager.style.removeProperty('--m3e-slide-animation-duration');
-        els.forEach((el) => {
-          el.style.removeProperty('transition');
-          el.style.removeProperty('transform');
-          el.style.removeProperty('visibility');
-        });
-      }, 230);
-    } else {
+      void els[0]!.offsetWidth;
+    }
+
+    els.forEach((el) => {
+      el.style.transition = 'transform 220ms cubic-bezier(0.2, 0, 0, 1)';
+      el.style.transform = 'translateX(0px)';
+    });
+
+    snapTimer = setTimeout(() => {
+      snapTimer = null;
       pager.style.removeProperty('--m3e-slide-animation-duration');
       els.forEach((el) => {
         el.style.removeProperty('transition');
         el.style.removeProperty('transform');
         el.style.removeProperty('visibility');
+        el.style.removeProperty('will-change');
       });
-    }
+    }, 230);
+
     activeEl = null;
     prevEl = null;
     nextEl = null;
@@ -160,7 +170,10 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
 
           pager.style.setProperty('--m3e-slide-animation-duration', '0ms');
           [activeEl, prevEl, nextEl].forEach((el) => {
-            if (el) el.style.transition = 'none';
+            if (el) {
+              el.style.transition = 'none';
+              el.style.willChange = 'transform';
+            }
           });
         },
         onUpdate: (detail) => {
@@ -189,21 +202,39 @@ export function initNavigation(onSelectTab: (tab: AppTab) => void): () => void {
           const shouldAdvance = Math.abs(lastDx) > dragWidth * 0.22 || Math.abs(vx) > 0.25;
 
           if (shouldAdvance && lastDx < 0 && dragIdx < TAB_ORDER.length - 1) {
-            resetDragStyles(false);
             const nextTab = TAB_ORDER[dragIdx + 1];
+            const els = [activeEl, nextEl].filter((el): el is HTMLElement => Boolean(el));
+            const startOffset = dragWidth + lastDx;
+            if (prevEl) {
+              prevEl.style.removeProperty('transition');
+              prevEl.style.removeProperty('transform');
+              prevEl.style.removeProperty('visibility');
+              prevEl.style.removeProperty('will-change');
+            }
             if (nextTab) onSelectTab(nextTab);
+            finishDragTransition(els, startOffset);
           } else if (shouldAdvance && lastDx > 0 && dragIdx > 0) {
-            resetDragStyles(false);
             const prevTab = TAB_ORDER[dragIdx - 1];
+            const els = [activeEl, prevEl].filter((el): el is HTMLElement => Boolean(el));
+            const startOffset = -dragWidth + lastDx;
+            if (nextEl) {
+              nextEl.style.removeProperty('transition');
+              nextEl.style.removeProperty('transform');
+              nextEl.style.removeProperty('visibility');
+              nextEl.style.removeProperty('will-change');
+            }
             if (prevTab) onSelectTab(prevTab);
+            finishDragTransition(els, startOffset);
           } else {
-            resetDragStyles(true);
+            const els = [activeEl, prevEl, nextEl].filter((el): el is HTMLElement => Boolean(el));
+            finishDragTransition(els, null);
           }
         },
         onCancel: () => {
           if (!isDragging) return;
           isDragging = false;
-          resetDragStyles(true);
+          const els = [activeEl, prevEl, nextEl].filter((el): el is HTMLElement => Boolean(el));
+          finishDragTransition(els, null);
         }
       }),
       {
