@@ -1,6 +1,6 @@
 import '@m3e/web/theme';
 import '@m3e/web/core';
-import '@m3e/web/gestures/swipe';
+import '@m3e/web/gestures/pan';
 import '@m3e/web/app-bar';
 import '@m3e/web/avatar';
 import '@m3e/web/badge';
