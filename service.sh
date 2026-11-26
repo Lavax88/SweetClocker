@@ -15,6 +15,10 @@ if [ ! -f "$MODDIR/sweetspot-apply.sh" ] && [ -f "/data/adb/modules/sweetclocker
     MODDIR="/data/adb/modules/sweetclocker"
 fi
 
+PID_FILE="/dev/.sweetclocker_service.pid"
+echo "$$" > "$PID_FILE" 2>/dev/null
+trap 'rm -f "$PID_FILE" 2>/dev/null' EXIT INT TERM
+
 LOG_FILE="/data/local/tmp/sweetclocker.log"
 
 log_msg() {

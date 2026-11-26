@@ -91,27 +91,62 @@ set_perm "$MODPATH/uninstall.sh" 0 0 0755
 set_perm_recursive "$MODPATH/webroot" 0 0 0755 0644
 [ -f "$MODPATH/system.prop" ] && set_perm "$MODPATH/system.prop" 0 0 0644
 
-# Universal Live-Sync Fallback for APatch / SukiSU / Magisk:
+# Universal Live-Sync Fallback for APatch / Magisk / legacy KernelSU without KSU_HAS_HOT_INSTALL
 TARGET_MOD="/data/adb/modules/sweetclocker"
-if [ "$MODPATH" != "$TARGET_MOD" ] && [ -d "/data/adb/modules" ]; then
-    ui_print "- Syncing module files to live path for no-reboot support..."
-    mkdir -p "$TARGET_MOD" 2>/dev/null
-    cp -af "$MODPATH"/* "$TARGET_MOD"/ 2>/dev/null
-    set_perm_recursive "$TARGET_MOD" 0 0 0755 0644
-    set_perm "$TARGET_MOD/service.sh" 0 0 0755
-    set_perm "$TARGET_MOD/post-fs-data.sh" 0 0 0755
-    set_perm "$TARGET_MOD/sweetspot-apply.sh" 0 0 0755
-    set_perm "$TARGET_MOD/telemetry.sh" 0 0 0755
-    set_perm "$TARGET_MOD/hotinstall.sh" 0 0 0755
-    set_perm "$TARGET_MOD/uninstall.sh" 0 0 0755
-    [ -f "$TARGET_MOD/system.prop" ] && set_perm "$TARGET_MOD/system.prop" 0 0 0644
-fi
+if [ "$KSU_HAS_HOT_INSTALL" = "true" ]; then
+    if [ "$chosen_action" != "reset" ] && [ -f "$TARGET_MOD/system.prop" ] && [ ! -f "$MODPATH/system.prop" ]; then
+        cp -af "$TARGET_MOD/system.prop" "$MODPATH/system.prop" 2>/dev/null
+        set_perm "$MODPATH/system.prop" 0 0 0644
+    fi
+    ui_print "- KernelSU native hot-install detected; deferring reload to post-swap hook."
+else
+    # Stop existing daemon before syncing files so running scripts are not overwritten mid-read
+    PID_FILE="/dev/.sweetclocker_service.pid"
+    if [ -f "$PID_FILE" ]; then
+        old_pid=$(cat "$PID_FILE" 2>/dev/null)
+        if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
+            kill -TERM "$old_pid" 2>/dev/null
+            sleep 0.3
+            kill -0 "$old_pid" 2>/dev/null && kill -KILL "$old_pid" 2>/dev/null
+        fi
+        rm -f "$PID_FILE" 2>/dev/null
+    else
+        pkill -f "sweetclocker/sweetspot-apply.sh" 2>/dev/null
+        pkill -f "sweetclocker/service.sh" 2>/dev/null
+        sleep 0.3
+    fi
 
-# Execute hotinstall immediately from the live persistent path (restarts background daemon and applies clocks)
-if [ -f "$TARGET_MOD/hotinstall.sh" ]; then
-    sh "$TARGET_MOD/hotinstall.sh"
-elif [ -f "$MODPATH/hotinstall.sh" ]; then
-    sh "$MODPATH/hotinstall.sh"
+    if [ "$MODPATH" != "$TARGET_MOD" ] && [ -d "/data/adb/modules" ]; then
+        ui_print "- Syncing module files to live path for no-reboot support..."
+        kept_prop="/dev/.sc_keep_system.prop"
+        rm -f "$kept_prop" 2>/dev/null
+        if [ "$chosen_action" != "reset" ] && [ -f "$TARGET_MOD/system.prop" ] && [ ! -f "$MODPATH/system.prop" ]; then
+            cp -af "$TARGET_MOD/system.prop" "$kept_prop" 2>/dev/null
+        fi
+
+        rm -rf "$TARGET_MOD" 2>/dev/null
+        mkdir -p "$TARGET_MOD" 2>/dev/null
+        cp -af "$MODPATH"/* "$TARGET_MOD"/ 2>/dev/null
+        if [ -f "$kept_prop" ]; then
+            mv -f "$kept_prop" "$TARGET_MOD/system.prop" 2>/dev/null
+        fi
+
+        set_perm_recursive "$TARGET_MOD" 0 0 0755 0644
+        set_perm "$TARGET_MOD/service.sh" 0 0 0755
+        set_perm "$TARGET_MOD/post-fs-data.sh" 0 0 0755
+        set_perm "$TARGET_MOD/sweetspot-apply.sh" 0 0 0755
+        set_perm "$TARGET_MOD/telemetry.sh" 0 0 0755
+        set_perm "$TARGET_MOD/hotinstall.sh" 0 0 0755
+        set_perm "$TARGET_MOD/uninstall.sh" 0 0 0755
+        [ -f "$TARGET_MOD/system.prop" ] && set_perm "$TARGET_MOD/system.prop" 0 0 0644
+    fi
+
+    # Execute hotinstall immediately from the live persistent path
+    if [ -f "$TARGET_MOD/hotinstall.sh" ]; then
+        sh "$TARGET_MOD/hotinstall.sh"
+    elif [ -f "$MODPATH/hotinstall.sh" ]; then
+        sh "$MODPATH/hotinstall.sh"
+    fi
 fi
 
 ui_print "- SweetClocker installation complete!"
