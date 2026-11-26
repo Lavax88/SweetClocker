@@ -211,17 +211,11 @@ html:not(.reduce-effects) body:has(m3e-bottom-sheet[open], m3e-dialog[open]) .ap
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.gpu-header-metrics {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.gpu-usage-value {
-  font-size: 0.95rem;
+.gpu-temp-lbl {
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--md-sys-color-primary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .gpu-usage-label {

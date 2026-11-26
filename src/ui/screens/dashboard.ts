@@ -80,13 +80,13 @@ export function renderDashboard(data: TelemetrySnapshot): void {
     const gpuTemp = document.getElementById('gpu-temp-badge');
     if (gpuTemp) {
       gpuTemp.innerText = data.gpu.temp > 0 ? `${data.gpu.temp}°C` : 'N/A';
-      const { bg, fg } = getTempBadgeColors(data.gpu.temp);
-      gpuTemp.style.setProperty('--m3e-badge-container-color', bg);
-      gpuTemp.style.setProperty('--m3e-badge-color', fg);
+      gpuTemp.style.color =
+        data.gpu.temp >= 70
+          ? 'var(--md-sys-color-error)'
+          : data.gpu.temp >= 55
+            ? 'var(--md-sys-color-warning)'
+            : 'var(--md-sys-color-success)';
     }
-
-    const gpuUsage = document.getElementById('gpu-usage-value');
-    if (gpuUsage) gpuUsage.innerText = `${data.gpu.usage}%`;
 
     const gpuProgress = document.getElementById(
       'gpu-progress-bar'
