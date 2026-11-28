@@ -67,11 +67,6 @@ function syncMetaThemeColor(): void {
   const themeEl = getThemeElement();
   if (!meta) return;
 
-  if (activeThemeMode === 'amoled') {
-    meta.setAttribute('content', '#000000');
-    return;
-  }
-
   requestAnimationFrame(() => {
     if (!themeEl) return;
     const bg = getComputedStyle(themeEl).getPropertyValue('--md-sys-color-background').trim();
@@ -186,12 +181,9 @@ export function setThemeMode(mode: ThemeMode): void {
   const root = document.documentElement;
   const themeEl = getThemeElement();
 
-  root.classList.remove('theme-dark', 'theme-light', 'theme-amoled', 'dark-mode', 'light-mode');
+  root.classList.remove('theme-dark', 'theme-light', 'dark-mode', 'light-mode');
 
-  if (effective === 'amoled') {
-    root.classList.add('theme-amoled', 'dark-mode');
-    if (themeEl) themeEl.scheme = 'dark';
-  } else if (effective === 'light') {
+  if (effective === 'light') {
     root.classList.add('theme-light', 'light-mode');
     if (themeEl) themeEl.scheme = 'light';
   } else {
@@ -310,7 +302,13 @@ export async function initTheme(): Promise<void> {
   }
 
   setReduceEffects(initialReduceEffects);
-  setThemeMode(stored.mode ?? 'auto');
+  const initialMode: ThemeMode =
+    stored.mode === 'auto' || stored.mode === 'dark' || stored.mode === 'light'
+      ? stored.mode
+      : (stored.mode as string | undefined) === 'amoled'
+        ? 'dark'
+        : 'auto';
+  setThemeMode(initialMode);
   setThemeVariant(stored.variant ?? 'tonal-spot');
   setThemeContrast(stored.contrast ?? 'standard');
   setFontMode(stored.font ?? 'outfit');

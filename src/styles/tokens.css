@@ -1,4 +1,4 @@
-/* tokens.css - Safe-area insets, semantic status colors, and AMOLED surface overrides */
+/* tokens.css - Safe-area insets and semantic status colors */
 
 :root {
   /* KernelSU/APatch Window Insets */
@@ -49,15 +49,4 @@
   --log-line-warn: #7e5700;
   --log-line-succ: #006c46;
   --log-line-info: #0969da;
-}
-
-/* AMOLED True Black Surface Overrides on top of M3E Theme */
-:root.theme-amoled m3e-theme {
-  --md-sys-color-background: #000000;
-  --md-sys-color-surface: #000000;
-  --md-sys-color-surface-container-lowest: #000000;
-  --md-sys-color-surface-container-low: #0a0a0a;
-  --md-sys-color-surface-container: #111111;
-  --md-sys-color-surface-container-high: #171717;
-  --md-sys-color-surface-container-highest: #1e1e1e;
 }

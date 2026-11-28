@@ -1,7 +1,7 @@
 import type { ContrastLevel, ThemeVariant } from '@m3e/web/theme';
 
-export type ThemeMode = 'auto' | 'dark' | 'light' | 'amoled';
-export type EffectiveThemeMode = 'dark' | 'light' | 'amoled';
+export type ThemeMode = 'auto' | 'dark' | 'light';
+export type EffectiveThemeMode = 'dark' | 'light';
 export type FontMode = 'outfit' | 'system';
 
 export interface ThemeSettings {
